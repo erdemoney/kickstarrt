@@ -21,6 +21,9 @@ kickst**Arr**t wires together everything a media library needs — **instant, de
 that keeps nothing on disk**, automatic TLS, and edge security — as code. The whole stack runs
 on one Docker host, and the same checkout deploys to a dedicated box, a VM, or a NAS appliance.
 
+> **Running on a VPS with a public IP instead?** The [VPS edition](https://github.com/erdemoney/kickstarrt-vps)
+> is a sibling repo: direct ingress by A-record, ufw/fail2ban hardening, no tunnel, no GPU.
+
 ## Architecture
 
 ```
