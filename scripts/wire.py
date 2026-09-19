@@ -9,6 +9,7 @@ service names (sonarr, radarr, etc.) remain private to the internal network.
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import re
@@ -28,6 +29,17 @@ MEDIA_ENV = ROOT / "stacks" / "media-server" / ".env"
 
 class WireError(RuntimeError):
     pass
+
+
+class HTTPWireError(WireError):
+    """An HTTP response with a client or server error status."""
+
+    def __init__(self, source: str, method: str, url: str, status: int, text: str):
+        self.source = source
+        self.method = method
+        self.url = url
+        self.status = status
+        super().__init__(f"{method} {url} returned HTTP {status}: {text.strip()[:300]}")
 
 
 def api_key(app: str, config_dir: Path) -> str:
@@ -89,6 +101,7 @@ class DockerHTTP:
         body: Any = None,
         auth_header: str = "X-Api-Key",
         form: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> Any:
         # Bazarr's image is intentionally small and does not include curl.
         # Sonarr is on the same Docker network and is already used as the
@@ -108,6 +121,8 @@ class DockerHTTP:
         ]
         if key:
             command.extend(["-H", f"{auth_header}: {key}"])
+        for name, value in (headers or {}).items():
+            command.extend(["-H", f"{name}: {value}"])
         if body is not None:
             command.extend(
                 ["-H", "Content-Type: application/json", "--data", json.dumps(body)]
@@ -129,9 +144,7 @@ class DockerHTTP:
             raise WireError(f"{source} returned an invalid HTTP response")
         text, status = result.stdout.rsplit(marker, 1)
         if int(status) >= 400:
-            raise WireError(
-                f"{method} {url} returned HTTP {status}: {text.strip()[:300]}"
-            )
+            raise HTTPWireError(source, method, url, int(status), text)
         if not text.strip():
             return None
         try:
@@ -501,6 +514,269 @@ def recyclarr_change(config_dir: Path, keys: dict[str, str]) -> Change | None:
     )
 
 
+def jellyfin_key_valid(http: DockerHTTP, key: str) -> bool:
+    try:
+        http.request(
+            "jellyfin",
+            "GET",
+            "http://jellyfin:8096/System/Info",
+            headers={"Authorization": f'MediaBrowser Token="{key}"'},
+        )
+    except WireError:
+        return False
+    return True
+
+
+def jellyfin_prompt_credentials(default_username: str | None = None) -> tuple[str, str]:
+    username = (
+        input(
+            "Jellyfin admin username"
+            + (f" [{default_username}]" if default_username else "")
+            + ": "
+        ).strip()
+        or default_username
+        or ""
+    )
+    if not username:
+        raise WireError("no Jellyfin admin username provided")
+    password = getpass.getpass("Jellyfin admin password: ")
+    if not password:
+        raise WireError("Jellyfin admin password must not be empty")
+    return username, password
+
+
+def jellyfin_authenticate(
+    http: DockerHTTP, base: str, username: str, password: str
+) -> str:
+    device = (
+        'MediaBrowser Client="kickstarrt", Device="just wire", '
+        'DeviceId="kickstarrt-vps-wire", Version="1.0"'
+    )
+    auth = http.request(
+        "jellyfin",
+        "POST",
+        f"{base}/Users/AuthenticateByName",
+        body={"Username": username, "Pw": password},
+        headers={"X-Emby-Authorization": device},
+    )
+    token = auth.get("AccessToken") if isinstance(auth, dict) else None
+    if not token:
+        raise WireError(
+            "Jellyfin did not accept the admin credentials (no access token returned)"
+        )
+    return token
+
+
+def jellyfin_mint_key(http: DockerHTTP, base: str, token: str) -> str:
+    authorized = {"Authorization": f'MediaBrowser Token="{token}"'}
+    http.request("jellyfin", "POST", f"{base}/Auth/Keys?app=wire", headers=authorized)
+    listed = http.request("jellyfin", "GET", f"{base}/Auth/Keys", headers=authorized)
+    items = listed.get("Items", []) if isinstance(listed, dict) else []
+    candidates = [item for item in items if item.get("AppName") == "wire"]
+    if not candidates:
+        raise WireError(
+            "Jellyfin created the wire API key but GET /Auth/Keys did not list it"
+        )
+    newest = max(candidates, key=lambda item: str(item.get("DateCreated") or ""))
+    key = newest.get("AccessToken")
+    if not key:
+        raise WireError("Jellyfin listed the wire API key without an AccessToken")
+    return key
+
+
+def jellyfin_mint_first_run(http: DockerHTTP, dry_run: bool, yes: bool) -> str | None:
+    """Create a Jellyfin API key, bootstrapping it when possible.
+
+    On a fresh install the wizard API creates the admin account first. If the
+    wizard is already complete (credentials exist) the key is minted through an
+    existing admin login instead, prompted interactively; `--yes` cannot prompt,
+    so that path is skipped with an error.
+    """
+    base = "http://jellyfin:8096"
+    try:
+        http.request("jellyfin", "GET", f"{base}/Startup/Configuration")
+        first_run = True
+    except HTTPWireError as exc:
+        if exc.status in (401, 403):
+            first_run = False
+        else:
+            raise
+    if dry_run:
+        if first_run:
+            print(
+                "Jellyfin: first run detected - `just wire` would create the admin "
+                "account and a wire API key, then configure the Sonarr/Radarr -> "
+                "Jellyfin scan connections",
+            )
+        else:
+            print(
+                "Jellyfin: no wire API key in use - `just wire` would authenticate "
+                "as the Jellyfin admin and mint a wire API key, then configure the "
+                "Sonarr/Radarr -> Jellyfin scan connections",
+            )
+        return None
+    if not first_run and yes:
+        print(
+            "error: no Jellyfin API key is in use and the setup wizard is already "
+            "complete; --yes cannot prompt for admin credentials. Run `just wire` "
+            "in a terminal to mint a key, or create one in Jellyfin -> Dashboard -> "
+            "API Keys and re-run (Jellyfin wiring skipped)",
+            file=sys.stderr,
+        )
+        return None
+    if not sys.stdin.isatty():
+        print(
+            "warning: Jellyfin has no usable API key; run `just wire` in a terminal "
+            "to create one (Jellyfin wiring skipped)",
+            file=sys.stderr,
+        )
+        return None
+    if first_run:
+        print(
+            "Jellyfin is in first-run state; creating the admin account and an API key."
+        )
+    else:
+        print(
+            "Jellyfin has no usable API key; authenticating as the admin to mint one."
+        )
+    username, password = jellyfin_prompt_credentials(
+        default_username="jellyfin" if first_run else None
+    )
+    try:
+        if first_run:
+            http.request(
+                "jellyfin",
+                "POST",
+                f"{base}/Startup/User",
+                body={"Name": username, "Password": password},
+            )
+            http.request("jellyfin", "POST", f"{base}/Startup/Complete")
+        token = jellyfin_authenticate(http, base, username, password)
+    except HTTPWireError as exc:
+        if first_run and exc.status in (400, 403, 404):
+            print(
+                f"warning: Jellyfin first-run bootstrap refused (HTTP {exc.status}); "
+                "the wizard is probably already configured - generate a key in "
+                "Jellyfin -> Dashboard -> API Keys (Jellyfin wiring skipped)",
+                file=sys.stderr,
+            )
+            return None
+        raise
+    return jellyfin_mint_key(http, base, token)
+
+
+def get_jellyfin_key(
+    http: DockerHTTP, keys: dict[str, str], dry_run: bool = False, yes: bool = False
+) -> str | None:
+    """Return a live Jellyfin API key or None.
+
+    A key already stored in the *arr Jellyfin connections is reused once it is
+    validated against Jellyfin, so a revoked or rotated key is detected. With no
+    usable key, a new one is minted when possible: through the first-run wizard
+    bootstrap on a fresh install, or interactively through an existing admin
+    login once the wizard is complete.
+    """
+    for app in ("sonarr", "radarr"):
+        port = 8989 if app == "sonarr" else 7878
+        current = http.request(
+            app, "GET", f"http://{app}:{port}/api/v3/notification", keys[app]
+        )
+        existing = next(
+            (
+                connection
+                for connection in current
+                if connection.get("name", "").lower() == "jellyfin"
+                and connection.get("implementation") == "Jellyfin"
+            ),
+            None,
+        )
+        candidate = field_value(existing, "apiKey") if existing else None
+        if candidate and jellyfin_key_valid(http, candidate):
+            return candidate
+    return jellyfin_mint_first_run(http, dry_run, yes)
+
+
+def arr_jellyfin_notification(
+    http: DockerHTTP, app: str, key: str, jellyfin_key: str
+) -> Change | None:
+    """Reconcile the *arr -> Jellyfin connection that scans the library on imports."""
+    port = 8989 if app == "sonarr" else 7878
+    endpoint = f"http://{app}:{port}/api/v3/notification"
+    current = http.request(app, "GET", endpoint, key)
+    existing = next(
+        (
+            connection
+            for connection in current
+            if connection.get("name", "").lower() == "jellyfin"
+            and connection.get("implementation") == "Jellyfin"
+        ),
+        None,
+    )
+    desired_fields = {
+        "host": "jellyfin",
+        "port": 8096,
+        "apiKey": jellyfin_key,
+        "useSsl": False,
+        "sendNotifications": False,
+        "updateLibrary": True,
+    }
+    triggers = {
+        "onGrab": False,
+        "onDownload": True,
+        "onUpgrade": True,
+        "onRename": True,
+    }
+    if existing:
+        payload = json.loads(json.dumps(existing))
+        changed = []
+        for name, value in desired_fields.items():
+            old = field_value(existing, name)
+            if old != value:
+                changed.append(
+                    f"{name}: {redacted(old, name)} -> {redacted(value, name)}"
+                )
+                set_field(payload, name, value)
+        for name, value in triggers.items():
+            old = existing.get(name)
+            if old != value:
+                changed.append(f"{name}: {old} -> {value}")
+                payload[name] = value
+        if existing.get("enable") is not True:
+            changed.append(f"enable: {existing.get('enable')} -> True")
+            payload["enable"] = True
+        if not changed:
+            return None
+        return Change(
+            app,
+            "update Jellyfin scan connection",
+            changed,
+            lambda: http.request(
+                app, "PUT", f"{endpoint}/{existing['id']}", key, payload
+            ),
+        )
+
+    payload = {
+        "name": "Jellyfin",
+        "enable": True,
+        "implementation": "Jellyfin",
+        "implementationName": "Jellyfin",
+        "configContract": "JellyfinSettings",
+        "fields": [
+            {"name": name, "value": value} for name, value in desired_fields.items()
+        ],
+        **triggers,
+    }
+    return Change(
+        app,
+        "create Jellyfin scan connection",
+        [
+            f"{field}: {redacted(value, field)}"
+            for field, value in desired_fields.items()
+        ],
+        lambda: http.request(app, "POST", endpoint, key, payload),
+    )
+
+
 def confirm(change: Change) -> bool:
     print(f"\n{change.service}: {change.description}")
     for detail in change.details:
@@ -569,6 +845,12 @@ def main() -> int:
                 change = arr_download_client(
                     http, app, keys[app], implementation, contract, name, fields
                 )
+                if change:
+                    changes.append(change)
+        jellyfin_key = get_jellyfin_key(http, keys, dry_run=args.dry_run, yes=args.yes)
+        if jellyfin_key:
+            for app in ("sonarr", "radarr"):
+                change = arr_jellyfin_notification(http, app, keys[app], jellyfin_key)
                 if change:
                     changes.append(change)
         for change in (

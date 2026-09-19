@@ -5,9 +5,17 @@ nav_order: 7
 
 # Jellyfin: playback setup
 
-The admin account is created on Jellyfin's **first login** (the setup wizard). From there
+The admin account is created on Jellyfin's **first login** (the setup wizard) — or, on a fresh
+install, by `just wire`, which completes the wizard through its API and mints a `wire` API key
+([*arrs → Automated wiring](arrs#automated-wiring)). From there
 the two things that need configuring are the libraries — they point at the library dirs on the
 shared bind (`/mnt/shows`, `/mnt/movies`) — and the transcode policy, tuned for a CPU-only VPS.
+
+> **Scanning is automatic.** `just wire` configures Sonarr/Radarr to push a library scan to
+> Jellyfin whenever media is imported, upgraded, or renamed (the *arr → Jellyfin connections,
+> library update on). Jellyfin's own filesystem watcher is deliberately not relied on: imports
+> arrive as symlink renames on the debrid FUSE mount, which do not always trigger it. You can
+> still run **Scan All Libraries** manually at any time.
 
 ## 1. Libraries
 

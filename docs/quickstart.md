@@ -306,10 +306,12 @@ it's configured.
 1. **Decypharr** — run the wizard: admin account, debrid provider + API key, mount at
    `/mnt/decypharr` → [Decypharr](decypharr#first-run-setup-wizard).
 2. **\*arrs** — run `just wire` on the box. It provisions streaming integrations, root folders,
-   Prowlarr sync, Bazarr connections, and Recyclarr's API secrets. Finish
+   Prowlarr sync, Bazarr connections, Recyclarr's API secrets, and the Sonarr/Radarr → Jellyfin
+   scan connections (creating the Jellyfin admin account and API key on first run, or minting the
+   key from the existing admin credentials). Finish
    language profiles and indexer choices in the GUI → [The \*arrs](arrs).
-3. **Jellyfin** — create the admin account, add libraries under `/mnt/shows` and `/mnt/movies`,
-   and set the transcode path → [Jellyfin](jellyfin).
+3. **Jellyfin** — a fresh `just wire` already created the admin account and API key, so finish the
+   setup: add the libraries under `/mnt/shows` and `/mnt/movies` and set the transcode path → [Jellyfin](jellyfin).
 4. **Seerr** — connect Jellyfin at `http://jellyfin:8096`, then connect Radarr and Sonarr with
    their internal URLs and API keys → [Seerr setup](seerr).
 5. **Indexers** — add at least one debrid indexer such as Torrentio; AltHub can be

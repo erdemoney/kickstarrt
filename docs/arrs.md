@@ -31,11 +31,16 @@ just wire --yes       # non-interactive use after reviewing the dry run
 
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
 reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
-Decypharr → Settings → Arrs), Prowlarr's
-Sonarr/Radarr application links, Bazarr's Sonarr/Radarr connections, and Recyclarr's native
-secret file plus initial sync. Jellyfin, Seerr, subtitle providers,
-language profiles, indexer choices, and the Decypharr provider/mount wizard remain GUI steps
-because they require user-specific choices or first-run authentication.
+Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, Bazarr's Sonarr/Radarr
+connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
+connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
+On a fresh Jellyfin install, `just wire` also creates the admin account and a `wire` API key
+through the first-run wizard API. If the wizard is already complete and no key is in use, it
+prompts for the existing admin credentials to mint one; `--yes` cannot prompt, so it errors and
+skips those connections (run `just wire` in a terminal to provision the key, or generate one in
+Dashboard → API Keys and re-run). Seerr, subtitle providers, language profiles, and indexer
+choices, plus the Decypharr provider/mount wizard, remain GUI steps because they require
+user-specific choices or first-run authentication.
 
 ## Docker networking
 
@@ -54,7 +59,7 @@ break CORS, and add latency; they are for browsers only).
 
 | Service   | Internal URL            | Port | API key lives at                                |
 | --------- | ----------------------- | ---- | ----------------------------------------------- |
-| jellyfin  | `http://jellyfin:8096`  | 8096 | Jellyfin → Dashboard → API Keys (generate one)  |
+| jellyfin  | `http://jellyfin:8096`  | 8096 | Dashboard → API Keys; created/reused by `just wire` |
 | seerr     | `http://seerr:5055`     | 5055 | (outbound only)                                 |
 | radarr    | `http://radarr:7878`    | 7878 | Settings → General → API Key                    |
 | sonarr    | `http://sonarr:8989`    | 8989 | Settings → General → API Key                    |
