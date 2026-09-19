@@ -5,10 +5,10 @@
 # in the Radarr UI. Edit this file to tune, then force a sync:
 #   docker compose -f stacks/media-server/compose.yaml exec recyclarr recyclarr sync
 #
-# Based on the TRaSH Guides, tailored for this stack: a CPU-only VPS where
-# Jellyfin should never video-transcode. The ladder is Remux + WEB + Bluray
-# (H.264/HEVC direct-play everywhere); audio is left unpenalized because audio
-# transcodes are cheap. Anything that would force a video transcode or break
+# Based on the TRaSH Guides, tailored for this stack: a CPU-only VPS. The ladder
+# is Remux + WEB + Bluray across 2160p and 1080p; audio is left unpenalized
+# because audio transcodes are cheap. HEVC is NOT penalized - all 4K UHD content
+# is HEVC - so 4K remuxes/encodes are grabbable. Anything that would break
 # playback scores -10000 (below the profile's minimum score of 0 = never
 # grabbed): exotic codecs (AV1/VP9/VC-1/MPEG2), Dolby Vision without an HDR10
 # fallback, Blu-ray disk images, and low-quality/obfuscated release groups.
@@ -94,7 +94,7 @@ radarr:
       - trash_ids: [e7718d7a3ce595f289bfee26adc178f5] # Repack/Proper
         assign_scores_to: [{ name: Direct Play, score: 5 }]
 
-      # --- never grab: forces a video transcode or broken playback ---
+      # --- never grab: codec and disk-image rejects ---
       - trash_ids: [ed38b889b31be83fda192888e2286d83] # BR-DISK (disk image; also disabled as a quality)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
       - trash_ids: [923b6abef9b17f937fab56cfcf89e1f1] # DV (no HDR10 fallback): pink/green or transcode on non-DV clients
@@ -106,10 +106,6 @@ radarr:
       - trash_ids: [11cd1db7165d6a7ad9a83bc97b8b1060] # VC-1 (pre-H.264 Blu-ray codec)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
       - trash_ids: [ff86c4326018682f817830ced463332b] # MPEG2 (broadcast caps)
-        assign_scores_to: [{ name: Direct Play, score: -10000 }]
-      - trash_ids: [dc98083864ea246d05a42df0d05f81cc] # x265 (720/1080p): mini-encode territory; x264 direct-plays everywhere
-        assign_scores_to: [{ name: Direct Play, score: -10000 }]
-      - trash_ids: [839bea857ed2c0a8e084f3cbdbd65ecb] # x265 (no HDR/DV): SDR HEVC encodes
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
 
       # --- never grab: junk groups (TRaSH Guide scores) ---

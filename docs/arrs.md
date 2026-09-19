@@ -167,7 +167,10 @@ docker compose -f stacks/media-server/compose.yaml exec recyclarr recyclarr sync
 ```
 
 Choose **Direct Play** wherever an app asks for a quality profile. If you regenerate an Arr API
-key, run `just wire` again.
+key, run `just wire` again. The Direct Play profiles are codec-agnostic on HEVC: every 4K UHD
+release is HEVC, so x265 carries no score penalty and 4K is grabbable. Direct playback of those
+titles depends on the client's HEVC support; on clients without it, Jellyfin's per-user
+transcode policy ([remux/audio ok, re-encode off](jellyfin#2-transcode-policy-no-video-transcoding-remux--audio-transcoding-stay-on)) applies.
 
 ### Direct Play (Anime) companion profile (Sonarr)
 

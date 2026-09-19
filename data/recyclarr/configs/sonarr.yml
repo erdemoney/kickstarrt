@@ -6,22 +6,22 @@
 #   docker compose -f stacks/media-server/compose.yaml exec recyclarr recyclarr sync
 #
 # Two companion profiles from the TRaSH Guides, tailored for this stack: a CPU-only
-# VPS where Jellyfin should never video-transcode.
-#
-# "Direct Play" (regular TV) - ladder is Remux + WEB + Bluray (H.264/HEVC
-# direct-play everywhere); audio is left unpenalized because audio transcodes are
-# cheap. Anything that would force a video transcode or break playback scores
-# -10000 (below the profile's minimum score of 0 = never grabbed): exotic codecs
-# (AV1/VP9/VC-1/MPEG2), Dolby Vision without an HDR10 fallback, Blu-ray disk
-# images, and low-quality/obfuscated release groups.
+# VPS. "Direct Play" (regular TV) - ladder is Remux + WEB + Bluray across 2160p
+# and 1080p; audio is left unpenalized because audio transcodes are cheap. HEVC
+# is NOT penalized - all 4K UHD content is HEVC - so 4K remuxes/encodes are
+# grabbable. Anything that would break playback scores -10000 (below the
+# profile's minimum score of 0 = never grabbed): exotic codecs (AV1/VP9/VC-1/
+# MPEG2), Dolby Vision without an HDR10 fallback, Blu-ray disk images, and
+# low-quality/obfuscated release groups.
 #
 # "Direct Play (Anime)" (companion, assign to anime series) - TRaSH's [Anime]
 # Remux-1080p recipe:
 # Bluray-1080p Remux and Bluray-1080p are merged into one tier, HDTV is folded into
 # the WEB tiers (anime WEB/HDRips often tag themselves HDTV), and the Anime BD/Web
 # tier Custom Formats (SeaDex release groups) outrank everything. x265 is NOT
-# penalized here - anime BD encodes are nearly always x265 10-bit - but the same
-# -10000 never-grab codec/disk-image rules apply so Jellyfin never video-transcodes.
+# penalized here - anime BD encodes are nearly always x265 10-bit - matching
+# Direct Play (all 4K UHD content is HEVC); the same -10000 codec/disk-image
+# never-grab rules apply.
 # Dubs-only, raw and LQ anime groups are rejected. Streaming-service tie-breakers
 # (CR/NF/DSNP/...) are left out to keep the profile lean like Direct Play.
 sonarr:
@@ -208,8 +208,7 @@ sonarr:
       - trash_ids: [44e7c4de10ae50265753082e5dc76047] # Repack3
         assign_scores_to: [{ name: Direct Play, score: 7 }, { name: Direct Play (Anime), score: 7 }]
 
-      # --- never grab: forces a video transcode or broken playback ---
-      # (Anime deliberately does NOT penalize x265: BD encodes are x265 10-bit.)
+      # --- never grab: codec and disk-image rejects ---
       - trash_ids: [85c61753df5da1fb2aab6f2a47426b09] # BR-DISK (disk image)
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
       - trash_ids: [6f808933a71bd9666531610cb8c059cc] # BR-DISK (BTN variant)
@@ -224,10 +223,6 @@ sonarr:
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
       - trash_ids: [4aee45b0868229c4fbd8bad3e315f1d0] # MPEG2 (broadcast caps)
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
-      - trash_ids: [47435ece6b99a0b477caf360e79ba0bb] # x265 (720/1080p): mini-encode territory; x264 direct-plays everywhere
-        assign_scores_to: [{ name: Direct Play, score: -10000 }]
-      - trash_ids: [9b64dff695c2115facf1b6ea59c9bd07] # x265 (no HDR/DV): SDR HEVC encodes
-        assign_scores_to: [{ name: Direct Play, score: -10000 }]
 
       # --- never grab: junk groups (TRaSH Guide scores) ---
       - trash_ids: [9c11cd3f07101cdba90a2d81cf0e56b4] # LQ (Low Quality Releases)

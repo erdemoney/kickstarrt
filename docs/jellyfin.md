@@ -30,7 +30,9 @@ Also set Dashboard → **Playback** → **Transcoding path** to `/transcodes` �
 transcode scratch never touches disk. This stack transcodes in software (no GPU,
 [FAQ](faq#why-does-jellyfin-transcode-in-software-no-gpu)) and Recyclarr ships a **Direct
 Play** quality profile, so the goal is to keep playback direct and never let a client push
-the server into a CPU-only video transcode.
+the server into a CPU-only video transcode. The profile permits 4K/HEVC (every UHD release is
+HEVC), so on clients without HEVC support the per-user policy below is what keeps the CPU idle:
+remux plays, video re-encoding fails cleanly instead of transcode-spiking.
 
 ## 2. Transcode policy: no video transcoding, remux + audio transcoding stay on
 
