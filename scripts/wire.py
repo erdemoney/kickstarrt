@@ -767,7 +767,7 @@ def arr_jellyfin_notification(
         "name": "Jellyfin",
         "implementation": "Emby",
         "implementationName": "Emby / Jellyfin",
-        "configContract": "EmbySettings",
+        "configContract": "MediaBrowserSettings",
         "fields": [
             {"name": name, "value": value} for name, value in desired_fields.items()
         ],
