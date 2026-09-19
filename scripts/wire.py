@@ -331,7 +331,6 @@ def prowlarr_change(
                 payload["syncLevel"] = "fullSync"
             for field, value in (
                 ("baseUrl", base_url),
-                ("apiKey", key),
                 ("prowlarrUrl", "http://prowlarr:9696"),
             ):
                 old = field_value(existing, field)
@@ -340,6 +339,23 @@ def prowlarr_change(
                         f"{field}: {redacted(old, field)} -> {redacted(value, field)}"
                     )
                     set_field(payload, field, value)
+            # Prowlarr masks the linked app's apiKey on read-back, so a literal
+            # comparison never converges. Verify the stored key by testing the
+            # application link; only a failing test rewrites the key.
+            try:
+                http.request(
+                    "prowlarr",
+                    "POST",
+                    f"{endpoint}/test?forceTest=true",
+                    token,
+                    json.loads(json.dumps(existing)),
+                )
+            except WireError:
+                set_field(payload, "apiKey", key)
+                local_changes.append(
+                    f"apiKey: {redacted(field_value(existing, 'apiKey'), 'apiKey')} "
+                    f"-> {redacted(key, 'apiKey')}"
+                )
             if local_changes:
                 changes.extend([f"{name} {item}" for item in local_changes])
                 updates.append(
@@ -388,12 +404,20 @@ def bazarr_change(
         "settings-general-use_sonarr": (general.get("use_sonarr"), True),
         "settings-sonarr-ip": (current.get("sonarr", {}).get("ip"), "sonarr"),
         "settings-sonarr-port": (current.get("sonarr", {}).get("port"), 8989),
-        "settings-sonarr-base_url": (current.get("sonarr", {}).get("base_url"), "/"),
+        # Bazarr serializes the root URL base as "", so match its own
+        # representation rather than fighting it with "/".
+        "settings-sonarr-base_url": (
+            current.get("sonarr", {}).get("base_url") or "",
+            "",
+        ),
         "settings-sonarr-ssl": (current.get("sonarr", {}).get("ssl"), False),
         "settings-general-use_radarr": (general.get("use_radarr"), True),
         "settings-radarr-ip": (current.get("radarr", {}).get("ip"), "radarr"),
         "settings-radarr-port": (current.get("radarr", {}).get("port"), 7878),
-        "settings-radarr-base_url": (current.get("radarr", {}).get("base_url"), "/"),
+        "settings-radarr-base_url": (
+            current.get("radarr", {}).get("base_url") or "",
+            "",
+        ),
         "settings-radarr-ssl": (current.get("radarr", {}).get("ssl"), False),
     }
     # Bazarr intentionally masks connected-app API keys in its API response.
@@ -706,9 +730,20 @@ def get_jellyfin_key(
 
 
 def arr_jellyfin_notification(
-    http: DockerHTTP, app: str, key: str, jellyfin_key: str
+    http: DockerHTTP,
+    app: str,
+    key: str,
+    jellyfin_key: Callable[[], str | None],
 ) -> Change | None:
-    """Reconcile the *arr -> Jellyfin connection that scans the library on imports."""
+    """Reconcile the *arr -> Jellyfin connection that scans the library on imports.
+
+    The *arr APIs mask the connection's stored apiKey on read-back, so a literal
+    comparison never converges. Instead the stored key is verified by running the
+    notification's own test endpoint: a connection that still tests OK is left
+    alone (masked value preserved on any unrelated update), and only a failing
+    test triggers a key rewrite with a freshly validated Jellyfin key. That key is
+    resolved lazily through ``jellyfin_key``, so converged runs never prompt.
+    """
     port = 8989 if app == "sonarr" else 7878
     endpoint = f"http://{app}:{port}/api/v3/notification"
     current = http.request(app, "GET", endpoint, key)
@@ -723,7 +758,6 @@ def arr_jellyfin_notification(
     desired_fields = {
         "host": "jellyfin",
         "port": 8096,
-        "apiKey": jellyfin_key,
         "useSsl": False,
         "notify": False,
         "updateLibrary": True,
@@ -752,6 +786,20 @@ def arr_jellyfin_notification(
         if existing.get("name") != "Jellyfin":
             changed.append(f"name: {existing.get('name')} -> Jellyfin")
             payload["name"] = "Jellyfin"
+        try:
+            http.request(
+                app,
+                "POST",
+                f"{endpoint}/test?forceTest=true",
+                key,
+                json.loads(json.dumps(existing)),
+            )
+        except WireError:
+            token = jellyfin_key()
+            if token is None:
+                return None
+            set_field(payload, "apiKey", token)
+            changed.append("apiKey: <unchanged secret> -> <unchanged secret>")
         if not changed:
             return None
         return Change(
@@ -763,6 +811,9 @@ def arr_jellyfin_notification(
             ),
         )
 
+    token = jellyfin_key()
+    if token is None:
+        return None
     payload = {
         "name": "Jellyfin",
         "implementation": "MediaBrowser",
@@ -770,7 +821,8 @@ def arr_jellyfin_notification(
         "configContract": "MediaBrowserSettings",
         "fields": [
             {"name": name, "value": value} for name, value in desired_fields.items()
-        ],
+        ]
+        + [{"name": "apiKey", "value": token}],
         **triggers,
     }
     return Change(
@@ -779,7 +831,8 @@ def arr_jellyfin_notification(
         [
             f"{field}: {redacted(value, field)}"
             for field, value in desired_fields.items()
-        ],
+        ]
+        + ["apiKey: <unchanged secret>"],
         lambda: http.request(app, "POST", endpoint, key, payload),
     )
 
@@ -854,12 +907,22 @@ def main() -> int:
                 )
                 if change:
                     changes.append(change)
-        jellyfin_key = get_jellyfin_key(http, keys, dry_run=args.dry_run, yes=args.yes)
-        if jellyfin_key:
-            for app in ("sonarr", "radarr"):
-                change = arr_jellyfin_notification(http, app, keys[app], jellyfin_key)
-                if change:
-                    changes.append(change)
+        jellyfin_key: str | None = None
+
+        def resolve_jellyfin_key() -> str | None:
+            nonlocal jellyfin_key
+            if jellyfin_key is None:
+                jellyfin_key = get_jellyfin_key(
+                    http, keys, dry_run=args.dry_run, yes=args.yes
+                )
+            return jellyfin_key
+
+        for app in ("sonarr", "radarr"):
+            change = arr_jellyfin_notification(
+                http, app, keys[app], resolve_jellyfin_key
+            )
+            if change:
+                changes.append(change)
         for change in (
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
