@@ -29,7 +29,9 @@ just wire             # review and confirm each checkpoint
 just wire --yes       # non-interactive use after reviewing the dry run
 ```
 
-The command handles Arr root folders and Decypharr's streaming integrations, Prowlarr's
+The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
+reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
+Decypharr → Settings → Arrs), Prowlarr's
 Sonarr/Radarr application links, Bazarr's Sonarr/Radarr connections, and Recyclarr's native
 secret file plus initial sync. Jellyfin, Seerr, subtitle providers,
 language profiles, indexer choices, and the Decypharr provider/mount wizard remain GUI steps

@@ -44,36 +44,6 @@ def api_key(app: str, config_dir: Path) -> str:
     return key
 
 
-def decypharr_token(config_dir: Path) -> str:
-    config_path = config_dir / "decypharr" / "configs" / "config.json"
-    auth_path = config_dir / "decypharr" / "configs" / "auth.json"
-    documents: list[tuple[Path, dict[str, Any]]] = []
-    for path in (auth_path, config_path):
-        try:
-            documents.append((path, json.loads(path.read_text(encoding="utf-8"))))
-        except FileNotFoundError:
-            continue
-        except json.JSONDecodeError as exc:
-            raise WireError(f"cannot parse {path}: {exc}") from exc
-
-    # Current Decypharr stores authentication separately in auth.json. The
-    # config.json fallback supports older releases that embedded the token.
-    for path, document in documents:
-        token = document.get("api_token", "")
-        if not token and isinstance(document.get("auth"), dict):
-            token = document["auth"].get("api_token", "")
-        if token:
-            return token
-
-    if not documents:
-        raise WireError(
-            f"{auth_path} and {config_path} do not exist; complete Decypharr setup first"
-        )
-    raise WireError(
-        f"{auth_path} and {config_path} do not contain a Decypharr API token"
-    )
-
-
 def bazarr_api_key(config_dir: Path) -> tuple[Path, str]:
     path = config_dir / "bazarr" / "config" / "config" / "config.yaml"
     try:
@@ -120,10 +90,10 @@ class DockerHTTP:
         auth_header: str = "X-Api-Key",
         form: dict[str, Any] | None = None,
     ) -> Any:
-        # Decypharr's image is intentionally small and does not include curl.
+        # Bazarr's image is intentionally small and does not include curl.
         # Sonarr is on the same Docker network and is already used as the
         # stack's internal HTTP diagnostic container.
-        transport = "sonarr" if source in {"decypharr", "bazarr"} else source
+        transport = "sonarr" if source == "bazarr" else source
         command = [
             "docker",
             "exec",
@@ -319,54 +289,6 @@ def root_folder_change(
         f"create root folder {path}",
         [f"path: {path}"],
         lambda: http.request(app, "POST", endpoint, key, {"path": path}),
-    )
-
-
-def decypharr_change(
-    http: DockerHTTP, token: str, keys: dict[str, str]
-) -> Change | None:
-    endpoint = "http://decypharr:8282/api/config"
-    auth = f"Bearer {token}"
-    current = http.request(
-        "decypharr", "GET", endpoint, auth, auth_header="Authorization"
-    )
-    arrs = list(current.get("arrs", []))
-    desired = {
-        "Sonarr": {
-            "name": "Sonarr",
-            "host": "http://sonarr:8989",
-            "token": keys["sonarr"],
-        },
-        "Radarr": {
-            "name": "Radarr",
-            "host": "http://radarr:7878",
-            "token": keys["radarr"],
-        },
-    }
-    changed = []
-    for name, item in desired.items():
-        existing = next(
-            (arr for arr in arrs if arr.get("name", "").lower() == name.lower()), None
-        )
-        if existing is None:
-            arrs.append({**item, "skip_repair": False})
-            changed.append(f"add {name}: {item['host']}")
-            continue
-        for field in ("host", "token"):
-            if existing.get(field) != item[field]:
-                changed.append(
-                    f"{name} {field}: {redacted(existing.get(field), field)} -> {redacted(item[field], field)}"
-                )
-                existing[field] = item[field]
-    if not changed:
-        return None
-    return Change(
-        "decypharr",
-        "update Arr integrations",
-        changed,
-        lambda: http.request(
-            "decypharr", "POST", endpoint, auth, {"arrs": arrs}, "Authorization"
-        ),
     )
 
 
@@ -612,7 +534,6 @@ def main() -> int:
         keys = {
             app: api_key(app, config_dir) for app in ("sonarr", "radarr", "prowlarr")
         }
-        token = decypharr_token(config_dir)
         http = DockerHTTP()
         changes: list[Change] = []
         for app, path in (("sonarr", "/mnt/shows"), ("radarr", "/mnt/movies")):
@@ -651,7 +572,6 @@ def main() -> int:
                 if change:
                     changes.append(change)
         for change in (
-            decypharr_change(http, token, keys),
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
             recyclarr_change(config_dir, keys),

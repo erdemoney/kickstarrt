@@ -47,13 +47,15 @@ Config is written to `data/decypharr/configs/config.json`.
 
 ## Integration with Sonarr/Radarr
 
-The wiring has two sides; the \*arr-UI side (streaming integration and root folders) is documented
-in [The \*arrs](arrs). Decypharr's own side:
+The \*arr-UI side (streaming integration and root folders) is documented in
+[The \*arrs](arrs). `just wire` only provisions the **Download Client** entries in
+Sonarr/Radarr — their username (`http://sonarr:8989` / `http://radarr:7878`) and password
+(each app's API key) are what Decypharr reads to **auto-detect** each arr. Nothing is entered
+in Decypharr → Settings → **Arrs**: the lowercase `sonarr`/`radarr` entries there are created
+automatically the first time each app connects.
 
-- **Outbound** — Decypharr → Settings → **Arrs**: it auto-detects apps that hit it; give each
-  arr's host (`http://sonarr:8989`, never the public URL) and API key.
-- **Repair worker / queue cleanup** — enable in Settings → Arrs (the blacklist + research
-  defaults are sensible) so failed grabs don't clog the queue.
+- **Repair worker / queue cleanup** — enable per detected app in Settings → Arrs (the
+  blacklist + research defaults are sensible) so failed grabs don't clog the queue.
 
 No **path mapping** is needed in this stack: Decypharr's mount path and the arrs' bind are
 the same absolute path (`/mnt/decypharr`), so the path it reports is the path they can open.
