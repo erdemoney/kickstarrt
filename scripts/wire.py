@@ -695,7 +695,7 @@ def get_jellyfin_key(
             (
                 connection
                 for connection in current
-                if connection.get("implementation") == "Emby"
+                if connection.get("implementation") == "MediaBrowser"
             ),
             None,
         )
@@ -716,7 +716,7 @@ def arr_jellyfin_notification(
         (
             connection
             for connection in current
-            if connection.get("implementation") == "Emby"
+            if connection.get("implementation") == "MediaBrowser"
         ),
         None,
     )
@@ -765,7 +765,7 @@ def arr_jellyfin_notification(
 
     payload = {
         "name": "Jellyfin",
-        "implementation": "Emby",
+        "implementation": "MediaBrowser",
         "implementationName": "Emby / Jellyfin",
         "configContract": "MediaBrowserSettings",
         "fields": [
