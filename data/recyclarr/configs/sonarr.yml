@@ -85,7 +85,7 @@ sonarr:
       - name: Direct Play (Anime)
         upgrade:
           allowed: true
-          # merged group (Bluray-1080p Remux + Bluray-1080p below) = the profile's
+          # merged group (Bluray-1080p Remux + Bluray-1080p) = the profile's
           # ceiling, so a good BD encode is never "downgraded" off a remux.
           until_quality: Bluray-1080p Remux
         min_format_score: 0 # v0, raws, LQ groups and codec rejects all score below 0
@@ -100,7 +100,7 @@ sonarr:
         # tiers (anime WEB/HDRip releases often mislabel themselves HDTV).
         qualities:
           - name: Bluray-1080p Remux
-            qualities: [Bluray-1080p]
+            qualities: [Bluray-1080p Remux, Bluray-1080p]
           - name: Bluray-2160p
           - name: WEBDL-1080p
             qualities: [WEBRip-1080p, HDTV-1080p]
