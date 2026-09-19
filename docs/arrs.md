@@ -79,14 +79,17 @@ mount:
 - Sonarr → `/mnt/shows`
 - Radarr → `/mnt/movies`
 
-`just prepare` creates and owns both (to `ENV_PUID`/`ENV_PGID`), so there's nothing to run
-first — no mount-ordering, because they're ordinary dirs the *arrs can write whatever the DFS
-mount state. (By hand it's just `mkdir -p /mnt/debrid/shows /mnt/debrid/movies` on the host —
-no sudo once the tree is owned by the PUID.) Then **Add Root Folder** in Sonarr/Radarr.
+`just prepare` creates and owns the library dirs and Decypharr's staging dir (`/mnt/shows`,
+`/mnt/movies`, `/mnt/downloads` — to `ENV_PUID`/`ENV_PGID`), so there's nothing to run first —
+no mount-ordering, because they're ordinary dirs the *arrs can write whatever the DFS
+mount state. (By hand it's just `mkdir -p /mnt/debrid/shows /mnt/debrid/movies
+/mnt/debrid/downloads` on the host — no sudo once the tree is owned by the PUID.) Then
+**Add Root Folder** in Sonarr/Radarr.
 
 Every service that touches media — `sonarr`, `radarr`, `bazarr` (subtitles land next to the
 video) and `jellyfin` (playback) — reaches both halves through the shared bind
-`- /mnt/debrid:/mnt:rslave`: the library dirs at `/mnt/shows` `/mnt/movies`, and the DFS mount
+`- /mnt/debrid:/mnt:rslave`: the library dirs at `/mnt/shows` `/mnt/movies`, Decypharr's
+staging dir at `/mnt/downloads`, and the DFS mount
 at `/mnt/decypharr`, so the symlinks Decypharr stages into its download folder resolve at the
 same place everywhere. Then in
 Jellyfin add the libraries the same way ([Jellyfin setup](jellyfin) covers libraries plus the
@@ -104,10 +107,11 @@ FUSE mount, and importing renames that link into the root folder — the payload
 disk, it streams from the debrid provider at playback (FUSE debrid mounts can't hardlink
 anyway: `link()` isn't implemented). Two constraints follow:
 
-- **Keep Decypharr's download folder and the \*arr root folders on the same mount** (both
-  under `/mnt/decypharr`). Same filesystem means the import is a rename of a tiny symlink —
-  instant. If they straddle filesystems the \*arrs fall back to copying, and copying a
-  symlink *dereferences* it: the entire file gets pulled from debrid onto local disk.
+- **Keep Decypharr's download folder and the \*arr root folders on the same filesystem.** The
+  staging dir `/mnt/downloads` and the roots `/mnt/shows` + `/mnt/movies` are all real dirs on
+  the shared bind, so the import is a rename of a tiny symlink — instant. If they straddle
+  filesystems the \*arrs fall back to copying, and copying a symlink *dereferences* it: the
+  entire file gets pulled from debrid onto local disk.
 - **Every consumer must resolve the symlink target at the same path.** What's stored in the
   library is an absolute path into the mount, so `sonarr`, `radarr`, `bazarr`, and `jellyfin`
   all bind `/mnt/decypharr` at the identical path. Change it in one place and that app sees a

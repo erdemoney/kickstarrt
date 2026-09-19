@@ -107,7 +107,7 @@ def main() -> int:
         ensure_owned(
             [
                 Path("/mnt/debrid") / name
-                for name in ("", "decypharr", "shows", "movies")
+                for name in ("", "decypharr", "shows", "movies", "downloads")
             ],
             puid,
             pgid,

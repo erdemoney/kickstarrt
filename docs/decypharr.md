@@ -22,9 +22,10 @@ Wizard order:
    those use each app's own API key ([The \*arrs](arrs)).
 2. **Debrid account** — add at least one provider (Real-Debrid, AllDebrid, Debrid-Link,
    Torbox, Premiumize) with its API key; Torbox also provides Usenet ([Services](services)).
-3. **Download Folder Path** — `/mnt/decypharr/downloads` — where Decypharr stages the symlinks
-   the \*arrs import. Imports copy those symlinks (never the backing data) into the \*arr root
-   folders ([The \*arrs](arrs#imports-are-symlinks-not-hardlinks)).
+3. **Download Folder Path** — `/mnt/downloads` — where Decypharr stages the symlinks the \*arrs
+   import. It's a real directory on the shared bind — a sibling of the library root folders, not
+   a subpath of the mount: the DFS root is read-only, so `mkdir` under `/mnt/decypharr/*` fails
+   ([The \*arrs](arrs#imports-are-symlinks-not-hardlinks)).
 4. **Mount System** — pick **DFS**, mount path `/mnt/decypharr` (what the \*arrs import from),
    and a cache dir. Keep the **Cache Directory** default `/tmp/decypharr-cache`: it's a
    disposable chunk cache (re-warms on demand; wiping it on redeploys costs nothing) and
@@ -36,9 +37,10 @@ Wizard order:
 Outside the wizard: the mount root is a **read-only virtual filesystem** — Decypharr's own
 provider folders and virtual folders — so
 `mkdir` under `/mnt/decypharr/*` fails with `Operation not supported`, even as root. The \*arr
-**root folders** are plain siblings of the mount on the shared bind, not subpaths of it:
-Sonarr → `/mnt/shows`, Radarr → `/mnt/movies` (`just prepare` creates and owns both to
-`ENV_PUID`/`ENV_PGID`). Jellyfin's libraries point at the same folders
+**root folders** and Decypharr's **download folder** are all plain siblings of the mount on the
+shared bind, not subpaths of it: Sonarr → `/mnt/shows`, Radarr → `/mnt/movies`, staging →
+`/mnt/downloads` (`just prepare` creates and owns all three to `ENV_PUID`/`ENV_PGID`).
+Jellyfin's libraries point at the same folders
 ([Jellyfin](jellyfin#1-libraries)).
 
 Config is written to `data/decypharr/configs/config.json`.
@@ -83,8 +85,9 @@ mount appears inside them when it's created; restarting Decypharr re-propagates 
 leaving the others with a stale `Transport endpoint is not connected` handle.
 
 Host prep is handled by **`just prepare`** (before the stack's first `just up`): it creates the
-host bind tree `/mnt/debrid`, its DFS mountpoint (`/mnt/debrid/decypharr`), and the \*arr library
-dirs (`/mnt/debrid/shows`, `/mnt/debrid/movies`), owning all of them to `ENV_PUID`/`ENV_PGID`
+host bind tree `/mnt/debrid`, its DFS mountpoint (`/mnt/debrid/decypharr`), the \*arr library
+dirs and Decypharr's download folder (`/mnt/debrid/shows`, `/mnt/debrid/movies`,
+`/mnt/debrid/downloads`), owning all of them to `ENV_PUID`/`ENV_PGID`
 from `stacks/media-server/.env`. Sudo only fires when a target is actually
 missing or mis-owned — normal `just up` runs are prompt-free, and a re-run when the mount is live
 leaves it alone. Never run a manual `chown -R` over
