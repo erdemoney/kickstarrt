@@ -569,18 +569,28 @@ def jellyfin_authenticate(
 
 def jellyfin_mint_key(http: DockerHTTP, base: str, token: str) -> str:
     authorized = {"Authorization": f'MediaBrowser Token="{token}"'}
-    http.request("jellyfin", "POST", f"{base}/Auth/Keys?app=wire", headers=authorized)
     listed = http.request("jellyfin", "GET", f"{base}/Auth/Keys", headers=authorized)
     items = listed.get("Items", []) if isinstance(listed, dict) else []
-    candidates = [item for item in items if item.get("AppName") == "wire"]
+    candidates = [item for item in items if item.get("AppName") == "Kickstarrt"]
+    if candidates:
+        newest = max(candidates, key=lambda item: str(item.get("DateCreated") or ""))
+        existing = newest.get("AccessToken")
+        if existing:
+            return existing
+    http.request(
+        "jellyfin", "POST", f"{base}/Auth/Keys?app=Kickstarrt", headers=authorized
+    )
+    listed = http.request("jellyfin", "GET", f"{base}/Auth/Keys", headers=authorized)
+    items = listed.get("Items", []) if isinstance(listed, dict) else []
+    candidates = [item for item in items if item.get("AppName") == "Kickstarrt"]
     if not candidates:
         raise WireError(
-            "Jellyfin created the wire API key but GET /Auth/Keys did not list it"
+            "Jellyfin created the Kickstarrt API key but GET /Auth/Keys did not list it"
         )
     newest = max(candidates, key=lambda item: str(item.get("DateCreated") or ""))
     key = newest.get("AccessToken")
     if not key:
-        raise WireError("Jellyfin listed the wire API key without an AccessToken")
+        raise WireError("Jellyfin listed the Kickstarrt API key without an AccessToken")
     return key
 
 
@@ -605,13 +615,13 @@ def jellyfin_mint_first_run(http: DockerHTTP, dry_run: bool, yes: bool) -> str |
         if first_run:
             print(
                 "Jellyfin: first run detected - `just wire` would create the admin "
-                "account and a wire API key, then configure the Sonarr/Radarr -> "
+                "account and a Kickstarrt API key, then configure the Sonarr/Radarr -> "
                 "Jellyfin scan connections",
             )
         else:
             print(
-                "Jellyfin: no wire API key in use - `just wire` would authenticate "
-                "as the Jellyfin admin and mint a wire API key, then configure the "
+                "Jellyfin: no Kickstarrt API key in use - `just wire` would authenticate "
+                "as the Jellyfin admin and mint a Kickstarrt API key, then configure the "
                 "Sonarr/Radarr -> Jellyfin scan connections",
             )
         return None
@@ -685,8 +695,7 @@ def get_jellyfin_key(
             (
                 connection
                 for connection in current
-                if connection.get("name", "").lower() == "jellyfin"
-                and connection.get("implementation") == "Jellyfin"
+                if connection.get("implementation") == "Emby"
             ),
             None,
         )
@@ -707,8 +716,7 @@ def arr_jellyfin_notification(
         (
             connection
             for connection in current
-            if connection.get("name", "").lower() == "jellyfin"
-            and connection.get("implementation") == "Jellyfin"
+            if connection.get("implementation") == "Emby"
         ),
         None,
     )
@@ -717,7 +725,7 @@ def arr_jellyfin_notification(
         "port": 8096,
         "apiKey": jellyfin_key,
         "useSsl": False,
-        "sendNotifications": False,
+        "notify": False,
         "updateLibrary": True,
     }
     triggers = {
@@ -741,9 +749,9 @@ def arr_jellyfin_notification(
             if old != value:
                 changed.append(f"{name}: {old} -> {value}")
                 payload[name] = value
-        if existing.get("enable") is not True:
-            changed.append(f"enable: {existing.get('enable')} -> True")
-            payload["enable"] = True
+        if existing.get("name") != "Jellyfin":
+            changed.append(f"name: {existing.get('name')} -> Jellyfin")
+            payload["name"] = "Jellyfin"
         if not changed:
             return None
         return Change(
@@ -757,10 +765,9 @@ def arr_jellyfin_notification(
 
     payload = {
         "name": "Jellyfin",
-        "enable": True,
-        "implementation": "Jellyfin",
-        "implementationName": "Jellyfin",
-        "configContract": "JellyfinSettings",
+        "implementation": "Emby",
+        "implementationName": "Emby / Jellyfin",
+        "configContract": "EmbySettings",
         "fields": [
             {"name": name, "value": value} for name, value in desired_fields.items()
         ],

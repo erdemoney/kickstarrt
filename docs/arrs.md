@@ -34,7 +34,7 @@ reach Decypharr (and that make Decypharr **auto-detect** those apps — no manua
 Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
-On a fresh Jellyfin install, `just wire` also creates the admin account and a `wire` API key
+On a fresh Jellyfin install, `just wire` also creates the admin account and a `Kickstarrt` API key
 through the first-run wizard API. If the wizard is already complete and no key is in use, it
 prompts for the existing admin credentials to mint one; `--yes` cannot prompt, so it errors and
 skips those connections (run `just wire` in a terminal to provision the key, or generate one in

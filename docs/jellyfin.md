@@ -6,7 +6,7 @@ nav_order: 7
 # Jellyfin: playback setup
 
 The admin account is created on Jellyfin's **first login** (the setup wizard) — or, on a fresh
-install, by `just wire`, which completes the wizard through its API and mints a `wire` API key
+install, by `just wire`, which completes the wizard through its API and mints a `Kickstarrt` API key
 ([*arrs → Automated wiring](arrs#automated-wiring)). From there
 the two things that need configuring are the libraries — they point at the library dirs on the
 shared bind (`/mnt/shows`, `/mnt/movies`) — and the transcode policy, tuned for a CPU-only VPS.
