@@ -75,11 +75,14 @@ streaming.
 
 The media stack runs **Zilean** (`stacks/media-server/compose.yaml`) — a DMM
 (DebridMediaManager) sourced index, backed by its own Postgres database. It is
-internal-only: no Traefik router, no published ports. Prowlarr reaches it over the
-`internal` network, so in the Prowlarr indexer form just use the service URL
-`http://zilean:8181` with **no API key** (the shipped Cardigann definition has no
-`settings`, so only the base URL needs filling in). Add it like any custom indexer
-above.
+internal-only: no Traefik router, no published ports.
+
+**`just wire` registers it for you.** Because the stack ships Zilean, `just wire`
+installs the Cardigann definition (fetched from a pinned upstream
+[Prowlarr-Indexers](https://github.com/dreulavelle/Prowlarr-Indexers) commit on first
+use) and creates the **Zilean** indexer in Prowlarr at the internal-only service URL
+`http://zilean:8181` with **no API key**, then keeps it re-pointed/enabled on later
+runs. It syncs to Sonarr/Radarr like any other indexer — no Prowlarr GUI step needed.
 
 Notes:
 - **First DMM sync is the heavy one**: ~10–30 min of sustained CPU (more on a 2 vCPU box)

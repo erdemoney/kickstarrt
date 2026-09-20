@@ -26,6 +26,13 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA_ENV = ROOT / "stacks" / "media-server" / ".env"
 
+ZILEAN_URL = "http://zilean:8181"
+ZILEAN_DEFINITION_FILE = "zilean"
+ZILEAN_DEFINITION_URL = (
+    "https://raw.githubusercontent.com/dreulavelle/Prowlarr-Indexers/"
+    "9c0e9bdbed6fd13066c58397c713bac0a6173949/Custom/zilean.yml"
+)
+
 
 class WireError(RuntimeError):
     pass
@@ -391,6 +398,167 @@ def prowlarr_change(
             )
 
     return Change("prowlarr", "update Arr applications", changes, apply)
+
+
+def zilean_definition_path(config_dir: Path) -> Path:
+    return (
+        config_dir
+        / "prowlarr"
+        / "Definitions"
+        / "Custom"
+        / f"{ZILEAN_DEFINITION_FILE}.yml"
+    )
+
+
+def install_zilean_definition(config_dir: Path) -> None:
+    """Fetch Zilean's Cardigann definition from a pinned upstream commit."""
+    target = zilean_definition_path(config_dir)
+    if target.exists():
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=".zilean.", dir=target.parent, text=True
+    )
+    os.close(descriptor)
+    try:
+        run_command(
+            [
+                "curl",
+                "-fsSL",
+                "--connect-timeout",
+                "10",
+                "--max-time",
+                "60",
+                ZILEAN_DEFINITION_URL,
+                "-o",
+                temporary,
+            ],
+            "download the Zilean indexer definition",
+        )
+        os.replace(temporary, target)
+    finally:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+
+
+def prowlarr_zilean_change(
+    http: DockerHTTP, token: str, config_dir: Path
+) -> Change | None:
+    """Reconcile the self-hosted Zilean indexer in Prowlarr.
+
+    The stack ships Zilean (docs/indexers.md), so `just wire` keeps it
+    registered: on a fresh box the Cardigann definition is downloaded from a
+    pinned Prowlarr-Indexers commit, then the indexer is created or re-pointed
+    at the internal service URL.
+    """
+    endpoint = "http://prowlarr:9696/api/v1/indexer"
+    current = http.request("prowlarr", "GET", endpoint, token)
+    existing = next(
+        (
+            indexer
+            for indexer in current
+            if indexer.get("implementation") == "Cardigann"
+            and (
+                field_value(indexer, "definitionFile") == ZILEAN_DEFINITION_FILE
+                or indexer.get("name", "").lower() == "zilean"
+            )
+        ),
+        None,
+    )
+    if existing:
+        payload = json.loads(json.dumps(existing))
+        changed = []
+        for name, value in (
+            ("definitionFile", ZILEAN_DEFINITION_FILE),
+            ("baseUrl", ZILEAN_URL),
+        ):
+            old = field_value(existing, name)
+            if old != value:
+                changed.append(
+                    f"{name}: {redacted(old, name)} -> {redacted(value, name)}"
+                )
+                set_field(payload, name, value)
+        if existing.get("enable") is not True:
+            changed.append(f"enable: {existing.get('enable')} -> True")
+            payload["enable"] = True
+        if not changed:
+            return None
+        return Change(
+            "prowlarr",
+            "re-point the self-hosted Zilean indexer",
+            changed,
+            lambda: http.request(
+                "prowlarr",
+                "PUT",
+                f"{endpoint}/{existing['id']}",
+                token,
+                payload,
+            ),
+        )
+
+    details = [
+        f"definitionFile: {ZILEAN_DEFINITION_FILE}",
+        f"baseUrl: {ZILEAN_URL}",
+    ]
+    if not zilean_definition_path(config_dir).exists():
+        details.append(
+            "would download zilean.yml from the pinned Prowlarr-Indexers commit"
+        )
+
+    def apply() -> None:
+        install_zilean_definition(config_dir)
+        run_command(
+            [
+                "docker",
+                "compose",
+                "-f",
+                str(ROOT / "stacks" / "media-server" / "compose.yaml"),
+                "up",
+                "-d",
+                "--force-recreate",
+                "prowlarr",
+            ],
+            "recreate prowlarr",
+        )
+        payload = {
+            "name": "Zilean",
+            "implementation": "Cardigann",
+            "implementationName": "Cardigann",
+            "configContract": "CardigannSettings",
+            "enable": True,
+            "tags": [],
+            "fields": [
+                {"name": "definitionFile", "value": ZILEAN_DEFINITION_FILE},
+                {"name": "baseUrl", "value": ZILEAN_URL},
+            ],
+        }
+        for attempt in range(1, 4):
+            try:
+                profiles = http.request(
+                    "prowlarr",
+                    "GET",
+                    "http://prowlarr:9696/api/v1/appprofile",
+                    token,
+                )
+                if isinstance(profiles, list) and profiles:
+                    ids = [p["id"] for p in profiles if p.get("id")]
+                    if ids:
+                        payload["appProfileId"] = min(ids)
+                http.request("prowlarr", "POST", endpoint, token, payload)
+                return
+            except WireError:
+                if attempt == 3:
+                    raise
+                time.sleep(10)
+
+    return Change(
+        "prowlarr",
+        "create the self-hosted Zilean indexer",
+        details,
+        apply,
+    )
 
 
 def bazarr_change(
@@ -924,6 +1092,7 @@ def main() -> int:
             if change:
                 changes.append(change)
         for change in (
+            prowlarr_zilean_change(http, keys["prowlarr"], config_dir),
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
             recyclarr_change(config_dir, keys),

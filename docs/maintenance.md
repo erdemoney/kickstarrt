@@ -25,7 +25,7 @@ nav_order: 16
 | `just validate`                 | `docker compose config -q` on every stack (read-only — never writes a `.env`)     |
 | `just prepare`                  | create config dirs and `acme.json` (0600) (called by `just up`) |
 | `just add-indexers`             | install all custom Prowlarr indexer definitions (Torrentio, comet, …; the dead TorBox definition is skipped — see [Indexers](indexers)) |
-| `just wire`                     | interactively reconcile Arr/Decypharr/Prowlarr/Bazarr links, the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin/API key on first run, or minting the key from existing admin credentials), and Recyclarr secrets through REST APIs; use `--dry-run` to preview |
+| `just wire`                     | interactively reconcile Arr/Decypharr/Prowlarr/Bazarr links, the self-hosted Zilean indexer (install + register on first run), the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin/API key on first run, or minting the key from existing admin credentials), and Recyclarr secrets through REST APIs; use `--dry-run` to preview |
 | `just dns`                      | print the tailnet DNS resolver setup (see [Tailnet DNS](tailnet))                 |
 | `just networks`                 | create the shared `internal` network (pinned subnet `172.30.0.0/16`)                   |
 | `just public enable <svc>` / `just public disable <svc>` | enable or remove a service's public Traefik router; does not change UFW or DNS |

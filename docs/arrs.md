@@ -31,7 +31,9 @@ just wire --yes       # non-interactive use after reviewing the dry run
 
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
 reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
-Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, Bazarr's Sonarr/Radarr
+Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the self-hosted
+**Zilean** indexer (its Cardigann definition is fetched from a pinned upstream commit on first
+use), Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
 On a fresh Jellyfin install, `just wire` also creates the admin account and a `Kickstarrt` API key
