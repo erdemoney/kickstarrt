@@ -302,6 +302,8 @@ services:
     # Comet's index database. shm_size is required: the default 64m fails the
     # bulk DMM hashlist ingestion. Never publish the port - unlike every other
     # container, this one has real credentials on Postgres.
+    # PG 18+ images use pg_ctlcluster-compatible layouts and require a single
+    # mount at /var/lib/postgresql (data lands in /var/lib/postgresql/<major>/docker).
     image: postgres:18.6-alpine3.24
     container_name: comet-postgres
     <<: *common
@@ -311,7 +313,7 @@ services:
       POSTGRES_USER: comet
       POSTGRES_PASSWORD: ${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}
     volumes:
-      - ../../data/comet-pg:/var/lib/postgresql/data
+      - ../../data/comet-pg:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U comet -d comet"]
       interval: 10s
