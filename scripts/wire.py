@@ -483,6 +483,7 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
             "configContract": "CardigannSettings",
             "enable": True,
             "tags": [],
+            "priority": 1,
             "fields": [
                 {"name": "definitionFile", "value": COMET_DEFINITION_FILE},
                 {"name": "baseUrl", "value": COMET_URL},
