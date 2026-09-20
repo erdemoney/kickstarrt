@@ -1144,13 +1144,13 @@ def seerr_mint_first_run(http: DockerHTTP, key: str, dry_run: bool, yes: bool) -
     # The Jellyfin login just created (or refreshed) the admin user, so the
     # X-Api-Key path now passes the ADMIN check on the settings routes.
     try:
-        http.request("seerr", "POST", f"{base}/api/v1/settings/initialize")
+        http.request("seerr", "POST", f"{base}/api/v1/settings/initialize", key)
     except WireError as exc:
         print(
             f"warning: could not mark Seerr as initialized: {exc}",
             file=sys.stderr,
         )
-    print("Applied: seerr - created the admin account and completed first-run setup.")
+    print("Applied: seerr - completed first-run setup.")
     return True
 
 
