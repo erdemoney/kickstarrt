@@ -34,7 +34,7 @@ hosts.
               | radarr       sonarr         |
               | prowlarr     bazarr         |   everything else (panels, dashboard):
               | recyclarr    decypharr      |   https-tailnet only
-              | comet        comet-postgres |   comet: internal-only Prowlarr indexer
+              | comet        comet-postgres |   comet: admin dashboard on the tailnet + Prowlarr indexer
               +-----------------------------+
 ```
 

@@ -282,6 +282,10 @@ services:
     environment:
       DATABASE_TYPE: postgresql
       DATABASE_URL: postgresql://comet:${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}@comet-postgres:5432/comet
+      # Tailnet-visible dashboard (https://comet.<DOMAIN>). Upstream also has a
+      # CONFIGURE_PAGE_PASSWORD for /configure; left unset - the tailnet is the
+      # gate, exactly like the other panels.
+      ADMIN_DASHBOARD_PASSWORD: ${ADMIN_DASHBOARD_PASSWORD:?set ADMIN_DASHBOARD_PASSWORD in stacks/media-server/.env}
       # Scrapers: DMM from Comet's local hashlist DB, plus public MediaFusion
       # (mediafusion.elfhosted.com). Torrentio stays off: torrentio.strem.fun
       # Cloudflare-challenges VPS/datacenter IPs.
@@ -295,6 +299,14 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/comet:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.comet.entrypoints=${COMET_ENTRYPOINTS:-https-tailnet}"
+      - "traefik.http.routers.comet.rule=Host(`${SUB_DOMAIN_COMET}.${DOMAIN}`)"
+      - "traefik.http.routers.comet.tls=true"
+      # Comet serves its admin dashboard at the app root, sharing this port with
+      # /stream, /manifest.json and /configure, so the whole 8000 host is routed.
+      - "traefik.http.services.comet.loadbalancer.server.port=8000"
     # The image ships its own HEALTHCHECK (python -m comet.healthcheck), so no
     # healthcheck block is needed here.
 

@@ -78,8 +78,10 @@ streaming.
 
 The media stack runs **Comet** (`stacks/media-server/compose.yaml`) — a torrent/debrid
 search add-on whose **DMM ingester** imports the public DMM hashlists into its own Postgres
-database. It is internal-only:
-no Traefik router, no published ports.
+database. It is exposed only on the tailnet:
+no public router, no published ports. Its admin dashboard (DMM ingestion progress,
+scraper health, cache stats) lives at `https://comet.<DOMAIN>` (password set by
+`just init`).
 
 **`just wire` registers it for you.** The Cardigann definition
 (`stacks/media-server/prowlarr/comet-local.yml`) is bind-mounted read-only into prowlarr's
