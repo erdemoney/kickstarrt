@@ -29,9 +29,13 @@ sonarr:
     base_url: http://sonarr:8989
     api_key: !secret sonarr_api_key
 
-    # TRaSH Guide preferred file sizes (min/max/preferred MB-per-minute)
+    # TRaSH Guide preferred file sizes (min/max/preferred MB-per-minute).
+    # Anime table (trash-guides "Anime/Animated/Cartoons"): far lower min
+    # MB/min than the generic series table, so low-bitrate/older anime encodes
+    # aren't rejected on size before scoring. Quality definitions are
+    # instance-wide in Sonarr, so this relaxes min sizes for all profiles.
     quality_definition:
-      type: series
+      type: anime
 
     quality_profiles:
       - name: Direct Play
@@ -191,8 +195,8 @@ sonarr:
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
       - trash_ids: [b2550eb333d27b75833e25b8c2557b38] # 10bit (0 = tie-break only)
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
-      - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio (0 = tie-break only)
-        assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
+      - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio (prefer over subs-only)
+        assign_scores_to: [{ name: Direct Play (Anime), score: 10 }]
 
       # --- HDR: direct-plays on HDR clients (SDR-only household? zero these) ---
       - trash_ids: [505d871304820ba7106b693be6fe4a9e] # HDR
