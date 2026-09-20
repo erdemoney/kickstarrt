@@ -33,6 +33,11 @@ ZILEAN_DEFINITION_URL = (
     "9c0e9bdbed6fd13066c58397c713bac0a6173949/Custom/zilean.yml"
 )
 
+SEERR_URL = "http://seerr:5055"
+SEERR_JELLYFIN_HOST = "jellyfin"
+SEERR_JELLYFIN_PORT = 8096
+SEERR_JELLYFIN_SERVER_TYPE = 2  # MediaServerType.JELLYFIN
+
 
 class WireError(RuntimeError):
     pass
@@ -82,6 +87,22 @@ def bazarr_api_key(config_dir: Path) -> tuple[Path, str]:
     raise WireError(f"{path} does not contain Bazarr's API key")
 
 
+def seerr_api_key(config_dir: Path) -> str:
+    # Seerr stores its configuration in a JSON file; the generated management
+    # API key authenticates every authenticated request below as the admin user.
+    path = config_dir / "seerr" / "config" / "settings.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise WireError(f"{path} does not exist; start Seerr once first") from exc
+    except json.JSONDecodeError as exc:
+        raise WireError(f"cannot parse {path}: {exc}") from exc
+    key = ((data.get("main") or {}).get("apiKey") or "").strip()
+    if not key:
+        raise WireError(f"{path} does not contain Seerr's API key")
+    return key
+
+
 def yaml_section_value(path: Path, section_name: str, key_name: str) -> str:
     """Read one scalar from Bazarr's simple top-level config sections."""
     section = ""
@@ -110,10 +131,10 @@ class DockerHTTP:
         form: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> Any:
-        # Bazarr's image is intentionally small and does not include curl.
-        # Sonarr is on the same Docker network and is already used as the
-        # stack's internal HTTP diagnostic container.
-        transport = "sonarr" if source == "bazarr" else source
+        # Bazarr's and Seerr's images do not include curl. Sonarr is on the
+        # same Docker network and is already used as the stack's internal HTTP
+        # diagnostic container.
+        transport = "sonarr" if source in ("bazarr", "seerr") else source
         command = [
             "docker",
             "exec",
@@ -737,6 +758,25 @@ def jellyfin_prompt_credentials(default_username: str | None = None) -> tuple[st
     return username, password
 
 
+jellyfin_credentials: dict[str, str] = {}
+
+
+def obtain_jellyfin_credentials(
+    default_username: str | None = None,
+) -> tuple[str, str]:
+    """Return the Jellyfin admin credentials, prompting only once per run.
+
+    Seerr bootstraps its admin account through the same Jellyfin login, so a run
+    that already prompted for Jellyfin reuses those credentials in memory instead
+    of prompting twice. Nothing is written to disk.
+    """
+    if "username" in jellyfin_credentials:
+        return jellyfin_credentials["username"], jellyfin_credentials["password"]
+    username, password = jellyfin_prompt_credentials(default_username)
+    jellyfin_credentials.update(username=username, password=password)
+    return username, password
+
+
 def jellyfin_authenticate(
     http: DockerHTTP, base: str, username: str, password: str
 ) -> str:
@@ -841,7 +881,7 @@ def jellyfin_mint_first_run(http: DockerHTTP, dry_run: bool, yes: bool) -> str |
         print(
             "Jellyfin has no usable API key; authenticating as the admin to mint one."
         )
-    username, password = jellyfin_prompt_credentials(
+    username, password = obtain_jellyfin_credentials(
         default_username="jellyfin" if first_run else None
     )
     try:
@@ -1005,6 +1045,326 @@ def arr_jellyfin_notification(
     )
 
 
+def seerr_mint_first_run(http: DockerHTTP, key: str, dry_run: bool, yes: bool) -> bool:
+    """Bring Seerr to a fully-wired state, bootstrapping first-run when possible.
+
+    Returns True once Seerr has an admin user, is marked initialized, and holds a
+    Jellyfin connection, so the caller can reconcile the Jellyfin and *arr
+    connections. Seerr creates that admin through a Jellyfin admin login; the
+    credentials captured earlier in the same ``just wire`` run are reused,
+    otherwise one interactive prompt happens here. ``--yes`` cannot prompt, so an
+    uninitialized (or Jellyfin-less) Seerr is skipped with an error.
+    """
+    base = SEERR_URL
+    try:
+        public = http.request("seerr", "GET", f"{base}/api/v1/settings/public")
+    except WireError:
+        print(
+            "warning: Seerr API is unreachable; finish the Seerr setup wizard or "
+            "bring the seerr service up, then re-run `just wire` (Seerr wiring "
+            "skipped)",
+            file=sys.stderr,
+        )
+        return False
+    initialized = bool(isinstance(public, dict) and public.get("initialized"))
+    if initialized:
+        try:
+            current = http.request(
+                "seerr", "GET", f"{base}/api/v1/settings/jellyfin", key
+            )
+        except WireError as exc:
+            print(
+                "warning: Seerr rejected the API key read from "
+                "data/seerr/config/settings.json; regenerate it in Seerr -> Settings "
+                f"and re-run `just wire` ({exc}) (Seerr wiring skipped)",
+                file=sys.stderr,
+            )
+            return False
+        if isinstance(current, dict) and current.get("apiKey"):
+            return True
+
+    if dry_run:
+        if not initialized:
+            print(
+                "Seerr: first run detected - `just wire` would create the admin "
+                "account and configure the Jellyfin and Sonarr/Radarr connections",
+            )
+        else:
+            print(
+                "Seerr: initialized but has no Jellyfin connection - `just wire` "
+                "would complete the Jellyfin login and configure the Sonarr/Radarr "
+                "connections",
+            )
+        return False
+    if yes or not sys.stdin.isatty():
+        print(
+            f"error: Seerr has not completed its "
+            f"{'first-run setup' if not initialized else 'Jellyfin connection'} "
+            "and --yes cannot prompt for the Jellyfin admin credentials it needs; "
+            "finish the setup in the Seerr UI or run `just wire` in a terminal "
+            "(Seerr wiring skipped)",
+            file=sys.stderr,
+        )
+        return False
+    if not initialized:
+        print(
+            "Seerr is in first-run state; creating the admin account via the "
+            "Jellyfin login."
+        )
+    else:
+        print(
+            "Seerr has no Jellyfin connection; linking it through the Jellyfin login."
+        )
+    username, password = obtain_jellyfin_credentials()
+    try:
+        http.request(
+            "seerr",
+            "POST",
+            f"{base}/api/v1/auth/jellyfin",
+            body={
+                "username": username,
+                "password": password,
+                "hostname": SEERR_JELLYFIN_HOST,
+                "port": SEERR_JELLYFIN_PORT,
+                "useSsl": False,
+                "serverType": SEERR_JELLYFIN_SERVER_TYPE,
+            },
+        )
+    except HTTPWireError as exc:
+        if "already configured" in str(exc).lower():
+            print("note: Seerr already has a Jellyfin connection; proceeding")
+        else:
+            print(
+                f"warning: Seerr first-run bootstrap failed (HTTP {exc.status}); "
+                "finish the setup wizard in the Seerr UI and re-run (Seerr wiring "
+                "skipped)",
+                file=sys.stderr,
+            )
+            return False
+    # The Jellyfin login just created (or refreshed) the admin user, so the
+    # X-Api-Key path now passes the ADMIN check on the settings routes.
+    try:
+        http.request("seerr", "POST", f"{base}/api/v1/settings/initialize")
+    except WireError as exc:
+        print(
+            f"warning: could not mark Seerr as initialized: {exc}",
+            file=sys.stderr,
+        )
+    print("Applied: seerr - created the admin account and completed first-run setup.")
+    return True
+
+
+def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
+    """Reconcile Seerr's Jellyfin connection and libraries.
+
+    The connection's API key, server id and server name belong to Seerr's own
+    Jellyfin login and are never overwritten here. Seerr cannot fill requests
+    without at least one Jellyfin library, so the library list is re-synced and
+    every movie/show library is enabled when discovery finds drift.
+    """
+    base = SEERR_URL
+    current = http.request("seerr", "GET", f"{base}/api/v1/settings/jellyfin", key)
+    payload = json.loads(json.dumps(current)) if isinstance(current, dict) else {}
+    desired = {
+        "ip": SEERR_JELLYFIN_HOST,
+        "port": SEERR_JELLYFIN_PORT,
+        "useSsl": False,
+        "urlBase": "",
+    }
+    changed = []
+    for name, value in desired.items():
+        old = payload.get(name)
+        if old != value:
+            changed.append(f"{name}: {old} -> {value}")
+            payload[name] = value
+    try:
+        settings_main = http.request(
+            "seerr", "GET", f"{base}/api/v1/settings/main", key
+        )
+    except WireError:
+        settings_main = {}
+    media_server_type = settings_main.get("mediaServerType")
+    if media_server_type != SEERR_JELLYFIN_SERVER_TYPE:
+        changed.append(
+            f"mediaServerType: {media_server_type} -> {SEERR_JELLYFIN_SERVER_TYPE}"
+        )
+    stored = http.request(
+        "seerr", "GET", f"{base}/api/v1/settings/jellyfin/library", key
+    )
+    libraries = stored if isinstance(stored, list) else []
+    disabled = [lib for lib in libraries if not lib.get("enabled")]
+    if not changed and not disabled and libraries:
+        return None
+
+    details = list(changed)
+    if not libraries:
+        details.append("sync and enable all Jellyfin libraries (none synced yet)")
+    elif disabled:
+        details.append(
+            "enable "
+            + ", ".join(f"{lib.get('name') or lib.get('id')}" for lib in disabled)
+        )
+
+    def apply() -> None:
+        if changed:
+            # POST validates and stores the connection; the apiKey, server id and
+            # server name already stored by Seerr's own Jellyfin login are kept.
+            http.request(
+                "seerr", "POST", f"{base}/api/v1/settings/jellyfin", key, payload
+            )
+        try:
+            synced = http.request(
+                "seerr",
+                "GET",
+                f"{base}/api/v1/settings/jellyfin/library?sync=1",
+                key,
+            )
+        except WireError as exc:
+            if "NoLibraries" in str(exc) or "GroupedFolders" in str(exc):
+                print(
+                    "  note: Seerr found no Jellyfin media libraries; create them in "
+                    "Jellyfin (Dashboard -> Media Libraries) and re-run",
+                )
+            else:
+                print(f"  note: Seerr could not sync Jellyfin libraries: {exc}")
+            return
+        ids = []
+        if isinstance(synced, list):
+            ids = [lib["id"] for lib in synced if lib.get("id")]
+        if ids:
+            http.request(
+                "seerr",
+                "GET",
+                f"{base}/api/v1/settings/jellyfin/library"
+                f"?enable={','.join(str(library_id) for library_id in ids)}",
+                key,
+            )
+
+    return Change("seerr", "update Jellyfin connection", details, apply)
+
+
+def seerr_arr_quality_profile(
+    http: DockerHTTP, app: str, key: str, preferred: str = "Direct Play"
+) -> dict[str, Any]:
+    port = 8989 if app == "sonarr" else 7878
+    profiles = http.request(
+        app, "GET", f"http://{app}:{port}/api/v3/qualityprofile", key
+    )
+    profiles = profiles if isinstance(profiles, list) else []
+    for profile in profiles:
+        if profile.get("name") == preferred:
+            return profile
+    if profiles:
+        return profiles[0]
+    raise WireError(f"{app} has no quality profiles; run a Recyclarr sync first")
+
+
+def seerr_arr_language_profile(http: DockerHTTP, app: str, key: str) -> int | None:
+    """Return the first available Sonarr language profile id, or None."""
+    port = 8989 if app == "sonarr" else 7878
+    languages = http.request(
+        app, "GET", f"http://{app}:{port}/api/v3/languageprofile", key
+    )
+    languages = languages if isinstance(languages, list) else []
+    if not languages:
+        return None
+    return languages[0].get("id")
+
+
+def seerr_arr_change(
+    http: DockerHTTP, seerr_key: str, app: str, keys: dict[str, str]
+) -> Change | None:
+    """Reconcile one *arr server in Seerr (radarr -> movies, sonarr -> shows).
+
+    The server is matched by its internal hostname and port. When it already
+    exists, only the connection fields are re-asserted; the quality profile and
+    any anime/language choices are left to the user. A new server pins the
+    "Direct Play" profile, resolved from the server at apply time after
+    Recyclarr has already synced in this run.
+    """
+    base = SEERR_URL
+    display = "Sonarr" if app == "sonarr" else "Radarr"
+    port = 8989 if app == "sonarr" else 7878
+    endpoint = f"{base}/api/v1/settings/{app}"
+    servers = http.request("seerr", "GET", endpoint, seerr_key)
+    servers = servers if isinstance(servers, list) else []
+    existing = next(
+        (
+            server
+            for server in servers
+            if server.get("hostname") == app and server.get("port") == port
+        ),
+        None,
+    )
+    desired = {
+        "name": display,
+        "hostname": app,
+        "port": port,
+        "apiKey": keys[app],
+        "useSsl": False,
+        "baseUrl": "",
+        "activeDirectory": "/mnt/shows" if app == "sonarr" else "/mnt/movies",
+        "is4k": False,
+        "syncEnabled": True,
+        "preventSearch": False,
+    }
+    if existing:
+        payload = json.loads(json.dumps(existing))
+        changed = []
+        for name, value in desired.items():
+            old = payload.get(name)
+            if old != value:
+                changed.append(
+                    f"{name}: {redacted(old, name)} -> {redacted(value, name)}"
+                )
+                payload[name] = value
+        if not changed:
+            return None
+        return Change(
+            "seerr",
+            f"update Seerr {display} server",
+            changed,
+            lambda: http.request(
+                "seerr", "PUT", f"{endpoint}/{existing['id']}", seerr_key, payload
+            ),
+        )
+
+    payload = dict(desired)
+    payload["tags"] = []
+    payload["isDefault"] = True
+    if app == "sonarr":
+        payload.update(
+            {
+                "seriesType": "standard",
+                "enableSeasonFolders": True,
+                "monitorNewItems": "all",
+            }
+        )
+    else:
+        payload["minimumAvailability"] = "announced"
+    details = [f"{name}: {redacted(value, name)}" for name, value in desired.items()]
+    details.append("activeProfileId: Direct Play (resolved from the server at apply)")
+    if app == "sonarr":
+        details.append("activeLanguageProfileId: first available (resolved at apply)")
+    details.append("isDefault: True")
+
+    def apply() -> None:
+        body = json.loads(json.dumps(payload))
+        profile = seerr_arr_quality_profile(http, app, keys[app])
+        body["activeProfileId"] = profile["id"]
+        body["activeProfileName"] = profile["name"]
+        if app == "sonarr":
+            try:
+                language_id = seerr_arr_language_profile(http, app, keys[app])
+            except WireError:
+                language_id = None
+            if language_id:
+                body["activeLanguageProfileId"] = language_id
+        http.request("seerr", "POST", endpoint, seerr_key, body)
+
+    return Change("seerr", f"create Seerr {display} server", details, apply)
+
+
 def confirm(change: Change) -> bool:
     print(f"\n{change.service}: {change.description}")
     for detail in change.details:
@@ -1099,6 +1459,17 @@ def main() -> int:
         ):
             if change:
                 changes.append(change)
+        # Seerr changes are appended after Recyclarr so the Direct Play quality
+        # profile it configures exists when a Seerr server is created.
+        seerr_key = seerr_api_key(config_dir)
+        if seerr_mint_first_run(http, seerr_key, args.dry_run, args.yes):
+            for change in (
+                seerr_jellyfin_change(http, seerr_key),
+                seerr_arr_change(http, seerr_key, "radarr", keys),
+                seerr_arr_change(http, seerr_key, "sonarr", keys),
+            ):
+                if change:
+                    changes.append(change)
     except WireError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

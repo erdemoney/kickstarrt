@@ -14,10 +14,11 @@ documented below.
 ## Automated wiring
 
 After the first-run admin accounts and Decypharr wizard are complete, `just wire` can
-reconcile the repeatable cross-service links through the applications' REST APIs. It does
-not edit `config.xml`, `config.json`, or Decypharr's `auth.json`; those files are read only
-to bootstrap API credentials. Requests run from inside the containers, so the internal
-service names remain private.
+reconcile the repeatable cross-service links through the applications' REST APIs — including
+Seerr's own first-login wizard, which it completes through the Jellyfin login. It does
+not edit `config.xml`, `config.json`, `seerr/config/settings.json`, or Decypharr's `auth.json`;
+those files are read only to bootstrap API credentials. Requests run from inside the containers,
+so the internal service names remain private.
 
 The default mode is interactive. It discovers the current configuration, displays each
 service-level change with secrets redacted, and asks for confirmation before applying it.
@@ -37,10 +38,14 @@ use), Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
 On a fresh Jellyfin install, `just wire` also creates the admin account and a `Kickstarrt` API key
-through the first-run wizard API. If the wizard is already complete and no key is in use, it
+through the first-run wizard API; a fresh **Seerr** is bootstrapped the same way through the
+Jellyfin login, then its **Jellyfin + Radarr + Sonarr** connections are created (media server
+type, every Jellyfin library enabled for requests, and both media managers pinned to the shipped
+**Direct Play** profile) using the credentials already gathered in the run, so only one prompt.
+If the Jellyfin wizard is already complete and no key is in use, it
 prompts for the existing admin credentials to mint one; `--yes` cannot prompt, so it errors and
 skips those connections (run `just wire` in a terminal to provision the key, or generate one in
-Dashboard → API Keys and re-run). Seerr, subtitle providers, language profiles, and indexer
+Dashboard → API Keys and re-run). Subtitle providers, language profiles, and indexer
 choices, plus the Decypharr provider/mount wizard, remain GUI steps because they require
 user-specific choices or first-run authentication.
 
@@ -62,7 +67,7 @@ break CORS, and add latency; they are for browsers only).
 | Service   | Internal URL            | Port | API key lives at                                |
 | --------- | ----------------------- | ---- | ----------------------------------------------- |
 | jellyfin  | `http://jellyfin:8096`  | 8096 | Dashboard → API Keys; created/reused by `just wire` |
-| seerr     | `http://seerr:5055`     | 5055 | (outbound only)                                 |
+| seerr     | `http://seerr:5055`     | 5055 | auto-generated `main.apiKey` in `data/seerr/config/settings.json` |
 | radarr    | `http://radarr:7878`    | 7878 | Settings → General → API Key                    |
 | sonarr    | `http://sonarr:8989`    | 8989 | Settings → General → API Key                    |
 | prowlarr  | `http://prowlarr:9696`  | 9696 | Settings → General → API Key                    |
@@ -135,12 +140,22 @@ hand unless you intentionally changed them.
 
 ## Seerr → Jellyfin + Radarr + Sonarr (requests)
 
+`just wire` reconciles the three Seerr connections ([Automated wiring](#automated-wiring)): a
+fresh Seerr is completed through the Jellyfin login, then a server is created for each managed
+\*arr and Jellyfin's libraries are enabled. You can still adjust any of it in the Seerr UI — a
+later `just wire` only re-asserts connection fields (URL, API key, root folder, sync enabled)
+and never overwrites a quality profile or anime/language choice you made.
+
+Manual setup (fallback):
+
 1. Seerr → Settings → **Jellyfin**: server name, URL `http://jellyfin:8096`, and an **API key
    generated on the Jellyfin server** (Dashboard → API Keys — the admin account is created on
    Jellyfin's first login).
 2. Seerr → **Radarr** and **Sonarr**: enable, add `http://radarr:7878` / `http://sonarr:8989`
    + API keys, pick the shipped **Direct Play** quality profile and the root folder for each.
 3. Users can now request via Seerr, which pushes to Radarr/Sonarr.
+4. Under Seerr → Settings → **Jellyfin**, enable at least one library so Seerr maps requests
+   to a root folder.
 
 ## Bazarr → Sonarr/Radarr (subtitles)
 

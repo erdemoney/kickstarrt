@@ -205,7 +205,8 @@ add-indexers:
     docker compose -f stacks/media-server/compose.yaml restart prowlarr 2>/dev/null \
         || echo "note: prowlarr is not running, the definition will load on next just up"
 
-# Reconcile the stable cross-service wiring through the applications' REST APIs.
+# Reconcile the stable cross-service wiring through the applications' REST APIs,
+# including Seerr's first-login bootstrap and its Jellyfin/Radarr/Sonarr links.
 # Interactive by default: each service-level change is displayed and requires
 # confirmation. Use `just wire --dry-run` to preview or `just wire --yes` only
 # when the plan has already been reviewed. API calls run from the containers so
