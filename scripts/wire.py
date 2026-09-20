@@ -1135,9 +1135,8 @@ def seerr_mint_first_run(http: DockerHTTP, key: str, dry_run: bool, yes: bool) -
             print("note: Seerr already has a Jellyfin connection; proceeding")
         else:
             print(
-                f"warning: Seerr first-run bootstrap failed (HTTP {exc.status}); "
-                "finish the setup wizard in the Seerr UI and re-run (Seerr wiring "
-                "skipped)",
+                f"warning: Seerr first-run bootstrap failed: {exc}; finish the setup "
+                "wizard in the Seerr UI and re-run (Seerr wiring skipped)",
                 file=sys.stderr,
             )
             return False
