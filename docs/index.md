@@ -34,7 +34,7 @@ hosts.
               | radarr       sonarr         |
               | prowlarr     bazarr         |   everything else (panels, dashboard):
               | recyclarr    decypharr      |   https-tailnet only
-              | zilean       zilean-postgres|   zilean: internal-only Prowlarr indexer
+              | comet        comet-postgres |   comet: internal-only Prowlarr indexer
               +-----------------------------+
 ```
 
@@ -82,7 +82,7 @@ doesn't, so use **Ubuntu 26.04 Minimal** there instead. The full Oracle walkthro
 stacks/                  compose files (one folder per stack) + .env per stack
   traefik/               edge router on :443, CrowdSec container, CoreDNS, plugin + ACME
   media-server/          jellyfin, seerr, radarr, sonarr, prowlarr,
-                         recyclarr, bazarr, decypharr, zilean (+ zilean-postgres)
+                         recyclarr, bazarr, decypharr, comet (+ comet-postgres)
 data/                    runtime config that lives in code
   traefik/               traefik.yml, dynamic.yml
   crowdsec/              acquis.yaml

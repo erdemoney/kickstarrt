@@ -163,7 +163,7 @@ health:
     python3 -m scripts.health
 
 # Install all custom Cardigann indexer definitions for Prowlarr from the
-# Prowlarr-Indexers repo (Torrentio, comet, zilean, ...). TorBox's definition is
+# Prowlarr-Indexers repo (Torrentio, comet, ...). TorBox's definition is
 # skipped: its search API was decommissioned (search-api.torbox.app no longer
 # resolves), so the indexer can never connect. Definitions are inert until
 # enabled in Prowlarr, so installing every one saves a pick-a-name step; add +

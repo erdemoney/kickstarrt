@@ -36,7 +36,7 @@ jobs:
           export PUBLIC_BIND=127.0.0.1
           # Required (non-default) interpolations in the media-server compose;
           # real values only exist in the server's private .env.
-          export ZILEAN_POSTGRES_PASSWORD=ci-placeholder
+          export COMET_POSTGRES_PASSWORD=ci-placeholder
           stacks="$(python3 -m scripts.stacks)"
           for stack in $stacks; do
             echo "::group::docker compose config stacks/$stack"

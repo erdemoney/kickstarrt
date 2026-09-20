@@ -141,6 +141,10 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/prowlarr:/config
+      # The stack's own Comet (Local) Cardigann definition (see
+      # prowlarr/comet-local.yml) is bind-mounted read-only, so Prowlarr picks
+      # it up at startup and `just wire` only registers the indexer.
+      - ../../stacks/media-server/prowlarr/comet-local.yml:/config/Definitions/Custom/comet-local.yml:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.prowlarr.entrypoints=${PROWLARR_ENTRYPOINTS:-https-tailnet}"
@@ -255,55 +259,61 @@ services:
       - "traefik.http.routers.decypharr.tls=true"
       - "traefik.http.services.decypharr.loadbalancer.server.port=8282"
 
-  zilean:
-    # DebridMediaManager-sourced aggregator, usable as a Torznab indexer from
-    # Prowlarr. Maintained fork (upstream ipromknight/zilean is dead). No web UI
-    # worth exposing, so no Traefik labels and no published ports: Prowlarr alone
-    # talks to it at http://zilean:8181 over the internal network (see
-    # docs/indexers.md). The one-time first DMM sync is the heavy one (10-30 min
-    # CPU, resumable on restart); subsequent syncs are incremental.
-    image: ghcr.io/thoroslives/zilean:v3.10.1
-    container_name: zilean
+  comet:
+    # Debrid/torrent search add-on used as the stack's self-hosted indexer
+    # ("Comet (Local)" cardigann, see docs/indexers.md). The DMM ingester loads
+    # hashlists into comet's own Postgres and SCRAPE_DMM searches that local
+    # cache. No web UI worth exposing, so no Traefik labels and no published
+    # ports: Prowlarr alone talks to it at http://comet:8000 over the internal
+    # network. The one-time first DMM ingestion is the heavy one (10-30 min CPU,
+    # resumable on restart); subsequent cycles (DMM_INGEST_INTERVAL) are
+    # incremental. Upstream publishes no version tags, so the image is pinned by
+    # digest (index of `latest`, v2.58.0).
+    image: g0ldyy/comet@sha256:dca62133336e02784d02aaad861381820674d1c8e3e98a03797610b81ee4defe
+    container_name: comet
     <<: *common
     init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
     depends_on:
-      zilean-postgres:
+      comet-postgres:
         condition: service_healthy
     environment:
-      POSTGRES_HOST: zilean-postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_DB: zilean
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${ZILEAN_POSTGRES_PASSWORD:?set ZILEAN_POSTGRES_PASSWORD in stacks/media-server/.env}
-      # Optional: a GitHub token avoids API rate limits during the DMM hashlist
-      # sync (see .env.example).
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      DATABASE_TYPE: postgresql
+      DATABASE_URL: postgresql://comet:${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}@comet-postgres:5432/comet
+      # Scrapers: DMM from Comet's local hashlist DB, plus public MediaFusion
+      # (mediafusion.elfhosted.com). Torrentio stays off: torrentio.strem.fun
+      # Cloudflare-challenges VPS/datacenter IPs.
+      SCRAPE_DMM: "true"
+      DMM_INGEST_ENABLED: "true"
+      DMM_INGEST_CONCURRENT_WORKERS: "1"
+      SCRAPE_MEDIAFUSION: "true"
+      SCRAPE_TORRENTIO: "false"
+      # Keep the process pool lean; raise alongside DMM_INGEST_CONCURRENT_WORKERS.
+      EXECUTOR_MAX_WORKERS: "1"
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ../../data/zilean:/app/data
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8181/healthchecks/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - ../../data/comet:/app/data
+    # The image ships its own HEALTHCHECK (python -m comet.healthcheck), so no
+    # healthcheck block is needed here.
 
-  zilean-postgres:
-    # Zilean's index database. shm_size is required: the default 64m fails the
-    # bulk DMM upserts with "No space left on device". Never publish the port -
-    # unlike every other container, this one has real credentials on Postgres.
-    image: postgres:16.15-alpine3.24
-    container_name: zilean-postgres
+  comet-postgres:
+    # Comet's index database. shm_size is required: the default 64m fails the
+    # bulk DMM hashlist ingestion. Never publish the port - unlike every other
+    # container, this one has real credentials on Postgres.
+    image: postgres:18.6-alpine3.24
+    container_name: comet-postgres
     <<: *common
     shm_size: 256m
     environment:
-      POSTGRES_DB: zilean
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${ZILEAN_POSTGRES_PASSWORD:?set ZILEAN_POSTGRES_PASSWORD in stacks/media-server/.env}
+      POSTGRES_DB: comet
+      POSTGRES_USER: comet
+      POSTGRES_PASSWORD: ${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}
     volumes:
-      - ../../data/zilean-pg:/var/lib/postgresql/data
+      - ../../data/comet-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d zilean"]
+      test: ["CMD-SHELL", "pg_isready -U comet -d comet"]
       interval: 10s
       timeout: 5s
       retries: 5

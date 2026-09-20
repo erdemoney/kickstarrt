@@ -1,0 +1,107 @@
+# Custom Cardigann definition for the stack's self-hosted Comet instance
+# (stacks/media-server/compose.yaml). `just wire` copies this into prowlarr's
+# Definitions/Custom dir and registers the "Comet (Local)" indexer against the
+# internal-only service URL http://comet:8000 - no GUI step needed.
+#
+# Comet is unconfigured in this stack (no debrid provider: Decypharr turns the
+# selected magnet into an instant-release download), so the definition hits
+# Comet's unconfigured /stream API. Cardigann search paths are relative to the
+# indexer's baseUrl, and a text-only search falls back to fixed IMDb IDs (the
+# stream API only accepts IMDb / IMDb:season[:episode]).
+id: comet-local
+name: Comet (Local)
+description: "Custom Prowlarr indexer for the stack's self-hosted Comet search add-on."
+language: en-US
+type: public
+encoding: UTF-8
+followredirect: false
+testlinktorrent: false
+requestDelay: 15
+links:
+  - http://comet:8000
+
+caps:
+  categories:
+    Movies: Movies
+    TV: TV
+  modes:
+    search: [q]
+    movie-search: [q, imdbid]
+    tv-search: [q, imdbid, season, ep]
+  allowrawsearch: false
+
+search:
+  paths:
+    - path: /stream/movie/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}tt0137523{{ end }}.json
+      method: get
+      response:
+        type: json
+        noResultsMessage: '"streams": []'
+      categories: [Movies]
+
+    - path: /stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}tt9288030{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}{{ if .Query.Ep }}:{{ .Query.Ep }}{{ end }}.json
+      method: get
+      response:
+        type: json
+        noResultsMessage: '"streams": []'
+      categories: [TV]
+
+  rows:
+    selector: streams:has(behaviorHints)
+    missingAttributeEqualsNoResults: true
+
+  fields:
+    title:
+      selector: description
+      filters:
+        - name: split
+          args: ["\n", 0]
+    year:
+      selector: description
+      filters:
+        - name: regexp
+          args: "(\\b(19|20)\\d{2}\\b)"
+    category_is_tv_show:
+      text: "{{ .Result.title }}"
+      filters:
+        - name: regexp
+          args: "\\b(S\\d+(?:E\\d+)?)\\b"
+    indexer_is_torrentio:
+      selector: description
+      filters:
+        - name: regexp
+          args: "Torrentio"
+    torrentio_size:
+      selector: description
+      filters:
+        - name: regexp
+          args: "\\b(\\d+(?:\\.\\d+)? [MG]B)\\b"
+    torrent_size:
+      selector: behaviorHints.videoSize
+    category:
+      text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
+    infohash:
+      selector: behaviorHints.bingeGroup
+      filters:
+        - name: split
+          args: ["|", 2]
+    size:
+      text: "{{ if .Result.torrent_size }}{{ .Result.torrent_size }}{{ else }}{{ .Result.torrentio_size }}{{ end }}"
+    quality:
+      selector: name
+      filters:
+        - name: regexp
+          args: "\\b(2160p|1080p|720p|480p)\\b"
+    date:
+      text: "Apr. 18th '11"
+      filters:
+        - name: re_replace
+          args: ["st|nd|rd|th", ""]
+        - name: replace
+          args: ["'", ""]
+        - name: dateparse
+          args: "MMM. d yy"
+    seeders:
+      text: "30"
+    leechers:
+      text: "0"

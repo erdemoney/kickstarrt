@@ -315,8 +315,8 @@ it's configured.
 4. **Seerr** — connect Jellyfin at `http://jellyfin:8096`, then connect Radarr and Sonarr with
    their internal URLs and API keys → [Seerr setup](seerr).
 5. **Indexers** — add at least one debrid indexer such as Torrentio; AltHub can be
-   added for TorBox Usenet streaming. The self-hosted Zilean indexer is already wired
-   in Prowlarr by `just wire` → [Indexers](indexers).
+   added for TorBox Usenet streaming. The self-hosted Comet (Local) indexer is already
+   wired into Prowlarr by `just wire` → [Indexers](indexers).
 
 `just wire --dry-run` previews the changes, and `just wire` applies each confirmed checkpoint.
 Minimum before going public: every app has its admin account and auth on — [the security

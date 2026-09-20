@@ -33,7 +33,7 @@ just wire --yes       # non-interactive use after reviewing the dry run
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
 reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
 Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the self-hosted
-**Zilean** indexer (its Cardigann definition is fetched from a pinned upstream commit on first
+**Comet (Local)** indexer (its Cardigann definition is installed from the repo on first
 use), Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
@@ -74,7 +74,7 @@ break CORS, and add latency; they are for browsers only).
 | recyclarr | —                      | —    | automatic — nothing to paste (see below)        |
 | bazarr    | `http://bazarr:6767`    | 6767 | (outbound only)                                 |
 | decypharr | `http://decypharr:8282` | 8282 | Settings → API token (shown once after wizard)  |
-| zilean    | `http://zilean:8181`    | 8181 | (indexer; no API key — see [Indexers](indexers)) |
+| comet     | `http://comet:8000`     | 8000 | (indexer; no API key — see [Indexers](indexers)) |
 
 Rule of thumb: when any UI asks for another app's **URL + API key**, use the
 `http://<service>:<port>` from the table and the key from the target app. Sanity-check any
