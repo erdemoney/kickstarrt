@@ -1127,6 +1127,7 @@ def seerr_mint_first_run(http: DockerHTTP, key: str, dry_run: bool, yes: bool) -
                 "hostname": SEERR_JELLYFIN_HOST,
                 "port": SEERR_JELLYFIN_PORT,
                 "useSsl": False,
+                "urlBase": "",
                 "serverType": SEERR_JELLYFIN_SERVER_TYPE,
             },
         )

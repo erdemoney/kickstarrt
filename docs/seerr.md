@@ -60,6 +60,13 @@ the root folder, then test and save.
 
 The same wiring is documented with the rest of the service integrations in [The \*arrs](arrs#seerr--jellyfin--radarr--sonarr-requests).
 
+### Troubleshooting
+
+- **`INVALID_URL` (HTTP 404) from `/api/v1/auth/jellyfin`.** Seerr builds the Jellyfin URL as
+  `ip:port + urlBase`; an omitted (not empty) `urlBase` stringifies to `"...:8096undefined"`,
+  which never connects. `just wire` sends `urlBase: ""` explicitly, so this only recurs if you
+  call Seerr's login endpoint by hand — always pass `urlBase` (empty string).
+
 ## 4. Request flow
 
 After the integrations are connected, users can search Seerr and request movies or shows.
