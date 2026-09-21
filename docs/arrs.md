@@ -33,8 +33,8 @@ just wire --yes       # non-interactive use after reviewing the dry run
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
 reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
 Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the self-hosted
-**Comet (Local)** indexer (its Cardigann definition is installed from the repo on first
-use), Bazarr's Sonarr/Radarr
+**Comet (Local)** indexer (its git-tracked Cardigann definition is mounted in with
+Prowlarr's `/config`), Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
 On a fresh Jellyfin install, `just wire` also creates the admin account and a `Kickstarrt` API key
@@ -134,7 +134,7 @@ anyway: `link()` isn't implemented). Two constraints follow:
 ## Prowlarr application sync
 
 `just wire` provisions Prowlarr's Sonarr and Radarr application links and enables full sync.
-Every indexer added in Prowlarr, including [Torrentio](indexers), is then pushed to both apps.
+Every indexer added in Prowlarr, including the self-hosted [Comet (Local)](indexers) indexer, is then pushed to both apps.
 Choose and test indexers in Prowlarr; there is no reason to recreate the application links by
 hand unless you intentionally changed them.
 

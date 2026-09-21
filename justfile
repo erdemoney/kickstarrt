@@ -162,49 +162,6 @@ maintenance-unschedule:
 health:
     python3 -m scripts.health
 
-# Install all custom Cardigann indexer definitions for Prowlarr from the
-# Prowlarr-Indexers repo (Torrentio, comet, ...). TorBox's definition is
-# skipped: its search API was decommissioned (search-api.torbox.app no longer
-# resolves), so the indexer can never connect. Definitions are inert until
-# enabled in Prowlarr, so installing every one saves a pick-a-name step; add +
-# key just the ones you want in the UI. Fetches the repo archive (curl + tar
-# only, no git/API), copies its Custom/ dir into prowlarr's config dir, and
-# restarts prowlarr. Idempotent; re-run to re-install. Run on the server.
-
-# Install all custom Cardigann indexer definitions for Prowlarr (idempotent).
-[group('Integrations')]
-add-indexers:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    DEST="{{ justfile_directory() }}/data/prowlarr/Definitions/Custom"
-    TMP="$(mktemp -d)"
-    trap 'rm -rf "$TMP"' EXIT
-
-    curl -fsSL --connect-timeout 10 --max-time 120 \
-        https://github.com/dreulavelle/Prowlarr-Indexers/archive/refs/heads/main.tar.gz \
-        -o "$TMP/indexers.tar.gz"
-    tar -xzf "$TMP/indexers.tar.gz" -C "$TMP"
-
-    SRC="$TMP/Prowlarr-Indexers-main/Custom"
-    [ -d "$SRC" ] || { echo "error: Custom/ not found in the downloaded archive" >&2; exit 1; }
-
-    mkdir -p "$DEST"
-    count=0
-    for f in "$SRC"/*.yml; do
-        case "$(basename "$f")" in
-            torbox*.yml) ;;
-            *)
-                cp "$f" "$DEST"/
-                count=$((count + 1))
-                ;;
-        esac
-    done
-    echo "installed $count indexer definitions into $DEST"
-
-    docker compose -f stacks/media-server/compose.yaml restart prowlarr 2>/dev/null \
-        || echo "note: prowlarr is not running, the definition will load on next just up"
-
 # Reconcile the stable cross-service wiring through the applications' REST APIs,
 # including Seerr's first-login bootstrap and its Jellyfin/Radarr/Sonarr links.
 # Interactive by default: each service-level change is displayed and requires

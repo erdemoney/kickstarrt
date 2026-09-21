@@ -38,7 +38,7 @@ hosts.
               +-----------------------------+
 ```
 
-Media flow: Prowlarr finds releases (incl. the Torrentio debrid indexer) → Sonarr/Radarr grab
+Media flow: Prowlarr finds releases (incl. the self-hosted Comet (Local) debrid indexer) → Sonarr/Radarr grab
 them → Decypharr resolves them into instant files on a FUSE mount → the \*arrs symlink them
 into the library → Jellyfin streams to any client; Seerr handles user requests.
 
@@ -106,7 +106,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Jellyfin](jellyfin)         | playback setup: libraries on the Decypharr mount, no-video-transcode policy |
 | [Seerr](seerr)               | user requests and Jellyfin/Radarr/Sonarr integration                 |
 | [User guide](user-guide)     | simple Jellyfin and Seerr instructions for end users                 |
-| [Indexers](indexers)         | Prowlarr, debrid indexers, and AltHub for TorBox Usenet streaming    |
+| [Indexers](indexers)         | Prowlarr, the self-hosted Comet (Local) indexer, and AltHub for TorBox Usenet streaming |
 | [Additional services](additional-services) | how to extend the stack safely with more containers |
 | [Security](security)         | layered security model: Tailscale, UFW, Docker forwarding, Traefik, and CrowdSec |
 | [Ingress](ingress)           | direct `:443`: the security gate, DNS records, certificates, dashboard |
@@ -125,6 +125,5 @@ For managing Radarr/Sonarr from your phone, see [Ruddarr](arrs#managing-from-you
 ## External references
 
 - Decypharr docs: <https://decypharr.com/guides>
-- Torrentio indexer definition: <https://github.com/dreulavelle/Prowlarr-Indexers>
 - Servarr wiki (Prowlarr quick start): <https://wiki.servarr.com/prowlarr/quick-start-guide>
 - CrowdSec documentation: <https://docs.crowdsec.net>
