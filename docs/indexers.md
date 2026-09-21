@@ -100,7 +100,9 @@ Notes:
   Torrentio scraper is intentionally left off: `torrentio.strem.fun` Cloudflare-challenges
   VPS/datacenter IPs.
 - The `Comet (Local)` indexer needs no debrid account and returns cached/debrid-ready releases;
-  pair it with Torrentio or a provider indexer rather than running it alone.
+  pair it with Torrentio or a provider indexer rather than running it alone. Its results are
+  marked `[DEBRID-CACHED]` and receive a preference score in the shipped Direct Play profiles,
+  while non-Comet results remain eligible for uncached downloads.
 - Comet's stream API only accepts IMDb (`imdbid`) queries, so use `{imdbid:tt123456}` for
   precise hits; a plain-text search falls back to fixed titles (`tt0137523` / `tt9288030`).
 - On a low-RAM box the initial ingestion may be tight; run it once (e.g. overnight) and let it

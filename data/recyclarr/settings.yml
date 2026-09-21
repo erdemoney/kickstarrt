@@ -1,0 +1,10 @@
+# Local custom formats used by the stack's profile configuration.
+resource_providers:
+  - name: kickstarrt-radarr-custom-formats
+    type: custom-formats
+    path: /config/custom-formats
+    service: radarr
+  - name: kickstarrt-sonarr-custom-formats
+    type: custom-formats
+    path: /config/custom-formats
+    service: sonarr

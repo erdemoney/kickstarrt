@@ -31,3 +31,6 @@ data/recyclarr/*
 data/recyclarr/configs/*
 !data/recyclarr/configs/radarr.yml
 !data/recyclarr/configs/sonarr.yml
+!data/recyclarr/settings.yml
+!data/recyclarr/custom-formats/
+!data/recyclarr/custom-formats/debrid-cached.json

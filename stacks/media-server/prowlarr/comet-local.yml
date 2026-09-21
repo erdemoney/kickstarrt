@@ -56,6 +56,10 @@ search:
       filters:
         - name: split
           args: ["\n", 0]
+        # Comet's results are debrid-ready cache candidates. Keep this marker
+        # in the release title so both Arr applications can score them equally.
+        - name: append
+          args: " [DEBRID-CACHED]"
     year:
       selector: description
       filters:

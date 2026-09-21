@@ -1,0 +1,16 @@
+{
+  "includeCustomFormatWhenRenaming": false,
+  "name": "Debrid Cached",
+  "specifications": [
+    {
+      "fields": {
+        "value": "\\[DEBRID-CACHED\\]"
+      },
+      "implementation": "ReleaseTitleSpecification",
+      "name": "Debrid cache marker",
+      "negate": false,
+      "required": false
+    }
+  ],
+  "trash_id": "kickstarrt-debrid-cached"
+}
