@@ -90,21 +90,30 @@ scraper health, cache stats) lives at `https://comet.<DOMAIN>` (password set by
 **no API key**, and keeps it re-pointed/enabled on later runs. It syncs to Sonarr/Radarr
 like any other indexer — no Prowlarr GUI step needed.
 
+The definition queries Comet's **native Torznab API** (`/torznab/api`), so plain-text
+searches are resolved by Comet's own metadata (movies via `t=movie`, TV via `t=tvsearch`
+with `season`/`ep`); `{imdbid:tt123456}` still gives the most precise hits — there is no
+fake-IMDb fallback anymore.
+
 Notes:
 - **First DMM ingestion is the heavy one**: ~10–30 min of sustained CPU (more on a 2 vCPU box)
   as Comet downloads and indexes the shared hashlists; results are only served after at least
   one ingestion cycle (watch `just logs-svc comet`). Ingestion is **resumable** — if it's
   interrupted (reboot, OOM), the next start picks up where it left off. Later cycles
   (`DMM_INGEST_INTERVAL`, daily) are incremental and light.
-- Comet also scrapes the public MediaFusion instance (`mediafusion.elfhosted.com`). The
-  Torrentio scraper is intentionally left off: `torrentio.strem.fun` Cloudflare-challenges
-  VPS/datacenter IPs.
+- Comet also scrapes the public **MediaFusion** (`mediafusion.elfhosted.com`) and
+  **StremThru** (`stremthru.13377001.xyz`) instances, and runs a modest **background
+  pre-cacher** (single worker, capped runs). Torrentio is intentionally left off:
+  `torrentio.strem.fun` Cloudflare-challenges VPS/datacenter IPs. Credentialed scrapers
+  (Debridio, TorBox, AIOStreams) are wired as env placeholders — fill the keys in
+  `stacks/media-server/.env` and enable their `SCRAPE_*` toggles (see `.env.example`).
 - The `Comet (Local)` indexer needs no debrid account and returns cached/debrid-ready releases;
   pair it with Torrentio or a provider indexer rather than running it alone. Its results are
   marked `[DEBRID-CACHED]` and receive a preference score in the shipped Direct Play profiles,
   while non-Comet results remain eligible for uncached downloads.
-- Comet's stream API only accepts IMDb (`imdbid`) queries, so use `{imdbid:tt123456}` for
-  precise hits; a plain-text search falls back to fixed titles (`tt0137523` / `tt9288030`).
+- Use `{imdbid:tt123456}` (optionally `{season:00}{episode:00}`) for precise hits; a plain-text
+  title search resolves through Comet's metadata and may miss very niche titles, falling back to
+  fetching its known cache instead.
 - On a low-RAM box the initial ingestion may be tight; run it once (e.g. overnight) and let it
   finish before relying on the indexer.
 

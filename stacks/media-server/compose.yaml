@@ -286,14 +286,32 @@ services:
       # CONFIGURE_PAGE_PASSWORD for /configure; left unset - the tailnet is the
       # gate, exactly like the other panels.
       ADMIN_DASHBOARD_PASSWORD: ${ADMIN_DASHBOARD_PASSWORD:?set ADMIN_DASHBOARD_PASSWORD in stacks/media-server/.env}
-      # Scrapers: DMM from Comet's local hashlist DB, plus public MediaFusion
-      # (mediafusion.elfhosted.com). Torrentio stays off: torrentio.strem.fun
-      # Cloudflare-challenges VPS/datacenter IPs.
+      # Scrapers: DMM from Comet's local hashlist DB, plus the public MediaFusion
+      # (mediafusion.elfhosted.com) and StremThru (stremthru.13377001.xyz)
+      # instances. Torrentio stays off: torrentio.strem.fun Cloudflare-challenges
+      # VPS/datacenter IPs. Debridio/TorBox/AIOStreams are env-gated placeholders
+      # (set the SCRAPE_* toggles and API keys in stacks/media-server/.env).
       SCRAPE_DMM: "true"
       DMM_INGEST_ENABLED: "true"
       DMM_INGEST_CONCURRENT_WORKERS: "1"
       SCRAPE_MEDIAFUSION: "true"
+      SCRAPE_STREMTHRU: "true"
       SCRAPE_TORRENTIO: "false"
+      SCRAPE_DEBRIDIO: "${SCRAPE_DEBRIDIO:-false}"
+      DEBRIDIO_API_KEY: "${DEBRIDIO_API_KEY:-}"
+      DEBRIDIO_PROVIDER: "${DEBRIDIO_PROVIDER:-realdebrid}"
+      DEBRIDIO_PROVIDER_KEY: "${DEBRIDIO_PROVIDER_KEY:-}"
+      SCRAPE_TORBOX: "${SCRAPE_TORBOX:-false}"
+      TORBOX_API_KEY: "${TORBOX_API_KEY:-}"
+      SCRAPE_AIOSTREAMS: "${SCRAPE_AIOSTREAMS:-false}"
+      AIOSTREAMS_URL: "${AIOSTREAMS_URL:-}"
+      AIOSTREAMS_USER_UUID_AND_PASSWORD: "${AIOSTREAMS_USER_UUID_AND_PASSWORD:-}"
+      # Background pre-caching is modest on purpose (single worker, capped runs)
+      # to avoid hammering the public scrapers and this box's CPU/RAM.
+      BACKGROUND_SCRAPER_ENABLED: "true"
+      BACKGROUND_SCRAPER_CONCURRENT_WORKERS: "1"
+      BACKGROUND_SCRAPER_MAX_MOVIES_PER_RUN: "100"
+      BACKGROUND_SCRAPER_MAX_SERIES_PER_RUN: "100"
       # Keep the process pool lean; raise alongside DMM_INGEST_CONCURRENT_WORKERS.
       EXECUTOR_MAX_WORKERS: "1"
     volumes:

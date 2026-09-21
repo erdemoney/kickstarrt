@@ -3,11 +3,16 @@
 # Definitions/Custom dir and registers the "Comet (Local)" indexer against the
 # internal-only service URL http://comet:8000 - no GUI step needed.
 #
-# Comet is unconfigured in this stack (no debrid provider: Decypharr turns the
-# selected magnet into an instant-release download), so the definition hits
-# Comet's unconfigured /stream API. Cardigann search paths are relative to the
-# indexer's baseUrl, and a text-only search falls back to fixed IMDb IDs (the
-# stream API only accepts IMDb / IMDb:season[:episode]).
+# Comet is deliberately unconfigured here (no debrid provider: Decypharr turns
+# the selected magnet into an instant-release download), so this definition
+# queries Comet's native Torznab endpoint (/torznab/api) with that default
+# config:
+#   - Movies (Newznab 2000): t=movie    (q, imdbid)
+#   - TV (Newznab 5000):     t=tvsearch (q, imdbid, season, ep)
+# Comet resolves plain-text titles to IMDb through its own metadata providers,
+# so q-only searches work; imdbid still gives the most precise hits. Cardigann
+# search paths are relative to the indexer's baseUrl, and inputs become
+# URL-encoded query parameters.
 id: comet-local
 name: Comet (Local)
 description: "Custom Prowlarr indexer for the stack's self-hosted Comet search add-on."
@@ -32,79 +37,49 @@ caps:
 
 search:
   paths:
-    - path: /stream/movie/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}tt0137523{{ end }}.json
+    # Comet rejects an empty imdbid= parameter, so the IMDb id (digits, no "tt"
+    # prefix) is only appended to the path when one was provided; inputs add the
+    # remaining encoded query params afterwards.
+    - path: /torznab/api{{ if .Query.IMDBID }}?imdbid={{ .Query.IMDBIDShort }}&{{ end }}
       method: get
+      inputs:
+        t: movie
+        q: "{{ .Query.Q }}"
       response:
-        type: json
-        noResultsMessage: '"streams": []'
+        type: xml
       categories: [Movies]
 
-    - path: /stream/series/{{ if .Query.IMDBID }}{{ .Query.IMDBID }}{{ else }}tt9288030{{ end }}:{{ if .Query.Season }}{{ .Query.Season }}{{ else }}1{{ end }}{{ if .Query.Ep }}:{{ .Query.Ep }}{{ end }}.json
+    - path: /torznab/api{{ if .Query.IMDBID }}?imdbid={{ .Query.IMDBIDShort }}&{{ end }}
       method: get
+      inputs:
+        t: tvsearch
+        q: "{{ .Query.Q }}"
+        season: "{{ if .Query.Season }}{{ .Query.Season }}{{ end }}"
+        ep: "{{ if .Query.Ep }}{{ .Query.Ep }}{{ end }}"
       response:
-        type: json
-        noResultsMessage: '"streams": []'
+        type: xml
       categories: [TV]
 
   rows:
-    selector: streams:has(behaviorHints)
+    selector: channel item
     missingAttributeEqualsNoResults: true
 
   fields:
     title:
-      selector: description
+      selector: title
       filters:
-        - name: split
-          args: ["\n", 0]
         # Comet's results are debrid-ready cache candidates. Keep this marker
         # in the release title so both Arr applications can score them equally.
         - name: append
           args: " [DEBRID-CACHED]"
-    year:
-      selector: description
-      filters:
-        - name: regexp
-          args: "(\\b(19|20)\\d{2}\\b)"
-    category_is_tv_show:
-      text: "{{ .Result.title }}"
-      filters:
-        - name: regexp
-          args: "\\b(S\\d+(?:E\\d+)?)\\b"
-    indexer_is_torrentio:
-      selector: description
-      filters:
-        - name: regexp
-          args: "Torrentio"
-    torrentio_size:
-      selector: description
-      filters:
-        - name: regexp
-          args: "\\b(\\d+(?:\\.\\d+)? [MG]B)\\b"
-    torrent_size:
-      selector: behaviorHints.videoSize
-    category:
-      text: "{{ if .Result.category_is_tv_show }}TV{{ else }}Movies{{ end }}"
+    magnet:
+      selector: link
     infohash:
-      selector: behaviorHints.bingeGroup
-      filters:
-        - name: split
-          args: ["|", 2]
+      selector: guid
     size:
-      text: "{{ if .Result.torrent_size }}{{ .Result.torrent_size }}{{ else }}{{ .Result.torrentio_size }}{{ end }}"
-    quality:
-      selector: name
-      filters:
-        - name: regexp
-          args: "\\b(2160p|1080p|720p|480p)\\b"
-    date:
-      text: "Apr. 18th '11"
-      filters:
-        - name: re_replace
-          args: ["st|nd|rd|th", ""]
-        - name: replace
-          args: ["'", ""]
-        - name: dateparse
-          args: "MMM. d yy"
+      selector: size
+    category:
+      selector: category
     seeders:
       text: "30"
     leechers:
