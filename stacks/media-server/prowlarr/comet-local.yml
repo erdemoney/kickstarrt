@@ -37,10 +37,10 @@ caps:
 
 search:
   paths:
-    # Comet rejects an empty imdbid= parameter, so the IMDb id (digits, no "tt"
-    # prefix) is only appended to the path when one was provided; inputs add the
-    # remaining encoded query params afterwards.
-    - path: /torznab/api{{ if .Query.IMDBID }}?imdbid={{ .Query.IMDBIDShort }}&{{ end }}
+    # Comet rejects both an empty imdbid= parameter and digit-only ids, so the
+    # full "tt..." id (.Query.IMDBID) is only appended to the path when one was
+    # provided; inputs add the remaining encoded query params afterwards.
+    - path: /torznab/api{{ if .Query.IMDBID }}?imdbid={{ .Query.IMDBID }}&{{ end }}
       method: get
       inputs:
         t: movie
@@ -49,7 +49,7 @@ search:
         type: xml
       categories: [Movies]
 
-    - path: /torznab/api{{ if .Query.IMDBID }}?imdbid={{ .Query.IMDBIDShort }}&{{ end }}
+    - path: /torznab/api{{ if .Query.IMDBID }}?imdbid={{ .Query.IMDBID }}&{{ end }}
       method: get
       inputs:
         t: tvsearch
