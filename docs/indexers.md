@@ -93,7 +93,9 @@ like any other indexer — no Prowlarr GUI step needed.
 The definition queries Comet's **native Torznab API** (`/torznab/api`), so plain-text
 searches are resolved by Comet's own metadata (movies via `t=movie`, TV via `t=tvsearch`
 with `season`/`ep`); `{imdbid:tt123456}` still gives the most precise hits — there is no
-fake-IMDb fallback anymore.
+fake-IMDb fallback anymore. Empty-query `t=search` requests (how Sonarr/Radarr validate a
+synced indexer and poll RSS) are answered with Comet's **recent** feed (`t=search&cat=…`),
+which is what keeps **Comet (Local)** syncing into the Arr apps.
 
 Notes:
 - **First DMM ingestion is the heavy one**: ~10–30 min of sustained CPU (more on a 2 vCPU box)
