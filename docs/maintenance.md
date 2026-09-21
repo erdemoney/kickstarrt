@@ -52,8 +52,8 @@ This updates the repository and container images only. Keep the host operating s
 Engine, Compose plugin, kernel, and other system packages up to date separately through the
 host distribution's package manager.
 
-One exception: `ufw-docker` (installed by the `prerequisites` script) is pinned to release tag
-`251123` in `scripts/prerequisites.sh` and is invisible to Renovate — bump that tag deliberately
+One exception: `ufw-docker` (installed by the `bootstrap` script) is pinned to release tag
+`251123` in `scripts/bootstrap.sh` and is invisible to Renovate — bump that tag deliberately
 via PR when [upstream](https://github.com/chaifeng/ufw-docker/releases) publishes a newer release.
 
 ### Scheduled maintenance

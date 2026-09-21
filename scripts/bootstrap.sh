@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# prerequisites.sh - one-shot bootstrap for a fresh VPS (see docs/quickstart.md).
+# bootstrap.sh - one-shot bootstrap for a fresh VPS (see docs/quickstart.md).
 #
 # Installs, idempotently: Tailscale, git, just, Docker (with the compose
 # plugin), ufw-docker, and adds the invoking user to the `docker` group. Only
 # needs curl. Cross-distro: Debian/Ubuntu (apt), Fedora/RHEL (dnf/yum),
 # openSUSE (zypper), Arch (pacman) and Alpine (apk).
 #
-#     curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/prerequisites.sh | sudo bash
+#     curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/bootstrap.sh | sudo bash
 #
 # At the end the script joins the box to your tailnet: it prints the auth URL
 # and waits up to 120s for you to approve it, then prints the box's tailnet

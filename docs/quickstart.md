@@ -53,7 +53,7 @@ with the compose plugin, `ufw-docker`, and your user in the `docker` group — *
 your tailnet**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/prerequisites.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/bootstrap.sh | sudo bash
 ```
 
 The script prints an **auth URL** and waits up to two minutes — open it in a browser and
