@@ -7,12 +7,22 @@
 # the selected magnet into an instant-release download), so this definition
 # queries Comet's native Torznab endpoint (/torznab/api) with that default
 # config:
-#   - Movies (Newznab 2000): t=movie    (q)
-#   - TV (Newznab 5000):     t=tvsearch (q, season, ep)
+#   - Movies (Newznab 2000): t=movie or t=search    (q)
+#   - TV (Newznab 5000):     t=tvsearch or t=search (q, season, ep)
 # Comet resolves q to IMDb through its own metadata providers, including a "tt..."
-# id passed in q, so the IMDb id is folded into q when present. Cardigann only
-# supports and/or/eq/ne + bare-variable templates (no Go if/end blocks), which
-# is why no conditional params or path segments are used.
+# id passed in q, so the IMDb id is folded into q when present.
+#
+# The per-path `t` switches between the function-specific calls and Comet's
+# generic `t=search`. Cardigann (Prowlarr) only supports and/or/eq/ne, bare
+# variables, and if/else/end over a single variable, and empty inputs are
+# dropped before the request is sent:
+#   - With a term (or IMDb id) -> t=movie / t=tvsearch, the explicit query.
+#   - Without either (t=search&cat=<n>) -> Comet's "recent" feed. Sonarr/Radarr
+#     validate an indexer (and poll RSS) with exactly this empty-query t=search
+#     on their configured categories; Comet answers with recently-scraped
+#     releases so both Arr apps accept and keep the indexer synced.
+# cat is pinned so the recent feed is deterministic for each media type (movies
+# vs series) and the category checks in the Arr apps always see a match.
 id: comet-local
 name: Comet (Local)
 description: "Custom Prowlarr indexer for the stack's self-hosted Comet search add-on."
@@ -44,8 +54,9 @@ search:
     - path: /torznab/api
       method: get
       inputs:
-        t: movie
+        t: "{{ if .Query.Q }}movie{{ else }}search{{ end }}"
         q: "{{ or .Query.IMDBID .Query.Q }}"
+        cat: "2000"
       response:
         type: xml
       categories: [Movies]
@@ -53,8 +64,9 @@ search:
     - path: /torznab/api
       method: get
       inputs:
-        t: tvsearch
+        t: "{{ if .Query.Q }}tvsearch{{ else }}search{{ end }}"
         q: "{{ or .Query.IMDBID .Query.Q }}"
+        cat: "5000"
         season: "{{ .Query.Season }}"
         ep: "{{ .Query.Ep }}"
       response:
