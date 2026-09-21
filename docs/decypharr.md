@@ -45,6 +45,20 @@ Jellyfin's libraries point at the same folders
 
 Config is written to `data/decypharr/configs/config.json`.
 
+## Post-setup settings
+
+These toggle off the wizard defaults in Decypharr → Settings:
+
+- **Unpack RAR** (Settings → Providers, per provider) — keep **on**. Scene releases often ship
+  as multi-part RAR archives; with this off the mount shows unplayable `.rar`/`.r00` parts
+  instead of the video file the \*arrs and Jellyfin actually play.
+- **Add samples** (Settings → Providers) — keep **off**. Leave it unchecked so Decypharr keeps
+  filtering `sample`/`trailer`/`special`/`extras` preview clips out of the mount; checking it
+  dumps those junk clips into your library and scans.
+- **Download Uncached** (Settings → Providers and per-arr under Settings → Arrs) — turn it
+  **on** so Decypharr fetches torrents the debrid cache doesn't have (it waits for them to seed
+  up) instead of failing the grab.
+
 ## Integration with Sonarr/Radarr
 
 The \*arr-UI side (streaming integration and root folders) is documented in
