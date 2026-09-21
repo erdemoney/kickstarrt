@@ -37,7 +37,6 @@ jobs:
           # Required (non-default) interpolations in the media-server compose;
           # real values only exist in the server's private .env.
           export COMET_POSTGRES_PASSWORD=ci-placeholder
-          export ADMIN_DASHBOARD_PASSWORD=ci-placeholder
           stacks="$(python3 -m scripts.stacks)"
           for stack in $stacks; do
             echo "::group::docker compose config stacks/$stack"
