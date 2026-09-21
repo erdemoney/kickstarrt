@@ -27,9 +27,9 @@ database. It scrapes the same release sources a standalone Torrentio/AioStreams/
 would (public DMM + MediaFusion + StremThru, plus optional credentialed scrapers), so it is
 the stack's only torrent indexer. It is exposed only on the tailnet:
 no public router, no published ports. Its admin dashboard (DMM ingestion progress,
-scraper health, cache stats) lives at `https://comet.<DOMAIN>`. Comet generates
-a random dashboard password on first startup and prints it to its logs, so there
-is no admin password stored in this repo — find it with `just logs-svc comet | grep password`.
+scraper health, cache stats) lives at `https://comet.<DOMAIN>`. `just init`
+generates a random dashboard password once into the git-ignored `.env`, so no
+password is ever committed to this repo.
 
 **`just wire` registers it for you.** The Cardigann definition
 (`data/prowlarr/Definitions/Custom/comet-local.yml`, tracked in git) lives in prowlarr's

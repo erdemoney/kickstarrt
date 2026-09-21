@@ -331,6 +331,10 @@ def configure_env(force: bool) -> list[str]:
         media.set("COMET_POSTGRES_PASSWORD", secrets.token_hex(32))
         changes.append("COMET_POSTGRES_PASSWORD")
 
+    if not media.get("ADMIN_DASHBOARD_PASSWORD"):
+        media.set("ADMIN_DASHBOARD_PASSWORD", secrets.token_urlsafe(24))
+        changes.append("ADMIN_DASHBOARD_PASSWORD")
+
     for key, default in (("SUB_DOMAIN_TRAEFIK", "traefik"),):
         value = validate_subdomain(traefik.get(key) or default, key)
         if traefik.set(key, value):
