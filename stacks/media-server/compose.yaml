@@ -140,11 +140,11 @@ services:
       PGID: ${ENV_PGID:-1000}
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      # The stack's own Comet (Local) Cardigann definition
+      # (data/prowlarr/Definitions/Custom/comet-local.yml, tracked in git) is
+      # mounted in via the /config dir, so Prowlarr picks it up at startup and
+      # `just wire` only registers the indexer.
       - ../../data/prowlarr:/config
-      # The stack's own Comet (Local) Cardigann definition (see
-      # prowlarr/comet-local.yml) is bind-mounted read-only, so Prowlarr picks
-      # it up at startup and `just wire` only registers the indexer.
-      - ../../stacks/media-server/prowlarr/comet-local.yml:/config/Definitions/Custom/comet-local.yml:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.prowlarr.entrypoints=${PROWLARR_ENTRYPOINTS:-https-tailnet}"

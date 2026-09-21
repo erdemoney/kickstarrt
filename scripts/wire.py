@@ -420,10 +420,10 @@ def prowlarr_change(
 def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
     """Reconcile the self-hosted Comet (Local) indexer in Prowlarr.
 
-    The stack ships Comet (docs/indexers.md) and its Cardigann definition is
-    bind-mounted into prowlarr's Definitions/Custom (see compose.yaml), so
-    `just wire` only has to create or re-point/enable the indexer at the
-    internal service URL.
+    The stack ships Comet (docs/indexers.md) and its Cardigann definition
+    (data/prowlarr/Definitions/Custom/comet-local.yml) is mounted in via
+    prowlarr's /config dir (see compose.yaml), so `just wire` only has to
+    create or re-point/enable the indexer at the internal service URL.
     """
     endpoint = "http://prowlarr:9696/api/v1/indexer"
     current = http.request("prowlarr", "GET", endpoint, token)

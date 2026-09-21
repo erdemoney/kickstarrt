@@ -8,7 +8,7 @@ __pycache__/
 *.py[cod]
 
 # data/ is app config state (untracked, never commit). `data/*` auto-covers any
-# new runtime subdir; only the traefik, crowdsec, coredns + recyclarr
+# new runtime subdir; only the traefik, crowdsec, coredns, recyclarr + prowlarr
 # config-as-code files are tracked. The static configs are mounted directly;
 # runtime state remains ignored.
 # Recyclarr's runtime state (secrets.yml, cache, logs) stays ignored; only the
@@ -34,3 +34,13 @@ data/recyclarr/configs/*
 !data/recyclarr/settings.yml
 !data/recyclarr/custom-formats/
 !data/recyclarr/custom-formats/debrid-cached.json
+# Prowlarr's runtime state (config.xml, DB, logs, downloaded indexer
+# definitions) stays ignored; only the shipped Comet (Local) Cardigann
+# definition is tracked.
+!data/prowlarr/
+data/prowlarr/*
+!data/prowlarr/Definitions/
+data/prowlarr/Definitions/*
+!data/prowlarr/Definitions/Custom/
+data/prowlarr/Definitions/Custom/*
+!data/prowlarr/Definitions/Custom/comet-local.yml

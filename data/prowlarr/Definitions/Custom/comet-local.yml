@@ -1,6 +1,7 @@
 # Custom Cardigann definition for the stack's self-hosted Comet instance
-# (stacks/media-server/compose.yaml). `just wire` copies this into prowlarr's
-# Definitions/Custom dir and registers the "Comet (Local)" indexer against the
+# (stacks/media-server/compose.yaml). It lives in Prowlarr's data dir
+# (data/prowlarr/Definitions/Custom) so it's mounted in automatically with
+# /config; `just wire` registers the "Comet (Local)" indexer against the
 # internal-only service URL http://comet:8000 - no GUI step needed.
 #
 # Comet is deliberately unconfigured here (no debrid provider: Decypharr turns
