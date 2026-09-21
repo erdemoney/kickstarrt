@@ -304,7 +304,10 @@ services:
       SCRAPE_TORBOX: "${SCRAPE_TORBOX:-false}"
       TORBOX_API_KEY: "${TORBOX_API_KEY:-}"
       SCRAPE_AIOSTREAMS: "${SCRAPE_AIOSTREAMS:-false}"
-      AIOSTREAMS_URL: "${AIOSTREAMS_URL:-}"
+      # AIOStreams has no public default, and Comet requires a non-empty URL even
+      # when the toggle is off (AIOStreamsConfig validates at import, crashing
+      # the container on ""), so the unset value is a non-empty placeholder.
+      AIOSTREAMS_URL: "${AIOSTREAMS_URL:-https://placeholder.invalid}"
       AIOSTREAMS_USER_UUID_AND_PASSWORD: "${AIOSTREAMS_USER_UUID_AND_PASSWORD:-}"
       # Background pre-caching is modest on purpose (single worker, capped runs)
       # to avoid hammering the public scrapers and this box's CPU/RAM.

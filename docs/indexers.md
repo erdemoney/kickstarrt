@@ -107,6 +107,8 @@ Notes:
   `torrentio.strem.fun` Cloudflare-challenges VPS/datacenter IPs. Credentialed scrapers
   (Debridio, TorBox, AIOStreams) are wired as env placeholders — fill the keys in
   `stacks/media-server/.env` and enable their `SCRAPE_*` toggles (see `.env.example`).
+  AIOStreams' URL is given a non-empty placeholder default because Comet crashes at
+  import if it ever sees an empty `AIOSTREAMS_URL`; set the real URL to use it.
 - The `Comet (Local)` indexer needs no debrid account and returns cached/debrid-ready releases;
   pair it with Torrentio or a provider indexer rather than running it alone. Its results are
   marked `[DEBRID-CACHED]` and receive a preference score in the shipped Direct Play profiles,
