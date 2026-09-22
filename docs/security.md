@@ -32,10 +32,13 @@ the public ports remain closed until the documented `ufw allow` commands open `8
 ## Security layers
 
 1. **Provider firewall and recovery access** provide the initial SSH path and the break-glass
-   console. Verify the provider firewall or host firewall choice before first boot.
+   console when the VPS product offers a configurable provider firewall. Verify that feature;
+   some VPS products do not include one. Otherwise, use the host firewall and keep the provider
+   console as the recovery path.
 2. **Tailscale** supplies the private route for SSH, DNS, dashboards, and management panels.
 3. **The chosen firewall** denies public traffic by default and permits only the access the
-   operator has deliberately configured. In UFW mode, this is the documented UFW ruleset.
+   operator has deliberately configured. A provider firewall filters at the provider perimeter;
+   UFW filters on the host. Use UFW when no configurable provider firewall is available.
 4. **In UFW mode, ufw-docker** connects UFW to Docker's `FORWARD` path through `DOCKER-USER`;
    without it, published container ports could bypass UFW's `INPUT` rules. See the
    [ufw-docker documentation](https://github.com/chaifeng/ufw-docker) for implementation details.

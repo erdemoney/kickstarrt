@@ -29,7 +29,7 @@ nav_order: 16
 | `just networks`                 | create the shared `internal` network (pinned subnet `172.30.0.0/16`); use `--dry-run` to report the state without creating it |
 | `just public enable <svc>` / `just public disable <svc>` | enable or remove a service's public Traefik router; does not change UFW or DNS; use `--dry-run` to preview |
 | `just public status`            | show which services are tailnet-only or also routed publicly     |
-| `sudo ufw status verbose`       | inspect the host firewall rules when using UFW mode (see [Quickstart §6](quickstart#6-choose-the-firewall-model)) |
+| `sudo ufw status verbose`       | inspect the host firewall rules when using UFW mode; provider firewalls must be checked in the provider console (see [Quickstart §6](quickstart#6-choose-the-firewall-model)) |
 | `sudo ufw-docker check`         | verify the Docker forward gate when using UFW mode (see [ufw-docker](https://github.com/chaifeng/ufw-docker)) |
 | `just backup-init`              | create the restic repository in `RESTIC_REPOSITORY` (idempotent; see below)       |
 | `just backup` / `backup-list` / `backup-check` / `backup-prune` / `backup-restore` | restic snapshots, integrity, retention, restore — see below |

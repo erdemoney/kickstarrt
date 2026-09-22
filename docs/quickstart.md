@@ -192,21 +192,35 @@ for — CrowdSec and Traefik use it to authenticate with each other. It must be 
 
 ## 6. Choose the firewall model
 
-The provider firewall and the host firewall are separate layers. Choose one before the first
-boot; the stack's application routers remain tailnet-only by default either way.
+First check whether your VPS product includes a configurable provider/cloud firewall. Some
+providers do not offer one, or offer it only for particular products or plans. A provider's
+DDoS protection or general network filtering is not a substitute for a firewall whose inbound
+rules you can configure.
+
+The provider firewall and the host firewall are separate layers. If a configurable provider
+firewall is available, it can replace UFW for filtering traffic at the provider perimeter. UFW
+adds host-level defense in depth and is the required option when no provider firewall is
+available. The stack's application routers remain tailnet-only by default either way.
 
 ### Provider firewall mode
 
-Use this mode if you will keep the stack private and manage inbound rules at the provider. Deny
-public inbound `22`, `53`, `80`, and `443` in the provider firewall, except for any deliberate
-temporary SSH access during setup. Keep a working provider console as the break-glass path.
+Use this mode only when your provider offers a configurable inbound firewall and you have
+confirmed how to manage its rules. It is suitable for provider-perimeter filtering, but it does
+not provide every capability of a host firewall or protect traffic that does not pass through
+the provider perimeter.
+
+Deny public inbound `22`, `53`, `80`, and `443` in the provider firewall, except for any
+deliberate temporary SSH access during setup. Open `80` and `443` there only when you publish
+services in §12. Keep a working provider console as the break-glass path. If the provider does
+not offer this firewall, use UFW mode instead.
 
 This mode does not install UFW or change host firewall rules. `just health` reports that the host
 firewall is not configured; it cannot inspect or verify the provider firewall.
 
 ### UFW mode
 
-Use this mode for host-level defense in depth or before exposing services publicly. **Before
+Use this mode when the provider has no configurable firewall, or for host-level defense in
+depth before exposing services publicly. **Before
 changing the firewall:** verify that you can access the provider's web, VNC, or serial console
 and that its break-glass credentials work. If the tailnet or SSH session fails, that console is
 the recovery path.
@@ -328,8 +342,8 @@ gate](ingress#the-security-gate).
 
 ## 10. Verify the security services
 
-CrowdSec, Traefik, Tailscale, UFW, and the Docker forwarding gate are checked by the same
-read-only panel:
+CrowdSec, Traefik, Tailscale, the selected host-firewall state, and the Docker forwarding gate
+are checked by the same read-only panel:
 
 ```bash
 just health

@@ -77,7 +77,8 @@ library → Jellyfin streams to any client. Zero local storage, immediately play
   near-zero disk usage
 - **Automatic TLS** — Traefik issues a `*.DOMAIN` Let's Encrypt wildcard via Cloudflare
   DNS-01; services can be opted into public HTTPS with `just public enable <service>`
-- **Layered security** — Tailscale private administration, provider or host-firewall controls,
+- **Layered security** — Tailscale private administration, provider-firewall controls where
+  available or host-firewall controls otherwise,
   Traefik TLS and entrypoint isolation, CrowdSec WAF, and application logins; `just health`
   checks the deployment without changing it
 - **Private admin panels** — the \*arrs, Decypharr and the Traefik dashboard resolve by name

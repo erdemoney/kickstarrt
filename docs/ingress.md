@@ -31,7 +31,8 @@ the rule they enforce:
    completed). An app that goes public before its login exists is claimable by anyone.
 3. **Only then open the door** — enable the public router for each selected service with
    `just public enable <service>`, add its A record, then open `443/tcp` and `80/tcp` in either
-   the provider firewall or UFW. In UFW mode, use `sudo ufw allow 443/tcp` and
+   the selected firewall: the provider firewall in provider-firewall mode, or UFW in UFW mode.
+   In UFW mode, use `sudo ufw allow 443/tcp` and
    `sudo ufw allow 80/tcp`; revoke them with `sudo ufw delete allow 443/tcp` and
    `sudo ufw delete allow 80/tcp`. These commands open Docker-published ports too when the
    [ufw-docker](https://github.com/chaifeng/ufw-docker) gate routes forwarded traffic through UFW.
