@@ -101,16 +101,13 @@ Read the pages in order for a first deploy; after that they're reference.
 | ---------------------------- | --------------------------------------------------------------------- |
 | [Quickstart](quickstart)     | the ordered walkthrough: get in via Tailscale, choose the firewall, init, first boot, app setup, go public |
 | [Tailnet DNS](tailnet)       | admin panels by name over the tailnet: CoreDNS + split DNS mechanics |
-| [Decypharr](decypharr)       | debrid gateway: wizard, mounts, its side of the arr wiring            |
-| [The \*arrs](arrs)           | app wiring: internal DNS names, API keys, streaming integrations, mounts; the Recyclarr-synced quality profiles |
-| [Jellyfin](jellyfin)         | playback setup: libraries on the Decypharr mount, no-video-transcode policy |
-| [Seerr](seerr)               | user requests and Jellyfin/Radarr/Sonarr integration                 |
+| [Services](services)         | service-specific setup and operations for the media stack             |
+| [Service wiring](services/wiring) | internal DNS, API keys, media paths, and cross-service integrations |
 | [User guide](user-guide)     | simple Jellyfin and Seerr instructions for end users                 |
-| [Indexers](indexers)         | Prowlarr, the self-hosted Comet (Local) indexer, and AltHub for TorBox Usenet streaming |
-| [Additional services](additional-services) | how to extend the stack safely with more containers |
+| [Providers](providers)       | recommended debrid and Usenet streaming providers                    |
+| [Adding services](services/extending) | how to extend the stack safely with more containers |
 | [Security](security)         | layered security model: Tailscale, UFW, Docker forwarding, Traefik, and CrowdSec |
 | [Ingress](ingress)           | direct `:443`: the security gate, DNS records, certificates, dashboard |
-| [Services](services)         | recommended debrid and Usenet streaming providers                    |
 | [Updates](updates)           | Renovate PR pipeline + CI checks end to end                           |
 | [Maintenance](maintenance)   | ops recipes, backups, troubleshooting                                 |
 | [FAQ](faq)                   | the design decisions, answered                                        |
@@ -120,7 +117,7 @@ All app config lives under the repo's own `data/` dir — `just init` writes the
 and `just prepare` creates each app's runtime subdirectory there. Media is served from
 the debrid FUSE mount, so there is no local media directory to configure.
 
-For managing Radarr/Sonarr from your phone, see [Ruddarr](arrs#managing-from-your-phone).
+For managing Radarr/Sonarr from your phone, see [Ruddarr](services/wiring#managing-from-your-phone).
 
 ## External references
 

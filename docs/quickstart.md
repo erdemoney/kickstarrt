@@ -323,18 +323,18 @@ Decypharr first, because the \*arrs need its live mount (root folders) and the w
 it's configured.
 
 1. **Decypharr** — run the wizard: admin account, debrid provider + API key, mount at
-   `/mnt/decypharr` → [Decypharr](decypharr#first-run-setup-wizard).
+   `/mnt/decypharr` → [Decypharr](services/decypharr#first-run-setup-wizard).
 2. **\*arrs** — run `just wire` on the box. It provisions streaming integrations, root folders,
    Prowlarr sync, Bazarr connections, Recyclarr's API secrets, and the Sonarr/Radarr → Jellyfin
    scan connections (creating the Jellyfin admin account and API key on first run, or minting the
    key from the existing admin credentials). Finish
-   language profiles and indexer choices in the GUI → [The \*arrs](arrs).
+   language profiles and indexer choices in the GUI → [Service wiring](services/wiring).
 3. **Jellyfin** — a fresh `just wire` already created the admin account and API key, so finish the
-   setup: add the libraries under `/mnt/shows` and `/mnt/movies` and set the transcode path → [Jellyfin](jellyfin).
+   setup: add the libraries under `/mnt/shows` and `/mnt/movies` and set the transcode path → [Jellyfin](services/jellyfin).
 4. **Seerr** — connect Jellyfin at `http://jellyfin:8096`, then connect Radarr and Sonarr with
-   their internal URLs and API keys → [Seerr setup](seerr).
+   their internal URLs and API keys → [Seerr setup](services/seerr).
 5. **Indexers** — the self-hosted **Comet (Local)** debrid indexer is already wired into
-   Prowlarr by `just wire`; optionally add AltHub for TorBox Usenet streaming → [Indexers](indexers).
+   Prowlarr by `just wire`; optionally add AltHub for TorBox Usenet streaming → [Indexers](services/indexers).
 
 `just wire --dry-run` previews the changes, and `just wire` applies each confirmed checkpoint.
 Minimum before going public: every app has its admin account and auth on — [the security
@@ -416,5 +416,5 @@ tailnet by name ([Tailnet DNS](tailnet)). Fully reversible: delete the records a
 corresponding provider/UFW port rules. To remove a public router, run `just public disable
 <service>`; this does not change the firewall.
 
-From here: [Indexers](indexers) and [Services](services) can be set up any time after the
+From here: [Indexers](services/indexers) and [Services](services) can be set up any time after the
 stack is up; [Updates & CI](updates) and [Maintenance](maintenance) are the ongoing-ops pages.

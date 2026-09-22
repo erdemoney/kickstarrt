@@ -1,6 +1,7 @@
 ---
-title: Additional services
-nav_order: 11
+title: Adding services
+parent: Services
+nav_order: 12
 ---
 
 # Adding services

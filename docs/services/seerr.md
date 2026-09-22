@@ -1,6 +1,7 @@
 ---
 title: Seerr
-nav_order: 8
+parent: Services
+nav_order: 2
 ---
 
 # Seerr: media requests
@@ -18,7 +19,7 @@ credentials it already gathered in the same run, so it never prompts twice), cre
 admin account, and marks setup complete. Run `just wire` in a terminal — `--yes` cannot prompt
 for those credentials, so it skips Seerr with an error if first-run is still needed. The Seerr
 panel is tailnet-only by default. After setup, use `just public enable seerr` if you want to
-publish it, then separately configure DNS and UFW ([Ingress](ingress)).
+publish it, then separately configure DNS and UFW ([Ingress](../ingress)).
 
 Seerr stores its configuration under `data/seerr/config`, so recreating the container
 does not remove its users or integrations.
@@ -38,7 +39,7 @@ Manual setup (fallback): in Seerr open **Settings → Jellyfin**, use `http://je
 an API key generated in Jellyfin → Dashboard → API Keys, then test and save.
 
 Use the internal service URL, not `https://jellyfin.<DOMAIN>` or `localhost`. All containers
-share the `internal` Docker network ([The \*arrs](arrs#docker-networking)).
+share the `internal` Docker network ([Service wiring](wiring#docker-networking)).
 
 ## 3. Connect Radarr and Sonarr
 
@@ -58,7 +59,7 @@ Manual setup (fallback): under **Settings** add each application, enable the con
 the internal URL and its API key (Settings → General → API Key), select **Direct Play**, select
 the root folder, then test and save.
 
-The same wiring is documented with the rest of the service integrations in [The \*arrs](arrs#seerr--jellyfin--radarr--sonarr-requests).
+The same wiring is documented with the rest of the service integrations in [Service wiring](wiring#seerr--jellyfin--radarr--sonarr-requests).
 
 ## 4. Request flow
 

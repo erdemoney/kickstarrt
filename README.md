@@ -120,8 +120,8 @@ In reading order for a first deploy:
 
 - [**Quickstart**](https://erdemoney.github.io/kickstarrt-vps/quickstart) — the ordered walkthrough: get in via Tailscale, choose the firewall, secrets, first boot, app setup, go public
 - [**Security**](https://erdemoney.github.io/kickstarrt-vps/security) · [**Tailnet DNS**](https://erdemoney.github.io/kickstarrt-vps/tailnet) — the layered security model and its details
-- [**Decypharr**](https://erdemoney.github.io/kickstarrt-vps/decypharr) · [**The \*arrs**](https://erdemoney.github.io/kickstarrt-vps/arrs) · [**Indexers**](https://erdemoney.github.io/kickstarrt-vps/indexers) · [**Services**](https://erdemoney.github.io/kickstarrt-vps/services) — the apps
-- [**Additional services**](https://erdemoney.github.io/kickstarrt-vps/additional-services) · [**Ingress**](https://erdemoney.github.io/kickstarrt-vps/ingress) — extending the stack and the public edge
+- [**Services**](https://erdemoney.github.io/kickstarrt-vps/services) · [**Providers**](https://erdemoney.github.io/kickstarrt-vps/providers) — the apps and provider recommendations
+- [**Adding services**](https://erdemoney.github.io/kickstarrt-vps/services/extending) · [**Ingress**](https://erdemoney.github.io/kickstarrt-vps/ingress) — extending the stack and the public edge
 - [**Maintenance**](https://erdemoney.github.io/kickstarrt-vps/maintenance) · [**Updates & CI**](https://erdemoney.github.io/kickstarrt-vps/updates) — ongoing ops
 - [**FAQ**](https://erdemoney.github.io/kickstarrt-vps/faq) — the design decisions, answered
 - [**Oracle Cloud (free tier)**](https://erdemoney.github.io/kickstarrt-vps/oci) — appendix: free VPS from zero

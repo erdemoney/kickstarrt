@@ -1,12 +1,13 @@
 ---
-title: The *arrs
-nav_order: 6
+title: Service wiring
+parent: Services
+nav_order: 4
 ---
 
-# The \*arrs: networking and app wiring
+# Service wiring: networking and app integrations
 
 First-run setup happens over the tailnet while nothing is public
-([Quickstart §9](quickstart#9-set-up-the-apps)) — open `https://radarr.<DOMAIN>` and friends
+([Quickstart §9](../quickstart#9-set-up-the-apps)) — open `https://radarr.<DOMAIN>` and friends
 from any tailnet device. Run `just wire --dry-run` first to preview the repeatable changes,
 then run `just wire` to review and confirm each checkpoint. The remaining GUI steps are
 documented below.
@@ -33,7 +34,7 @@ just wire --yes       # non-interactive use after reviewing the dry run
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
 reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
 Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the self-hosted
-**Comet (Local)** indexer (its git-tracked Cardigann definition is mounted in with
+**Comet (Local)** indexer (its git-tracked Prowlarr Cardigann adapter is mounted in with
 Prowlarr's `/config`), Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
@@ -74,7 +75,7 @@ break CORS, and add latency; they are for browsers only).
 | recyclarr | —                      | —    | automatic — nothing to paste (see below)        |
 | bazarr    | `http://bazarr:6767`    | 6767 | (outbound only)                                 |
 | decypharr | `http://decypharr:8282` | 8282 | Settings → API token (shown once after wizard)  |
-| comet     | `http://comet:8000`     | 8000 | (indexer, no API key — see [Indexers](indexers); admin dashboard `https://comet.<DOMAIN>/admin`, password set by `just init`) |
+| comet     | `http://comet:8000`     | 8000 | (indexer, no API key — see [Comet](comet); admin dashboard `https://comet.<DOMAIN>/admin`, password set by `just init`) |
 
 Rule of thumb: when any UI asks for another app's **URL + API key**, use the
 `http://<service>:<port>` from the table and the key from the target app. Sanity-check any
@@ -134,7 +135,7 @@ anyway: `link()` isn't implemented). Two constraints follow:
 ## Prowlarr application sync
 
 `just wire` provisions Prowlarr's Sonarr and Radarr application links and enables full sync.
-Every indexer added in Prowlarr, including the self-hosted [Comet (Local)](indexers) indexer, is then pushed to both apps.
+Every indexer added in Prowlarr, including the self-hosted [Comet (Local)](comet) indexer, is then pushed to both apps.
 Choose and test indexers in Prowlarr; there is no reason to recreate the application links by
 hand unless you intentionally changed them.
 
@@ -157,64 +158,10 @@ Manual setup (fallback):
 4. Under Seerr → Settings → **Jellyfin**, enable at least one library so Seerr maps requests
    to a root folder.
 
-## Bazarr → Sonarr/Radarr (subtitles)
+## Service-specific configuration
 
-Bazarr's Sonarr/Radarr connections are configured by `just wire`. It reads Bazarr's own API
-key, submits only the two connection blocks through `/api/system/settings`, and preserves all
-other Bazarr settings. Bazarr only fetches subtitles for titles added **after** a language
-profile is assigned — the easy-to-forget step.
-
-1. Create a language profile (Languages → manage), then assign it in the Sonarr/Radarr
-   library views via **Mass Edit**.
-2. **Subtitle providers** (the fiddly part):
-   - **OpenSubtitles.com** — primary; the old `.org` API is shut down. Create an account,
-     generate an **API key** on your profile page, enter username + API key. Free tier is
-     rate-limited (~20 downloads/day); VIP removes the cap.
-   - **subdl.com** — free fallback; grab an API key from your account panel (~2,000
-     searches/day).
-   - **Whisper (optional)** — AI-generated fallback when nothing clears a minimum score;
-     needs a separate whisper ASR service.
-4. Rank providers by preference and raise each language's **minimum score** if subs arrive
-   out of sync or machine-translated. Subtitle folder: **Alongside media file**.
-
-## Quality profiles (Recyclarr - automatic)
-
-[Recyclarr](https://recyclarr.dev) syncs the tracked TRaSH-Guide profiles into Radarr and Sonarr.
-`just wire` creates its private API-key file and runs the first sync; the container then syncs
-daily. Before wiring, it waits quietly for the file to exist.
-
-The YAML under `data/recyclarr/configs/` is the source of truth. Edit it when you want to tune
-quality scores, then run the sync manually if you do not want to wait for the next scheduled run:
-
-```bash
-docker compose -f stacks/media-server/compose.yaml exec recyclarr recyclarr sync
-```
-
-Choose **Direct Play** wherever an app asks for a quality profile. If you regenerate an Arr API
-key, run `just wire` again. The Direct Play profiles are codec-agnostic on HEVC: every 4K UHD
-release is HEVC, so x265 carries no score penalty and 4K is grabbable. Direct playback of those
-titles depends on the client's HEVC support; on clients without it, Jellyfin's per-user
-transcode policy ([remux/audio ok, re-encode off](jellyfin#2-transcode-policy-no-video-transcoding-remux--audio-transcoding-stay-on)) applies.
-
-### Direct Play (Anime) companion profile (Sonarr)
-
-Sonarr also ships a **Direct Play (Anime)** profile (TRaSH's `[Anime] Remux-1080p` recipe)
-for anime series inside the same instance. It differs from **Direct Play** in the ways that
-matter to anime: `Bluray-1080p Remux` and `Bluray-1080p` are merged into one tier (and are the
-upgrade ceiling), HDTV resolutions are folded into the WEB tiers (anime HDRips often tag
-themselves HDTV), and SeaDex-driven **Anime BD/Web tier** Custom Formats rank release groups
-instead of the general tiers. x265 is *not* penalized — anime BD encodes are nearly always
-x265 10-bit — but the same `-10000` codec/disk-image never-grab rules apply, and
-dubs-only/raw/LQ anime groups are rejected.
-
-Nothing else to set up: both profiles arrive with the same automatic sync. When you add an
-anime series in Sonarr (set its **Series Type** to *Anime*), pick the **Direct Play (Anime)**
-profile for it; regular shows keep **Direct Play**. Tuning knobs live in the header comments
-of `data/recyclarr/configs/sonarr.yml` (e.g. score `Anime Dual Audio` / `Uncensored`
-positively if the household prefers them).
-
-> Migrating from the old Profilarr setup? Nothing to migrate — its container and panel are
-> gone; the leftover `data/profilarr` dir is inert and safe to delete.
+See [Bazarr](bazarr) for subtitle providers and language profiles, and [Recyclarr](recyclarr)
+for the quality-profile design and synchronization workflow.
 
 ## Managing from your phone
 
@@ -222,7 +169,7 @@ positively if the household prefers them).
 for Radarr and Sonarr — browse the library and calendar, kick off searches, act on the queue
 or history. It's a *client*, not a service: nothing runs on the server. Point it at each
 instance's **Application URL**: with Tailscale on the phone, `https://radarr.<DOMAIN>` /
-`https://sonarr.<DOMAIN>` resolve to the box's tailnet address ([Tailnet DNS](tailnet)) — no
+`https://sonarr.<DOMAIN>` resolve to the box's tailnet address ([Tailnet DNS](../tailnet)) — no
 public A records, no extra auth (the tailnet is the gate). The app handles HTTPS and
 reverse-proxy headers; the panels' own logins and CrowdSec still apply, so they stay
 admin-only — the app is just another client.

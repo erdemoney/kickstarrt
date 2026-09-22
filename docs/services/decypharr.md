@@ -1,6 +1,7 @@
 ---
 title: Decypharr
-nav_order: 5
+parent: Services
+nav_order: 3
 ---
 
 # Decypharr (debrid gateway)
@@ -13,19 +14,19 @@ add.
 
 ## First-run setup wizard
 
-Visit `https://decypharr.<DOMAIN>` once, over the tailnet ([Quickstart §9](quickstart#9-set-up-the-apps)).
+Visit `https://decypharr.<DOMAIN>` once, over the tailnet ([Quickstart §9](../quickstart#9-set-up-the-apps)).
 Wizard order:
 
 1. **Authentication** — create the admin username/password. The **API token shown once** after
    setup completes is Decypharr's *own* API credential: save it (regenerates via
    `POST /api/refresh-token`). It is **not** the credential used by the \*arr integrations —
-   those use each app's own API key ([The \*arrs](arrs)).
+   those use each app's own API key ([Service wiring](wiring)).
 2. **Debrid account** — add at least one provider (Real-Debrid, AllDebrid, Debrid-Link,
-   Torbox, Premiumize) with its API key; Torbox also provides Usenet ([Services](services)).
+   Torbox, Premiumize) with its API key; Torbox also provides Usenet ([Providers](../providers)).
 3. **Download Folder Path** — `/mnt/downloads` — where Decypharr stages the symlinks the \*arrs
    import. It's a real directory on the shared bind — a sibling of the library root folders, not
    a subpath of the mount: the DFS root is read-only, so `mkdir` under `/mnt/decypharr/*` fails
-   ([The \*arrs](arrs#imports-are-symlinks-not-hardlinks)).
+   ([Service wiring](wiring#imports-are-symlinks-not-hardlinks)).
 4. **Mount System** — pick **DFS**, mount path `/mnt/decypharr` (what the \*arrs import from),
    and a cache dir. Keep the **Cache Directory** default `/tmp/decypharr-cache`: it's a
    disposable chunk cache (re-warms on demand; wiping it on redeploys costs nothing) and
@@ -68,7 +69,7 @@ if provider rate limits become a problem. Repair availability remains at its nor
 ## Integration with Sonarr/Radarr
 
 The \*arr-UI side (streaming integration and root folders) is documented in
-[The \*arrs](arrs). `just wire` only provisions the **Download Client** entries in
+[Service wiring](wiring). `just wire` only provisions the **Download Client** entries in
 Sonarr/Radarr — their username (`http://sonarr:8989` / `http://radarr:7878`) and password
 (each app's API key) are what Decypharr reads to **auto-detect** each arr. Nothing is entered
 in Decypharr → Settings → **Arrs**: the lowercase `sonarr`/`radarr` entries there are created

@@ -29,7 +29,7 @@ services:
     tmpfs:
       - /transcodes
     # No GPU passthrough here: VPS hosts are CPU-only, so Jellyfin transcodes in
-    # software. Keep the library direct-play friendly (see docs/services.md).
+    # software. Keep the library direct-play friendly (see docs/services/jellyfin.md).
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.entrypoints=${JELLYFIN_ENTRYPOINTS:-https-tailnet}"
@@ -240,7 +240,7 @@ services:
       # FUSE mounts via setuid /usr/bin/fusermount3; the x-common no-new-privileges
       # anchor would block the privilege raise and DFS fails to mount with
       # "fusermount3: mount failed: Operation not permitted". Decypharr ships
-      # without it (see docs/decypharr.md).
+      # without it (see docs/services/decypharr.md).
       - apparmor:unconfined
     environment:
       PUID: ${ENV_PUID:-1000}
@@ -265,7 +265,8 @@ services:
 
   comet:
     # Debrid/torrent search add-on used as the stack's self-hosted indexer
-    # ("Comet (Local)" cardigann, see docs/indexers.md). The DMM ingester loads
+    # ("Comet (Local)" Prowlarr Cardigann adapter for Comet's native Torznab API, see
+    # docs/services/comet.md). The DMM ingester loads
     # hashlists into comet's own Postgres and SCRAPE_DMM searches that local
     # cache. No web UI worth exposing, so no Traefik labels and no published
     # ports: Prowlarr alone talks to it at http://comet:8000 over the internal

@@ -128,7 +128,7 @@ COMET_DASHBOARD_PASSWORD_PROMPT = Prompt(
     "The password to open Comet's admin dashboard over the tailnet. It is stored "
     "plaintext in stacks/media-server/.env for Comet to hash at login.",
     "a unique password",
-    "docs/arrs.md",
+    "docs/services/wiring.md",
 )
 CLOUDFLARE_PROMPT = Prompt(
     "Cloudflare DNS API token (blank to skip)",
@@ -377,7 +377,7 @@ def configure_env(force: bool) -> list[str]:
             f"Configured container identity: {uid}:{gid}\n"
             f"Current user identity:        {detected_uid}:{detected_gid}\n"
             "Keeping the configured identity is usually correct for an existing install.\n"
-            "See docs/decypharr.md for ownership details."
+            "See docs/services/decypharr.md for ownership details."
         )
         if force and confirm(
             "Replace the configured container identity with the current user?", False

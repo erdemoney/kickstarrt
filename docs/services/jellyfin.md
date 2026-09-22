@@ -1,13 +1,14 @@
 ---
 title: Jellyfin
-nav_order: 7
+parent: Services
+nav_order: 1
 ---
 
 # Jellyfin: playback setup
 
 The admin account is created on Jellyfin's **first login** (the setup wizard) — or, on a fresh
 install, by `just wire`, which completes the wizard through its API and mints a `Kickstarrt` API key
-([*arrs → Automated wiring](arrs#automated-wiring)). From there
+([Service wiring → Automated wiring](wiring#automated-wiring)). From there
 the two things that need configuring are the libraries — they point at the library dirs on the
 shared bind (`/mnt/shows`, `/mnt/movies`) — and the transcode policy, tuned for a CPU-only VPS.
 
@@ -67,7 +68,7 @@ index, and all media containers see those paths consistently.
 
 Also set Dashboard → **Playback** → **Transcoding path** to `/transcodes` — a tmpfs, so
 transcode scratch never touches disk. This stack transcodes in software (no GPU,
-[FAQ](faq#why-does-jellyfin-transcode-in-software-no-gpu)) and Recyclarr ships a **Direct
+[FAQ](../faq#why-does-jellyfin-transcode-in-software-no-gpu)) and Recyclarr ships a **Direct
 Play** quality profile, so the goal is to keep playback direct and never let a client push
 the server into a CPU-only video transcode. The profile permits 4K/HEVC (every UHD release is
 HEVC), so on clients without HEVC support the per-user policy below is what keeps the CPU idle:

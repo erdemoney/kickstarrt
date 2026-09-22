@@ -214,7 +214,7 @@ for the case local snapshots can't help — the box itself disappearing.
 | Symptom                                      | Fix                                                                            |
 | -------------------------------------------- | ------------------------------------------------------------------------------ |
 | Renovate opened no PRs                       | see [Updates](updates) troubleshooting                                         |
-| New indexer/app link fails                   | check the URL+port against the [internal DNS table](arrs); revisit the API key |
+| New indexer/app link fails                   | check the URL+port against the [internal DNS table](services/wiring); revisit the API key |
 | Direct Play / Direct Play (Anime) profile missing in Radarr/Sonarr | `docker logs recyclarr`; if an arr's API key was regenerated, run `just wire` |
 | Bouncer not blocking                         | recreate crowdsec + traefik after a key change; `cscli bouncers list`          |
 | Traefik won't start after this repo's change | first start downloads plugins — check outbound internet; `just validate` first |

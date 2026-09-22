@@ -68,7 +68,7 @@ VPS hosts are CPU-only — there's no `/dev/dri` to pass through. In practice, d
 arrive in client-friendly codecs and direct-play covers nearly everything (sizing guidance in
 the [overview](index)); transcoding is the exception, and a 2–4 vCPU box handles it when it
 happens. The stack leans into this: the shipped
-[Direct Play and Direct Play (Anime) quality profiles](arrs#quality-profiles-recyclarr--automatic) score
+[Direct Play and Direct Play (Anime) quality profiles](services/recyclarr) score
 anything that would force a video transcode out of the grab candidates entirely.
 
 ## Why Ubuntu on Oracle Cloud but Debian elsewhere?
