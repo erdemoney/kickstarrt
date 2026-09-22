@@ -282,9 +282,9 @@ just up
 ```
 
 > **Under the hood:** `just up` first runs `just networks` and `just prepare`, then starts every
-> stack. Both steps are safe to audit before they run: `just networks --dry-run` reports whether
-> the `internal` network exists, and `just prepare --dry-run` lists every directory, permission,
-> and `.env` value it would create or change without touching anything.
+> stack. Both steps are safe to audit before they run: `just up --dry-run` reports on the network,
+> the directories and `.env` values that would change, and Compose's plan for each stack — all
+> without touching anything.
 
 ### Verify the first boot
 

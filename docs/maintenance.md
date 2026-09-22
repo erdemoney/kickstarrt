@@ -10,7 +10,7 @@ nav_order: 16
 | Command                         | What it does                                                                      |
 | ------------------------------- | --------------------------------------------------------------------------------- |
 | `just init`                     | create/reconcile `.env` files and fill interactive secrets (idempotent)           |
-| `just up`                       | create networks, config dirs, `acme.json`, then bring up every stack |
+| `just up`                       | create networks, config dirs, `acme.json`, then bring up every stack; use `--dry-run` to preview |
 | `just down`                     | tear every stack down                                                             |
 | `just update-all`               | pull fresh images + recreate changed containers                                   |
 | `just update <svc>`             | pull + recreate one service, searched across all stacks, e.g. `just update jellyfin` |
@@ -27,7 +27,7 @@ nav_order: 16
 | `just wire`                     | interactively reconcile Arr/Decypharr/Prowlarr/Bazarr links, the self-hosted Comet (Local) indexer (register on first run), the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin/API key on first run, or minting the key from existing admin credentials), and Recyclarr secrets through REST APIs; use `--dry-run` to preview |
 | `just dns`                      | print the tailnet DNS resolver setup (see [Tailnet DNS](tailnet))                 |
 | `just networks`                 | create the shared `internal` network (pinned subnet `172.30.0.0/16`); use `--dry-run` to report the state without creating it |
-| `just public enable <svc>` / `just public disable <svc>` | enable or remove a service's public Traefik router; does not change UFW or DNS |
+| `just public enable <svc>` / `just public disable <svc>` | enable or remove a service's public Traefik router; does not change UFW or DNS; use `--dry-run` to preview |
 | `just public status`            | show which services are tailnet-only or also routed publicly     |
 | `sudo ufw status verbose`       | inspect the host firewall rules when using UFW mode (see [Quickstart §6](quickstart#6-choose-the-firewall-model)) |
 | `sudo ufw-docker check`         | verify the Docker forward gate when using UFW mode (see [ufw-docker](https://github.com/chaifeng/ufw-docker)) |

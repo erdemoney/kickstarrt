@@ -58,11 +58,27 @@ networks dry_run="":
 # `just prepare` creates the repo's data/ config directories.
 
 # Bring the whole stack up (ensures networks + config dirs exist first).
-up: networks prepare
-    @for s in {{ stack_list }}; do \
-        echo "-- $s" \
-        && docker compose -f "stacks/$s/compose.yaml" up -d || exit 1 \
-    ; done
+# `just up --dry-run` previews the networks/prepare steps plus every stack's
+# container plan without changing anything.
+[arg("dry_run", long="dry-run", value="--dry-run", help="report what would be created and recreated without changing anything")]
+up dry_run="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{ dry_run }}" ]; then
+        just networks --dry-run
+        just prepare --dry-run
+    else
+        just networks
+        just prepare
+    fi
+    for s in {{ stack_list }}; do
+        echo "-- $s"
+        if [ -n "{{ dry_run }}" ]; then
+            docker compose -f "stacks/$s/compose.yaml" up --dry-run
+        else
+            docker compose -f "stacks/$s/compose.yaml" up -d
+        fi
+    done
 
 # Pull + recreate one service, searched across all stacks, e.g. `just update jellyfin`.
 update service:
@@ -190,9 +206,12 @@ wire dry_run="" yes="":
 # This deliberately does not change UFW rules or DNS records.
 
 # Enable or disable public Traefik routers without editing Compose files.
+# `just public --dry-run enable <svc>` previews the router change; UFW and DNS
+# are never touched either way.
+[arg("dry_run", long="dry-run", value="--dry-run", help="report what would change without editing .env or recreating services")]
 [group('Security')]
-public action *SERVICES:
-    python3 -m scripts.public {{ action }} {{ SERVICES }}
+public dry_run="" action *SERVICES:
+    python3 -m scripts.public {{ dry_run }} {{ action }} {{ SERVICES }}
 
 # Show the tailnet DNS resolver setup (CoreDNS in the traefik stack).
 # The matching Tailscale admin setting is one-time: DNS -> Nameservers -> add
