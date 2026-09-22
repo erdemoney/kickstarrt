@@ -71,6 +71,9 @@ Notes:
 - The `Comet (Local)` indexer needs no debrid account and returns cached/debrid-ready releases.
   Its results are marked `[DEBRID-CACHED]` and receive a preference score in the shipped Direct
   Play profiles, while non-Comet results remain eligible for uncached downloads.
+- Nyaa and AnimeTosho are enabled by default as free, anime-only Comet scrapers. They do not
+  pollute movie or standard TV feeds; set `SCRAPE_NYAA=false` or `SCRAPE_ANIMETOSHO=false` in
+  `stacks/media-server/.env` to disable either one.
 - Use `{imdbid:tt123456}` (optionally `{season:00}{episode:00}`) for precise hits; a plain-text
   title search resolves through Comet's metadata and may miss very niche titles, falling back to
   fetching its known cache instead.
