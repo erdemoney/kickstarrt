@@ -60,11 +60,12 @@ These toggle off the wizard defaults in Decypharr → Settings:
   **on** so Decypharr fetches torrents the debrid cache doesn't have (it waits for them to seed
   up) instead of failing the grab.
 
-The stack also sets Decypharr's Usenet **Import Availability Sample** to **25%** through Compose.
-This checks a meaningful portion of each file before creating the symlink that Sonarr/Radarr
-probe, while keeping provider traffic below a full 100% validation. The setting is deliberately
-not 100%: increase it if incomplete Usenet releases still reach the Arr queue, or lower it only
-if provider rate limits become a problem. Repair availability remains at its normal 10% sample.
+The stack sets Decypharr's Usenet **Import Availability Sample** to **100%** through Compose. This
+checks every segment before creating the symlink that Sonarr/Radarr probe, preventing incomplete
+releases from reaching the Arr queue and surfacing as the misleading "unable to determine if file
+is a sample" state. The tradeoff is additional provider traffic and longer processing before a
+release is exposed; this is intentional because an incomplete release cannot be streamed
+reliably. Repair availability remains at its normal 10% sample.
 
 ## Integration with Sonarr/Radarr
 
