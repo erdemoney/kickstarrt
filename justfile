@@ -19,8 +19,9 @@ init force="":
 # The implementation lives in scripts/prepare.py.
 
 # Create config dirs and `acme.json` (0600); called by `just up`.
-prepare:
-    python3 -m scripts.prepare
+[arg("dry_run", long="dry-run", value="--dry-run", help="report what would be done without changing anything")]
+prepare dry_run="":
+    python3 -m scripts.prepare {{ dry_run }}
 
 # Read-only: never creates or edits a .env. Safe placeholder values are supplied
 # through the shell environment for required deployment settings when they are not
@@ -39,9 +40,19 @@ validate:
 # with its default RFC1918 subnets when host-firewall mode is configured.
 # Only change it if you re-provision the gate with `sudo ufw-docker install --docker-subnets`.
 
-# Create the shared Docker network (idempotent).
-networks:
-    docker network inspect internal >/dev/null 2>&1 || docker network create --subnet 172.30.0.0/16 internal
+# Create the shared Docker network (idempotent). Add `--dry-run` to report the
+# state without creating anything.
+[arg("dry_run", long="dry-run", value="--dry-run", help="report the network state without creating it")]
+networks dry_run="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if docker network inspect internal >/dev/null 2>&1; then
+        echo "-- internal network already exists"
+    elif [ -n "{{ dry_run }}" ]; then
+        echo "-- network 'internal' would be created on subnet 172.30.0.0/16"
+    else
+        docker network create --subnet 172.30.0.0/16 internal
+    fi
 
 # Bring the whole stack up (ensures networks + config dirs exist first)
 # `just prepare` creates the repo's data/ config directories.

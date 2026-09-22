@@ -281,6 +281,11 @@ domain with no fallback, and nothing is listening yet. Expected — it heals at 
 just up
 ```
 
+> **Under the hood:** `just up` first runs `just networks` and `just prepare`, then starts every
+> stack. Both steps are safe to audit before they run: `just networks --dry-run` reports whether
+> the `internal` network exists, and `just prepare --dry-run` lists every directory, permission,
+> and `.env` value it would create or change without touching anything.
+
 ### Verify the first boot
 
 `just up` runs preparation, creates the networks and runtime directories, and starts both stacks.

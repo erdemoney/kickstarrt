@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import shutil
 import sys
@@ -52,7 +53,8 @@ def configured_ids(media: EnvFile) -> tuple[int, int]:
     return puid, pgid
 
 
-def ensure_owned(paths: list[Path], puid: int, pgid: int) -> None:
+def owned_paths(paths: list[Path], puid: int, pgid: int) -> list[Path]:
+    """Return paths that are missing, a mount point, or misowned."""
     missing_or_wrong = []
     for path in paths:
         try:
@@ -70,10 +72,14 @@ def ensure_owned(paths: list[Path], puid: int, pgid: int) -> None:
             continue
         if (stat.st_uid, stat.st_gid) != (puid, pgid):
             missing_or_wrong.append(path)
-    if not missing_or_wrong:
+    return missing_or_wrong
+
+
+def apply_owned(paths: list[Path], puid: int, pgid: int) -> None:
+    if not paths:
         return
     if os.geteuid() == 0:
-        for path in missing_or_wrong:
+        for path in paths:
             path.mkdir(parents=True, exist_ok=True)
             os.chown(path, puid, pgid)
         return
@@ -84,27 +90,41 @@ def ensure_owned(paths: list[Path], puid: int, pgid: int) -> None:
         )
         return
     run(
-        ("sudo", "mkdir", "-p", *[str(path) for path in missing_or_wrong]),
+        ("sudo", "mkdir", "-p", *[str(path) for path in paths]),
         "create media directories",
     )
     run(
         (
             "sudo",
             "chown",
-            *[f"{puid}:{pgid}"] + [str(path) for path in missing_or_wrong],
+            *[f"{puid}:{pgid}"] + [str(path) for path in paths],
         ),
         "own media directories",
     )
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Prepare runtime directories and host settings consumed by Compose"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="report what would be done without changing anything",
+    )
+    args = parser.parse_args()
+    dry_run = args.dry_run
+
+    def would(description: str) -> None:
+        print(f"would {description}")
+
     try:
         media = EnvFile(MEDIA_ENV)
         traefik = EnvFile(TRAEFIK_ENV)
         config_dir = ROOT / "data"
         puid, pgid = configured_ids(media)
 
-        ensure_owned(
+        media_paths = owned_paths(
             [
                 Path("/mnt/debrid") / name
                 for name in ("", "decypharr", "shows", "movies", "downloads")
@@ -112,6 +132,12 @@ def main() -> int:
             puid,
             pgid,
         )
+        if dry_run:
+            for path in media_paths:
+                would(f"create and chown {path} to {puid}:{pgid}")
+        else:
+            apply_owned(media_paths, puid, pgid)
+
         directories = (
             "jellyfin/config",
             "seerr/config",
@@ -125,17 +151,32 @@ def main() -> int:
             "comet-pg",
             "crowdsec/config",
             "crowdsec/data",
+            "traefik/logs",
         )
-        for directory in directories:
-            (config_dir / directory).mkdir(parents=True, exist_ok=True)
-        (config_dir / "traefik" / "logs").mkdir(parents=True, exist_ok=True)
+        if dry_run:
+            for directory in directories:
+                if not (config_dir / directory).exists():
+                    would(f"create {config_dir / directory}")
+        else:
+            for directory in directories:
+                (config_dir / directory).mkdir(parents=True, exist_ok=True)
+
         acme = config_dir / "traefik" / "acme.json"
         if acme.is_dir():
             raise ScriptError(
                 f"{acme} must be a file, not a directory; remove it and rerun just prepare"
             )
-        acme.touch(exist_ok=True)
-        acme.chmod(0o600)
+        if acme.exists():
+            if acme.stat().st_mode & 0o777 != 0o600:
+                if dry_run:
+                    would(f"chmod 600 {acme}")
+                else:
+                    acme.chmod(0o600)
+        elif dry_run:
+            would(f"create {acme} with mode 0600")
+        else:
+            acme.touch(exist_ok=True)
+            acme.chmod(0o600)
 
         changed = False
         for key, detector in (
@@ -145,15 +186,25 @@ def main() -> int:
             if not value(traefik, key):
                 detected = detector()
                 if detected:
-                    traefik.set(key, detected)
-                    changed = True
-                    print(f"filled {key}={detected} in stacks/traefik/.env")
+                    if dry_run:
+                        would(f"set {key}={detected} in stacks/traefik/.env")
+                    else:
+                        traefik.set(key, detected)
+                        changed = True
+                        print(f"filled {key}={detected} in stacks/traefik/.env")
         if changed:
             traefik.write()
-        try:
-            os.chown(config_dir, puid, pgid)
-        except OSError:
-            pass
+
+        if dry_run:
+            if not config_dir.exists():
+                would(f"chown {config_dir} to {puid}:{pgid}")
+            elif config_dir.stat().st_uid != puid or config_dir.stat().st_gid != pgid:
+                would(f"chown {config_dir} to {puid}:{pgid}")
+        else:
+            try:
+                os.chown(config_dir, puid, pgid)
+            except OSError:
+                pass
         return 0
     except ScriptError as exc:
         print(f"error: {exc}", file=sys.stderr)
