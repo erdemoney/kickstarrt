@@ -283,9 +283,11 @@ services:
       DATABASE_TYPE: postgresql
       DATABASE_URL: postgresql://comet:${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}@comet-postgres:5432/comet
       # Tailnet-visible dashboard (https://comet.<DOMAIN>); `just init` writes
-      # this password to .env. Upstream also has a CONFIGURE_PAGE_PASSWORD for
-      # /configure; left unset - the tailnet is the gate, like the other panels.
-      COMET_DASHBOARD_PASSWORD: ${COMET_DASHBOARD_PASSWORD:?set COMET_DASHBOARD_PASSWORD in stacks/media-server/.env}
+      # this password to .env as COMET_DASHBOARD_PASSWORD. Comet's container env
+      # name is ADMIN_DASHBOARD_PASSWORD; keep the key here as upstream expects.
+      # CONFIGURE_PAGE_PASSWORD for /configure is left unset - the tailnet is the
+      # gate, like the other panels.
+      ADMIN_DASHBOARD_PASSWORD: ${COMET_DASHBOARD_PASSWORD:?set COMET_DASHBOARD_PASSWORD in stacks/media-server/.env}
       # Scrapers: DMM from Comet's local hashlist DB, plus the public MediaFusion
       # (mediafusion.elfhosted.com) and StremThru (stremthru.13377001.xyz)
       # instances. Torrentio stays off: torrentio.strem.fun Cloudflare-challenges
