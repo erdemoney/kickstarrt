@@ -184,6 +184,24 @@ maintenance-status:
 maintenance-unschedule:
     python3 -m scripts.maintenance unschedule
 
+# Run one ephemeral, rate-limited Sonarr/Radarr back-catalog hunt.
+[group('Maintenance')]
+hunt-run MODE="both":
+    docker compose -f stacks/media-server/compose.yaml run --build --rm --no-deps -e HUNT_MODE="{{ MODE }}" hunt
+
+# Install the ephemeral hunt systemd timer (default: 03:00 local time).
+[group('Maintenance')]
+hunt-schedule ON_CALENDAR="*-*-* 03:00:00":
+    python3 -m scripts.hunt_schedule schedule "{{ ON_CALENDAR }}"
+
+[group('Maintenance')]
+hunt-status:
+    python3 -m scripts.hunt_schedule status
+
+[group('Maintenance')]
+hunt-unschedule:
+    python3 -m scripts.hunt_schedule unschedule
+
 # Read-only host, firewall, DNS, and container health checks.
 [group('Diagnostics')]
 health:

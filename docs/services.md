@@ -23,6 +23,7 @@ integration behavior.
 | [Comet](services/comet) | Self-hosted torrent/debrid indexer |
 | [Recyclarr](services/recyclarr) | Quality profile synchronization |
 | [Bazarr](services/bazarr) | Subtitle management |
+| [Back-catalog hunting](services/hunt) | Scheduled missing and quality-upgrade searches |
 | [Indexers](services/indexers) | Indexer workflow and provider choices |
 
 Provider subscriptions and pricing remain in the top-level [Providers](providers) page.

@@ -14,6 +14,9 @@ __pycache__/
 # Recyclarr's runtime state (secrets.yml, cache, logs) stays ignored; only the
 # shipped configs and the bootstrap script are tracked.
 data/*
+!data/hunt/
+data/hunt/*
+!data/hunt/.gitkeep
 !data/traefik/
 data/traefik/*
 !data/traefik/traefik.yml
