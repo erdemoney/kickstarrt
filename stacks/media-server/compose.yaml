@@ -286,6 +286,10 @@ services:
       # This prevents incomplete releases from reaching Arr and surfacing as the
       # misleading "unable to determine if file is a sample" state.
       USENET__IMPORT_AVAILABILITY_SAMPLE_PERCENT: "100"
+      # Keep scheduled repair checks modest while still catching broken files.
+      USENET__AVAILABILITY_SAMPLE_PERCENT: "10"
+      # Fail unavailable NZB processing instead of leaving it retrying forever.
+      USENET__PROCESSING_TIMEOUT: "10m"
     volumes:
       - /mnt/debrid:/mnt:rshared
       - ../../data/decypharr/configs:/app

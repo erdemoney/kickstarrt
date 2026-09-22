@@ -60,12 +60,20 @@ These toggle off the wizard defaults in Decypharr → Settings:
   **on** so Decypharr fetches torrents the debrid cache doesn't have (it waits for them to seed
   up) instead of failing the grab.
 
-The stack sets Decypharr's Usenet **Import Availability Sample** to **100%** through Compose. This
-checks every segment before creating the symlink that Sonarr/Radarr probe, preventing incomplete
-releases from reaching the Arr queue and surfacing as the misleading "unable to determine if file
-is a sample" state. The tradeoff is additional provider traffic and longer processing before a
-release is exposed; this is intentional because an incomplete release cannot be streamed
-reliably. Repair availability remains at its normal 10% sample.
+The stack manages these Usenet policies through Compose environment overrides:
+
+- **Import Availability Sample: 100%** — checks every segment before creating the symlink that
+  Sonarr/Radarr probe, preventing incomplete releases from reaching the Arr queue and surfacing as
+  the misleading "unable to determine if file is a sample" state. The tradeoff is additional
+  provider traffic and longer processing before a release is exposed; this is intentional because
+  an incomplete release cannot be streamed reliably.
+- **Repair Availability Sample: 10%** — keeps scheduled repair checks useful without probing every
+  segment of every existing file.
+- **Processing Timeout: 10m** — bounds NZB processing when the provider cannot complete a file,
+  allowing queue cleanup to blacklist and research it instead of retrying forever.
+
+These values are intentionally explicit even where they match Decypharr defaults, so the stack's
+operational policy remains reproducible across image upgrades.
 
 ## Integration with Sonarr/Radarr
 
