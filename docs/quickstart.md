@@ -348,14 +348,21 @@ just backup-schedule   # optional daily systemd timer (backup + prune)
 
 See [Maintenance](maintenance) for R2 credentials, alternate backends, restores, and retention.
 
-Enable the Renovate workflow once on GitHub:
+Enable the repository automation once on GitHub. Run this from the cloned repository:
 
 ```bash
-gh secret set RENOVATE_TOKEN
+REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+gh workflow enable ci.yml --repo "$REPO"
+gh workflow enable renovate.yml --repo "$REPO"
+gh workflow enable pages.yml --repo "$REPO"
+gh secret set RENOVATE_TOKEN --repo "$REPO"
+gh workflow run renovate.yml --repo "$REPO"
 ```
 
-Then run the **Renovate** workflow once from GitHub Actions. Review its pull requests normally;
-after merging one, update the server with `git pull && just update-all`. See [Updates & CI](updates).
+If GitHub Pages has not been enabled for the fork, choose **GitHub Actions** under repository
+**Settings → Pages → Build and deployment → Source**. For branch protection, Renovate details,
+run monitoring, and the optional Pages API command, see [Updates & CI](updates). Review Renovate
+pull requests normally; after merging one, update the server with `git pull && just update-all`.
 
 ## 12. Go public (last)
 

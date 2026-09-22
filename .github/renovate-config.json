@@ -54,9 +54,6 @@
       ]
     }
   ],
-  "repositories": [
-    "erdemoney/kickstarrt-vps"
-  ],
   "separateMajorMinor": true,
   "separateMultipleMajor": true,
   "timezone": "UTC"
