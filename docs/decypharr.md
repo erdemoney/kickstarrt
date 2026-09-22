@@ -59,6 +59,12 @@ These toggle off the wizard defaults in Decypharr → Settings:
   **on** so Decypharr fetches torrents the debrid cache doesn't have (it waits for them to seed
   up) instead of failing the grab.
 
+The stack also sets Decypharr's Usenet **Import Availability Sample** to **25%** through Compose.
+This checks a meaningful portion of each file before creating the symlink that Sonarr/Radarr
+probe, while keeping provider traffic below a full 100% validation. The setting is deliberately
+not 100%: increase it if incomplete Usenet releases still reach the Arr queue, or lower it only
+if provider rate limits become a problem. Repair availability remains at its normal 10% sample.
+
 ## Integration with Sonarr/Radarr
 
 The \*arr-UI side (streaming integration and root folders) is documented in
@@ -69,7 +75,11 @@ in Decypharr → Settings → **Arrs**: the lowercase `sonarr`/`radarr` entries 
 automatically the first time each app connects.
 
 - **Repair worker / queue cleanup** — enable per detected app in Settings → Arrs (the
-  blacklist + research defaults are sensible) so failed grabs don't clog the queue.
+  blacklist + research defaults are sensible) so failed grabs don't clog the queue. Keep
+  **Failed download**, **Unable to parse**, and **No eligible files** on **Blacklist + Research**.
+  Do not force-import an item whose media probe failed: it will retry the same incomplete or
+  corrupt file and can leave the queue stuck again. Use **Import** for title mismatches only when
+  the downloaded files are known to be valid.
 
 No **path mapping** is needed in this stack: Decypharr's mount path and the arrs' bind are
 the same absolute path (`/mnt/decypharr`), so the path it reports is the path they can open.

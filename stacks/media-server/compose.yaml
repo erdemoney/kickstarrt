@@ -245,6 +245,10 @@ services:
     environment:
       PUID: ${ENV_PUID:-1000}
       PGID: ${ENV_PGID:-1000}
+      # Reject most incomplete Usenet files before exposing them to Sonarr/Radarr.
+      # A moderate sample keeps provider requests bounded while avoiding the
+      # misleading Arr "unable to determine if file is a sample" state.
+      USENET__IMPORT_AVAILABILITY_SAMPLE_PERCENT: "25"
     volumes:
       - /mnt/debrid:/mnt:rshared
       - ../../data/decypharr/configs:/app
