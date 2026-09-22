@@ -27,7 +27,8 @@ database. It scrapes the same release sources a standalone Torrentio/AioStreams/
 would (public DMM + MediaFusion + StremThru, plus optional credentialed scrapers), so it is
 the stack's only torrent indexer. It is exposed only on the tailnet:
 no public router, no published ports. Its admin dashboard (DMM ingestion progress,
-scraper health, cache stats) lives at `https://comet.<DOMAIN>` (password set by
+scraper health, cache stats) lives at `https://comet.<DOMAIN>/admin` (the hostname root
+redirects there; password set by
 `just init`).
 
 **`just wire` registers it for you.** The Cardigann definition

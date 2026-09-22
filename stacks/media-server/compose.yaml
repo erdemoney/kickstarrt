@@ -335,8 +335,13 @@ services:
       - "traefik.http.routers.comet.entrypoints=${COMET_ENTRYPOINTS:-https-tailnet}"
       - "traefik.http.routers.comet.rule=Host(`${SUB_DOMAIN_COMET}.${DOMAIN}`)"
       - "traefik.http.routers.comet.tls=true"
-      # Comet serves its admin dashboard at the app root, sharing this port with
-      # /stream, /manifest.json and /configure, so the whole 8000 host is routed.
+      # Comet's root redirects to /configure; send the hostname root to the admin
+      # dashboard instead. Other paths (/stream, /manifest.json, /configure, etc.)
+      # pass through this same router unchanged.
+      - "traefik.http.routers.comet.middlewares=comet-admin-redirect"
+      - "traefik.http.middlewares.comet-admin-redirect.redirectregex.regex=^https?://([^/]+)/?$"
+      - "traefik.http.middlewares.comet-admin-redirect.redirectregex.replacement=https://$${1}/admin"
+      - "traefik.http.middlewares.comet-admin-redirect.redirectregex.permanent=true"
       - "traefik.http.services.comet.loadbalancer.server.port=8000"
     # The image ships its own HEALTHCHECK (python -m comet.healthcheck), so no
     # healthcheck block is needed here.
