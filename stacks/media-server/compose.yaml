@@ -291,7 +291,7 @@ services:
       # Scrapers: DMM from Comet's local hashlist DB, plus the public MediaFusion
       # (mediafusion.elfhosted.com) and StremThru (stremthru.13377001.xyz)
       # instances. Torrentio stays off: torrentio.strem.fun Cloudflare-challenges
-      # VPS/datacenter IPs. Debridio/TorBox/AIOStreams are env-gated placeholders
+      # VPS/datacenter IPs. Debridio/AIOStreams are env-gated placeholders
       # (set the SCRAPE_* toggles and API keys in stacks/media-server/.env).
       SCRAPE_DMM: "true"
       DMM_INGEST_ENABLED: "true"
@@ -303,8 +303,6 @@ services:
       DEBRIDIO_API_KEY: "${DEBRIDIO_API_KEY:-}"
       DEBRIDIO_PROVIDER: "${DEBRIDIO_PROVIDER:-realdebrid}"
       DEBRIDIO_PROVIDER_KEY: "${DEBRIDIO_PROVIDER_KEY:-}"
-      SCRAPE_TORBOX: "${SCRAPE_TORBOX:-false}"
-      TORBOX_API_KEY: "${TORBOX_API_KEY:-}"
       SCRAPE_AIOSTREAMS: "${SCRAPE_AIOSTREAMS:-false}"
       # AIOStreams has no public default, and Comet requires a non-empty URL even
       # when the toggle is off (AIOStreamsConfig validates at import, crashing

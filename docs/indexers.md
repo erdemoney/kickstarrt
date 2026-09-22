@@ -63,7 +63,7 @@ Notes:
   (`stremthru.13377001.xyz`) instances plus the local **DMM** cache, with a modest **background
   pre-cacher** (single worker, capped runs). Torrentio's own instance is intentionally left off:
   `torrentio.strem.fun` Cloudflare-challenges VPS/datacenter IPs. Credentialed scrapers
-  (Debridio, TorBox, AIOStreams) are wired as env placeholders — fill the keys in
+  (Debridio, AIOStreams) are wired as env placeholders — fill the keys in
   `stacks/media-server/.env` and enable their `SCRAPE_*` toggles (see `.env.example`).
   AIOStreams' URL is given a non-empty placeholder default because Comet crashes at
   import if it ever sees an empty `AIOSTREAMS_URL`; set the real URL to use it.
