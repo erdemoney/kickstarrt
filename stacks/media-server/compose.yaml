@@ -27,7 +27,7 @@ services:
       - ../../data/jellyfin/config:/config
       - /mnt/debrid:/mnt:rslave
     tmpfs:
-      - /transcodes
+      - /transcode
     # No GPU passthrough here: VPS hosts are CPU-only, so Jellyfin transcodes in
     # software. Keep the library direct-play friendly (see docs/services/jellyfin.md).
     labels:

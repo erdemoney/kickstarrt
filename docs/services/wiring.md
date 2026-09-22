@@ -109,7 +109,7 @@ at `/mnt/decypharr`, so the symlinks Decypharr stages into its download folder r
 same place everywhere. Then in
 Jellyfin add the libraries the same way ([Jellyfin setup](jellyfin) covers libraries plus the
 transcode policy). Also set Jellyfin → Playback → **Transcode path**
-to `/transcodes` (a tmpfs — transcode scratch never hits disk; this edition transcodes in
+to `/transcode` (a tmpfs — transcode scratch never hits disk; this edition transcodes in
 software, so keep the library direct-play friendly).
 
 If those paths look empty inside a container, check mount propagation

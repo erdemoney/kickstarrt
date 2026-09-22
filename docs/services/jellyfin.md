@@ -66,7 +66,7 @@ index, and all media containers see those paths consistently.
 
 ## 3. Stack-specific playback settings
 
-Also set Dashboard → **Playback** → **Transcoding path** to `/transcodes` — a tmpfs, so
+Also set Dashboard → **Playback** → **Transcoding path** to `/transcode` — a tmpfs, so
 transcode scratch never touches disk. This stack transcodes in software (no GPU,
 [FAQ](../faq#why-does-jellyfin-transcode-in-software-no-gpu)) and Recyclarr ships a **Direct
 Play** quality profile, so the goal is to keep playback direct and never let a client push
