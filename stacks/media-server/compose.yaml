@@ -311,6 +311,12 @@ services:
       # the container on ""), so the unset value is a non-empty placeholder.
       AIOSTREAMS_URL: "${AIOSTREAMS_URL:-https://placeholder.invalid}"
       AIOSTREAMS_USER_UUID_AND_PASSWORD: "${AIOSTREAMS_USER_UUID_AND_PASSWORD:-}"
+      # Anime: Nyaa and AnimeTosho are the go-to anime torrent sources and only
+      # fire for anime content (their *_ANIME_ONLY flags default True), so they
+      # can't pollute the movie/TV Torznab feeds. Anime mapping is already on by
+      # default. Toggles default off and are enabled via .env.
+      SCRAPE_NYAA: "${SCRAPE_NYAA:-false}"
+      SCRAPE_ANIMETOSHO: "${SCRAPE_ANIMETOSHO:-false}"
       # Background pre-caching is modest on purpose (single worker, capped runs)
       # to avoid hammering the public scrapers and this box's CPU/RAM.
       BACKGROUND_SCRAPER_ENABLED: "true"

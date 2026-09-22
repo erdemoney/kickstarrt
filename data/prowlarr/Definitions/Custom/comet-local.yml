@@ -4,26 +4,31 @@
 # /config; `just wire` registers the "Comet (Local)" indexer against the
 # internal-only service URL http://comet:8000 - no GUI step needed.
 #
-# Comet is deliberately unconfigured here (no debrid provider: Decypharr turns
-# the selected magnet into an instant-release download), so this definition
-# queries Comet's native Torznab endpoint (/torznab/api) with that default
-# config:
-#   - Movies (Newznab 2000): t=movie or t=search    (q)
-#   - TV (Newznab 5000):     t=tvsearch or t=search (q, season, ep)
-# Comet resolves q to IMDb through its own metadata providers, including a "tt..."
-# id passed in q, so the IMDb id is folded into q when present.
+# This definition models Comet's native Torznab integration (Prowlarr Generic
+# Torznab: URL http://comet:8000/torznab, API path /api, no API key) with
+# q/imdbid/season/ep passed through as Newznab params and parsed back into
+# release attributes (imdb, season/episode, seeders) from Comet's Torznab item
+# XML.
 #
-# The per-path `t` switches between the function-specific calls and Comet's
-# generic `t=search`. Cardigann (Prowlarr) only supports and/or/eq/ne, bare
-# variables, and if/else/end over a single variable, and empty inputs are
-# dropped before the request is sent:
-#   - With a term (or IMDb id) -> t=movie / t=tvsearch, the explicit query.
-#   - Without either (t=search&cat=<n>) -> Comet's "recent" feed. Sonarr/Radarr
-#     validate an indexer (and poll RSS) with exactly this empty-query t=search
-#     on their configured categories; Comet answers with recently-scraped
-#     releases so both Arr apps accept and keep the indexer synced.
-# cat is pinned so the recent feed is deterministic for each media type (movies
-# vs series) and the category checks in the Arr apps always see a match.
+# Two structural quirks keep this definition single-minded rather than widely
+# parametrized:
+#   - t is pinned to Comet's generic `search` function. Comet only answers
+#     empty-query requests (Sonarr/Radarr indexer validation and RSS sync) with
+#     its recent feed when function == "search" and no q/imdbid are given
+#     (comet/api/endpoints/torznab.py); t=movie/tvsearch with an empty query
+#     always resolve to an empty feed.
+#   - cat is pinned to Comet's numeric Newznab ids (2000 Movies / 5000 TV).
+#     Comet errors on any non-numeric category. Cardigann refuses pure-numeric
+#     `cat:` mapping tokens and requires alphabetic Newznab category names, so
+#     the numeric tracker ids are declared explicitly under categorymappings
+#     and pinned per search path. With t=search the cat id is what selects the
+#     media type (2000 -> movies, 5000 -> TV).
+#
+# The one intentional deviation from Generic Torznab is the title marker:
+# Comet's results are debrid-ready cache candidates, so each release title gets
+# a " [DEBRID-CACHED]" suffix that the shipped Recyclarr Direct Play profiles
+# score (data/recyclarr/custom-formats/debrid-cached.json), giving Comet
+# releases a preference over uncached sources.
 id: comet-local
 name: Comet (Local)
 description: "Custom Prowlarr indexer for the stack's self-hosted Comet search add-on."
@@ -37,48 +42,50 @@ links:
   - http://comet:8000
 
 caps:
-  categories:
-    Movies: Movies
-    TV: TV
+  categorymappings:
+    - {id: 2000, cat: Movies, desc: "Movies", default: true}
+    - {id: 5000, cat: TV, desc: "TV", default: true}
   modes:
     search: [q]
     movie-search: [q, imdbid]
     tv-search: [q, imdbid, season, ep]
   allowrawsearch: false
+  allowtvsearchimdb: true
 
 search:
   paths:
-    # Prefer the full "tt..." IMDb id when one was provided, otherwise the
-    # matched title. Comet accepts both through q. Empty season/ep values are
-    # dropped by Prowlarr, and Comet errors on an empty season=/ep=, so those
-    # params are only present for actual episode searches.
     - path: /torznab/api
       method: get
-      inputs:
-        t: "{{ if .Query.Q }}movie{{ else }}search{{ end }}"
-        q: "{{ or .Query.IMDBID .Query.Q }}"
-        cat: "2000"
       response:
         type: xml
-      categories: [Movies]
+      categories: [2000]
+      inputs:
+        t: "search"
+        q: "{{ .Keywords }}"
+        cat: "2000"
+        imdbid: "{{ .Query.IMDBID }}"
 
     - path: /torznab/api
       method: get
+      response:
+        type: xml
+      categories: [5000]
       inputs:
-        t: "{{ if .Query.Q }}tvsearch{{ else }}search{{ end }}"
-        q: "{{ or .Query.IMDBID .Query.Q }}"
+        t: "search"
+        q: "{{ .Keywords }}"
         cat: "5000"
+        imdbid: "{{ .Query.IMDBID }}"
         season: "{{ .Query.Season }}"
         ep: "{{ .Query.Ep }}"
-      response:
-        type: xml
-      categories: [TV]
 
   rows:
-    selector: channel item
+    selector: rss > channel > item
     missingAttributeEqualsNoResults: true
 
   fields:
+    category:
+      selector: "[name=category]"
+      attribute: value
     title:
       selector: title
       filters:
@@ -89,12 +96,23 @@ search:
     magnet:
       selector: link
     infohash:
-      selector: guid
+      selector: "[name=infohash]"
+      attribute: value
+    imdbid:
+      selector: "[name=imdb]"
+      attribute: value
+    date:
+      selector: pubDate
     size:
       selector: size
-    category:
-      selector: category
     seeders:
-      text: "30"
+      selector: "[name=seeders]"
+      attribute: value
+      optional: true
+      default: 0
     leechers:
       text: "0"
+    downloadvolumefactor:
+      text: "0"
+    uploadvolumefactor:
+      text: "1"

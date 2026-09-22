@@ -38,12 +38,19 @@ scraper health, cache stats) lives at `https://comet.<DOMAIN>` (password set by
 **no API key**, and keeps it re-pointed/enabled on later runs. It syncs to Sonarr/Radarr
 like any other indexer — no Prowlarr GUI step needed.
 
-The definition queries Comet's **native Torznab API** (`/torznab/api`), so plain-text
-searches are resolved by Comet's own metadata (movies via `t=movie`, TV via `t=tvsearch`
-with `season`/`ep`); `{imdbid:tt123456}` still gives the most precise hits — there is no
-fake-IMDb fallback anymore. Empty-query `t=search` requests (how Sonarr/Radarr validate a
-synced indexer and poll RSS) are answered with Comet's **recent** feed (`t=search&cat=…`),
-which is what keeps **Comet (Local)** syncing into the Arr apps.
+The definition models Comet's **native Torznab API** (`/torznab/api`) with two
+category-specific paths. Both pin `t=search`, because Comet only serves its recent
+feed for empty-query `search` requests; `movie`/`tvsearch` with an empty query do
+not produce the feed needed by Arr validation and RSS. Movie requests pin
+`cat=2000`, TV requests pin `cat=5000`, while `q`, `imdbid`, `season`, and `ep` pass
+through for explicit searches. The one deviation from Generic Torznab is that
+every release title is suffixed `[DEBRID-CACHED]` so the shipped Recyclarr **Direct
+Play** profiles can score Comet releases over uncached sources.
+
+The recent feed depends on Comet's newest demand candidates. As a result, an
+upstream Comet release whose candidate torrent is classified with season/episode
+metadata can miss that movie from the movie recent feed; explicit movie searches
+remain unaffected.
 
 Notes:
 - **First DMM ingestion is the heavy one**: ~10–30 min of sustained CPU (more on a 2 vCPU box)
