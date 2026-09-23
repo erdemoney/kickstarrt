@@ -45,6 +45,9 @@ caps:
   categorymappings:
     - {id: 2000, cat: Movies, desc: "Movies", default: true}
     - {id: 5000, cat: TV, desc: "TV", default: true}
+    # Prowlarr uses child categories for anime searches. Comet's native API
+    # still receives the TV category (5000) for these requests.
+    - {id: 5070, cat: TV/Anime, desc: "Anime", default: true}
   modes:
     search: [q]
     movie-search: [q, imdbid]
@@ -69,7 +72,7 @@ search:
       method: get
       response:
         type: xml
-      categories: [5000]
+      categories: [5000, 5070]
       inputs:
         t: "search"
         q: "{{ .Keywords }}"
