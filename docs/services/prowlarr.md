@@ -19,6 +19,11 @@ Newznab URL and API key.
 [Comet](comet) indexer. Do not recreate those application connections manually unless you have
 intentionally changed them.
 
+For Sonarr, `just wire` sets Prowlarr's anime sync category to `5000` (parent TV). Comet returns
+anime cache candidates as category `5000`, not `5070`; keeping this setting in Prowlarr ensures
+future application syncs preserve the working category. Comet's application minimum seeders is
+also `0` because cached debrid results do not expose swarm seeder counts.
+
 ## Internal connections
 
 Prowlarr reaches the other containers over the `internal` network:

@@ -353,10 +353,14 @@ def prowlarr_change(
                     f"syncLevel: {existing.get('syncLevel')} -> fullSync"
                 )
                 payload["syncLevel"] = "fullSync"
-            for field, value in (
+            app_fields = [
                 ("baseUrl", base_url),
                 ("prowlarrUrl", "http://prowlarr:9696"),
-            ):
+            ]
+            if name == "Sonarr":
+                # Comet returns cached anime as parent TV category 5000.
+                app_fields.append(("animeSyncCategories", [5000]))
+            for field, value in app_fields:
                 old = field_value(existing, field)
                 if old != value:
                     local_changes.append(
@@ -403,6 +407,8 @@ def prowlarr_change(
             ],
             "tags": [],
         }
+        if name == "Sonarr":
+            payload["fields"].append({"name": "animeSyncCategories", "value": [5000]})
         changes.append(f"add {name}: {base_url}")
         updates.append((endpoint, payload))
     if not changes:
@@ -445,9 +451,16 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
         for name, value in (
             ("definitionFile", COMET_DEFINITION_FILE),
             ("baseUrl", COMET_URL),
+            # Comet exposes debrid-cache availability, not swarm seeders.
+            ("torrentBaseSettings.appMinimumSeeders", "0"),
         ):
             old = field_value(existing, name)
-            if old != value:
+            equivalent = (
+                str(old) == str(value)
+                if name.endswith("appMinimumSeeders")
+                else old == value
+            )
+            if not equivalent:
                 changed.append(
                     f"{name}: {redacted(old, name)} -> {redacted(value, name)}"
                 )
@@ -473,6 +486,7 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
     details = [
         f"definitionFile: {COMET_DEFINITION_FILE}",
         f"baseUrl: {COMET_URL}",
+        "torrentBaseSettings.appMinimumSeeders: 0",
     ]
 
     def apply() -> None:
@@ -487,6 +501,7 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
             "fields": [
                 {"name": "definitionFile", "value": COMET_DEFINITION_FILE},
                 {"name": "baseUrl", "value": COMET_URL},
+                {"name": "torrentBaseSettings.appMinimumSeeders", "value": "0"},
             ],
         }
         for attempt in range(1, 4):
