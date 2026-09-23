@@ -29,8 +29,11 @@ incremental. Check progress with:
 just logs-svc comet
 ```
 
-Nyaa, AnimeTosho, and SeaDex are enabled by default for anime. Peerflix is also enabled for both
-live searches and background pre-caching; Comet deduplicates results in its cache. Override
+Nyaa and SeaDex are enabled by default for anime. AnimeTosho is also enabled by default but runs
+`background`-only (Comet context mode): it participates in background pre-caching but not live
+searches, because its public instance rate-limits (429) when hit by live Torznab searches. Peerflix
+is enabled for both live searches and background pre-caching; Comet deduplicates results in its
+cache. Override `SCRAPE_ANIMETOSHO` (e.g. `true` to re-enable live, `false` to disable),
 `SCRAPE_SEADEX`, `SEADEX_ANIME_ONLY`, or `SCRAPE_PEERFLIX` in `stacks/media-server/.env` if needed.
 TorrentsDB remains disabled by default because it overlaps with the other aggregator scrapers.
 Credentialed scrapers are also controlled by the `SCRAPE_*` settings in that file.

@@ -358,9 +358,13 @@ services:
       # Anime: Nyaa, AnimeTosho, and SeaDex only fire for anime content, so they
       # can't pollute the movie/TV Torznab feeds. Anime mapping is already on by
       # default. These scrapers are enabled by default; set their toggles to false
-      # in .env to disable them.
+      # in .env to disable them. AnimeTosho defaults to `background` (Comet
+      # context mode, not a plain bool) because its public instance rate-limits
+      # (429) when hit by live Torznab searches; it still contributes to
+      # background pre-caching. Set SCRAPE_ANIMETOSHO=true (both) in .env to
+      # re-enable it for live searches.
       SCRAPE_NYAA: "${SCRAPE_NYAA:-true}"
-      SCRAPE_ANIMETOSHO: "${SCRAPE_ANIMETOSHO:-true}"
+      SCRAPE_ANIMETOSHO: "${SCRAPE_ANIMETOSHO:-background}"
       SCRAPE_SEADEX: "${SCRAPE_SEADEX:-true}"
       SEADEX_ANIME_ONLY: "${SEADEX_ANIME_ONLY:-true}"
       # All enabled scrapers participate in live searches and background
