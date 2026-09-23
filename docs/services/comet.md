@@ -29,8 +29,11 @@ incremental. Check progress with:
 just logs-svc comet
 ```
 
-Nyaa and AnimeTosho are enabled by default for anime. Credentialed scrapers are controlled by the
-`SCRAPE_*` settings in `stacks/media-server/.env`.
+Nyaa, AnimeTosho, and SeaDex are enabled by default for anime. Peerflix is also enabled for both
+live searches and background pre-caching; Comet deduplicates results in its cache. Override
+`SCRAPE_SEADEX`, `SEADEX_ANIME_ONLY`, or `SCRAPE_PEERFLIX` in `stacks/media-server/.env` if needed.
+TorrentsDB remains disabled by default because it overlaps with the other aggregator scrapers.
+Credentialed scrapers are also controlled by the `SCRAPE_*` settings in that file.
 
 See [Indexers](indexers) for adding other indexers and [Recyclarr](recyclarr) for how cached Comet
 results affect selection.
