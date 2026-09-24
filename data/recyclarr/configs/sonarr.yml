@@ -47,9 +47,13 @@ sonarr:
         reset_unmatched_scores:
           enabled: true # this file owns the profile: unmanaged CF scores reset to 0
         quality_sort: top
-        # best ... worst. Only the first six are allowed; the rest stay listed
-        # (disabled) so their sort order and cutoff behavior stay deterministic.
-        # Sonarr names its remux qualities "Bluray-<res> Remux" (unlike Radarr).
+        # best ... worst. The ceiling is 2160p Remux (4K upgrades are chased),
+        # and the ladder runs all the way down to SDTV so a missing episode is
+        # ALWAYS grabbable - completion first, quality second. Once a low-tier
+        # release lands, Sonarr keeps upgrading it toward the ceiling for free
+        # over debrid. The junk tiers below stay listed (disabled) so their
+        # sort order and cutoff behavior stay deterministic. Sonarr names its
+        # remux qualities "Bluray-<res> Remux" (unlike Radarr).
         qualities:
           - name: Bluray-2160p Remux
           - name: WEB 2160p
@@ -59,29 +63,21 @@ sonarr:
           - name: WEB 1080p
             qualities: [WEBRip-1080p, WEBDL-1080p]
           - name: Bluray-1080p
-          - name: HDTV-2160p
-            enabled: false
+          - name: HDTV-1080p
           - name: Bluray-720p
-            enabled: false
           - name: WEB 720p
             qualities: [WEBRip-720p, WEBDL-720p]
+          - name: HDTV-720p
+          - name: Bluray-576p
+          - name: Bluray-480p
+          - name: WEB 480p
+            qualities: [WEBRip-480p, WEBDL-480p]
+          - name: SDTV
+          - name: HDTV-2160p
             enabled: false
           - name: Raw-HD
             enabled: false
-          - name: HDTV-1080p
-            enabled: false
-          - name: HDTV-720p
-            enabled: false
-          - name: Bluray-576p
-            enabled: false
-          - name: Bluray-480p
-            enabled: false
           - name: DVD
-            enabled: false
-          - name: WEB 480p
-            qualities: [WEBRip-480p, WEBDL-480p]
-            enabled: false
-          - name: SDTV
             enabled: false
           - name: Unknown
             enabled: false
@@ -93,15 +89,17 @@ sonarr:
           # ceiling, so a good BD encode is never "downgraded" off a remux.
           until_quality: Bluray-1080p Remux
         min_format_score: 0 # v0, raws, LQ groups and codec rejects all score below 0
-        min_upgrade_format_score: 10000 # only the quality ceiling stops CF-based upgrades
+        min_upgrade_format_score: 1 # quality upgrades are gated only by until_quality
         reset_unmatched_scores:
           enabled: true # this file owns the profile: unmanaged CF scores reset to 0
         quality_sort: top
-        # best ... worst (TRaSH anime order). Only the first five are allowed; the
-        # rest stay listed (disabled) for a deterministic sort order. Qualities are
+        # best ... worst (TRaSH anime order). Allowed the first nine; the rest
+        # stay listed (disabled) for a deterministic sort order. Qualities are
         # merged per the TRaSH guide so scoring works: Bluray-1080p Remux with
         # Bluray-1080p in one tier, and HDTV-1080p/HDTV-720p folded into the WEB
         # tiers (anime WEB/HDRip releases often mislabel themselves HDTV).
+        # Bluray-576p/SDTV sit at the bottom as a completion floor so a missing
+        # episode is always fillable; Sonarr then climbs back up for free.
         qualities:
           - name: Bluray-1080p Remux
             qualities: [Bluray-1080p Remux, Bluray-1080p]
@@ -111,22 +109,18 @@ sonarr:
           - name: Bluray-720p
           - name: WEBDL-720p
             qualities: [WEBRip-720p, HDTV-720p]
+          - name: Bluray-576p
+          - name: Bluray-480p
+          - name: WEB 480p
+            qualities: [WEBRip-480p, WEBDL-480p]
+          - name: SDTV
           - name: Bluray-2160p Remux
             enabled: false
           - name: HDTV-2160p
             enabled: false
           - name: Raw-HD
             enabled: false
-          - name: Bluray-576p
-            enabled: false
-          - name: Bluray-480p
-            enabled: false
           - name: DVD
-            enabled: false
-          - name: WEB 480p
-            qualities: [WEBRip-480p, WEBDL-480p]
-            enabled: false
-          - name: SDTV
             enabled: false
           - name: Unknown
             enabled: false
@@ -149,10 +143,14 @@ sonarr:
         assign_scores_to: [{ name: Direct Play, score: 1600 }]
 
       # --- prefer season packs (TRaSH Guide official CF, release type 3) ---
+      # Big bonus (clears the top tier scores) so that when a pack is grabbable
+      # it always wins over scattered single-episode grabs. Still subject to
+      # Sonarr's all-or-nothing pack rule: packs only grab when they upgrade
+      # every episode or the whole season is missing.
       - trash_ids: [3bc5f395426614e155e585a2f056cdf1] # Season Pack
         assign_scores_to:
-          - { name: Direct Play, score: 100 }
-          - { name: Direct Play (Anime), score: 100 }
+          - { name: Direct Play, score: 5000 }
+          - { name: Direct Play (Anime), score: 5000 }
 
       # --- anime release-group tiers (SeaDex groups, TRaSH anime guide scores) ---
       - trash_ids: [949c16fe0a8147f50ba82cc2df9411c9] # Anime BD Tier 01

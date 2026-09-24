@@ -28,6 +28,19 @@ optimizes for files clients can play without video re-encoding:
 The `0` minimum format score means normal releases remain eligible; the `-10000` scores are the
 hard exclusions.
 
+### Completion first, then 4K
+
+The quality ladders are completion-first: they run all the way down to **SDTV** (Sonarr) /
+**DVD-R** (Radarr), so a monitored missing episode or movie is *always* grabbable instead of
+staying empty while waiting for a 4K release. Once a low-tier landing fills the gap, subsequent
+searches upgrade it toward the profile ceiling for free over debrid. The `until_quality` ceilings
+are untouched, so 4K is still chased - just never allowed to leave a gap behind.
+
+Sonarr's season packs carry a large preference bonus (`+5000`) so a grabbable pack always beats
+scattered individual-episode grabs. Note this cannot override Sonarr's built-in all-or-nothing pack
+rule - a pack is only grabbed when it upgrades *every* episode or the whole season is missing -
+so partially-filled mixed-quality seasons still fill episode-by-episode.
+
 ## Anime profile
 
 Sonarr also receives **Direct Play (Anime)**. It uses the TRaSH anime recipe but is adapted to the
