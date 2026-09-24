@@ -329,6 +329,53 @@ def root_folder_change(
     )
 
 
+def sonarr_unknown_quality_change(http: DockerHTTP, key: str) -> Change | None:
+    """Reconcile Sonarr's "Unknown" quality sizes to the TRaSH convention.
+
+    TRaSH quality-size resources cover every real quality but omit "Unknown",
+    and recyclarr only manages qualities present in the guide (overriding one
+    that is absent is a hard config error), so Unknown keeps Sonarr's shipped
+    default max of 199.9 MB/min. Releases whose titles carry no resolvable
+    resolution/source - anime "Hybrid Remux" season packs in particular - parse
+    to Unknown and get sized against the whole-season runtime, so that cap
+    rejects them. Set Unknown to the same sizes the guide applies to the real
+    qualities (min 5 / preferred 995 / max 1000 = Sonarr's displayed
+    "Unlimited"); daily recyclarr sync leaves it alone.
+    """
+    desired = {"minSize": 5.0, "preferredSize": 995.0, "maxSize": 1000.0}
+    endpoint = "http://sonarr:8989/api/v3/qualitydefinition"
+    current = http.request("sonarr", "GET", endpoint, key)
+    items = current if isinstance(current, list) else []
+    unknown = next(
+        (
+            item
+            for item in items
+            if (item.get("quality") or {}).get("name") == "Unknown"
+        ),
+        None,
+    )
+    if not unknown:
+        return None
+
+    payload = json.loads(json.dumps(unknown))
+    changed = []
+    for name, value in desired.items():
+        old = unknown.get(name)
+        if old is None or abs(float(old) - value) > 1e-9:
+            changed.append(f"{name}: {old} -> {value}")
+            payload[name] = value
+    if not changed:
+        return None
+    return Change(
+        "sonarr",
+        "set Unknown quality sizes to the guide convention",
+        changed,
+        lambda: http.request(
+            "sonarr", "PUT", f"{endpoint}/{unknown['id']}", key, payload
+        ),
+    )
+
+
 def prowlarr_change(
     http: DockerHTTP, token: str, keys: dict[str, str]
 ) -> Change | None:
@@ -1400,6 +1447,9 @@ def main() -> int:
             )
             if change:
                 changes.append(change)
+        unknown_quality = sonarr_unknown_quality_change(http, keys["sonarr"])
+        if unknown_quality:
+            changes.append(unknown_quality)
         for change in (
             prowlarr_comet_change(http, keys["prowlarr"]),
             prowlarr_change(http, keys["prowlarr"], keys),
