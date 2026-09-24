@@ -1,4 +1,0 @@
-# Local resource providers consumed by data/recyclarr/configs/*.yml. The stack
-# previously shipped a local DEBRID-CACHED custom format here; it is gone, so no
-# resource_providers are declared. This file stays so Recyclarr's default
-# settings file resolves cleanly.

@@ -34,7 +34,6 @@ data/recyclarr/*
 data/recyclarr/configs/*
 !data/recyclarr/configs/radarr.yml
 !data/recyclarr/configs/sonarr.yml
-!data/recyclarr/settings.yml
 # Prowlarr's runtime state (config.xml, DB, logs, downloaded indexer
 # definitions) stays ignored; only the shipped Zilean Cardigann definition is
 # tracked.
