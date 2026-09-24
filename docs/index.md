@@ -34,11 +34,10 @@ hosts.
               | radarr       sonarr         |
               | prowlarr     bazarr         |   everything else (panels, dashboard):
               | recyclarr    decypharr      |   https-tailnet only
-              | comet        comet-postgres |   comet: admin dashboard on the tailnet + Prowlarr indexer
               +-----------------------------+
 ```
 
-Media flow: Prowlarr finds releases (incl. the self-hosted Comet (Local) debrid indexer) → Sonarr/Radarr grab
+Media flow: Prowlarr finds releases (incl. the hosted Zilean DMM indexer) → Sonarr/Radarr grab
 them → Decypharr resolves them into instant files on a FUSE mount → the \*arrs symlink them
 into the library → Jellyfin streams to any client; Seerr handles user requests.
 
@@ -82,7 +81,7 @@ doesn't, so use **Ubuntu 26.04 Minimal** there instead. The full Oracle walkthro
 stacks/                  compose files (one folder per stack) + .env per stack
   traefik/               edge router on :443, CrowdSec container, CoreDNS, plugin + ACME
   media-server/          jellyfin, seerr, radarr, sonarr, prowlarr,
-                         recyclarr, bazarr, decypharr, comet (+ comet-postgres)
+                         recyclarr, bazarr, decypharr
 data/                    runtime config that lives in code
   traefik/               traefik.yml, dynamic.yml
   crowdsec/              acquis.yaml

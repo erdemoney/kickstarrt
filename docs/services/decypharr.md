@@ -73,7 +73,9 @@ The stack manages these Usenet policies through Compose environment overrides:
   allowing queue cleanup to blacklist and research it instead of retrying forever.
 
 These values are intentionally explicit even where they match Decypharr defaults, so the stack's
-operational policy remains reproducible across image upgrades.
+operational policy remains reproducible across image upgrades. Decypharr reads environment overrides
+with a `DECYPHARR_` prefix, so the Compose service sets `DECYPHARR_USENET__*`, not `USENET__*`
+(v2.5 and later ignore the unprefixed names).
 
 ## Integration with Sonarr/Radarr
 

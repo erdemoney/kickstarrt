@@ -19,8 +19,9 @@ optimizes for files clients can play without video re-encoding:
 - HEVC is allowed, including 4K, because UHD releases are commonly HEVC and direct-play-capable
   clients can handle them.
 - Audio is not penalized because audio transcoding is comparatively inexpensive.
-- Comet's `[DEBRID-CACHED]` results receive a positive score, preferring instant cached media while
-  leaving uncached results eligible as a fallback.
+- Debrid-cache state is not asserted at the indexer (Zilean mirrors the DMM hashlist without
+  per-hash cache checks); Decypharr's `download_uncached=false` gate is the cache verification at
+  grab time.
 - Disk images, Dolby Vision without an HDR10 fallback, AV1, VP9, VC-1, MPEG-2, low-quality, and
   obfuscated releases receive `-10000` and are never grabbed.
 

@@ -333,7 +333,7 @@ it's configured.
    setup: add the libraries under `/mnt/shows` and `/mnt/movies` and set the transcode path → [Jellyfin](services/jellyfin).
 4. **Seerr** — connect Jellyfin at `http://jellyfin:8096`, then connect Radarr and Sonarr with
    their internal URLs and API keys → [Seerr setup](services/seerr).
-5. **Indexers** — the self-hosted **Comet (Local)** debrid indexer is already wired into
+5. **Indexers** — the hosted **Zilean (DMM)** debrid indexer is already wired into
    Prowlarr by `just wire`; optionally add AltHub for TorBox Usenet streaming → [Indexers](services/indexers).
 
 `just wire --dry-run` previews the changes, and `just wire` applies each confirmed checkpoint.

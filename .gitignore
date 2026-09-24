@@ -35,15 +35,13 @@ data/recyclarr/configs/*
 !data/recyclarr/configs/radarr.yml
 !data/recyclarr/configs/sonarr.yml
 !data/recyclarr/settings.yml
-!data/recyclarr/custom-formats/
-!data/recyclarr/custom-formats/debrid-cached.json
 # Prowlarr's runtime state (config.xml, DB, logs, downloaded indexer
-# definitions) stays ignored; only the shipped Comet (Local) Cardigann
-# definition is tracked.
+# definitions) stays ignored; only the shipped Zilean Cardigann definition is
+# tracked.
 !data/prowlarr/
 data/prowlarr/*
 !data/prowlarr/Definitions/
 data/prowlarr/Definitions/*
 !data/prowlarr/Definitions/Custom/
 data/prowlarr/Definitions/Custom/*
-!data/prowlarr/Definitions/Custom/comet-local.yml
+!data/prowlarr/Definitions/Custom/zilean.yml

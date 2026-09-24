@@ -15,14 +15,13 @@ Open `https://prowlarr.<DOMAIN>` over the tailnet and create the administrator a
 indexers under **Indexers**, then test and save them. Add regular Usenet indexers with their
 Newznab URL and API key.
 
-`just wire` creates the Radarr and Sonarr application connections and registers the built-in
-[Comet](comet) indexer. Do not recreate those application connections manually unless you have
+`just wire` creates the Radarr and Sonarr application connections and registers the
+[Zilean](zilean) indexer. Do not recreate those application connections manually unless you have
 intentionally changed them.
 
-For Sonarr, `just wire` sets Prowlarr's anime sync category to `5000` (parent TV). Comet returns
-anime cache candidates as category `5000`, not `5070`; keeping this setting in Prowlarr ensures
-future application syncs preserve the working category. Comet's application minimum seeders is
-also `0` because cached debrid results do not expose swarm seeder counts.
+For Sonarr, `just wire` sets Prowlarr's anime sync category to `5000` (parent TV). Zilean reports
+anime candidates under the parent TV category; keeping this setting in Prowlarr ensures future
+application syncs preserve the working category.
 
 ## Internal connections
 
@@ -31,7 +30,6 @@ Prowlarr reaches the other containers over the `internal` network:
 ```text
 http://radarr:7878
 http://sonarr:8989
-http://comet:8000
 ```
 
 Use service names for application URLs, never public hostnames or `localhost`. See [Service

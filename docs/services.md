@@ -20,7 +20,7 @@ integration behavior.
 | [Radarr](services/radarr) | Movie management |
 | [Sonarr](services/sonarr) | Series management |
 | [Prowlarr](services/prowlarr) | Indexer management and application sync |
-| [Comet](services/comet) | Self-hosted torrent/debrid indexer |
+| [Zilean](services/zilean) | Debrid-packed DMM release indexer |
 | [Recyclarr](services/recyclarr) | Quality profile synchronization |
 | [Bazarr](services/bazarr) | Subtitle management |
 | [Back-catalog hunting](services/hunt) | Scheduled missing and quality-upgrade searches |

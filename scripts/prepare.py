@@ -147,8 +147,6 @@ def main() -> int:
             "recyclarr",
             "bazarr/config",
             "decypharr/configs",
-            "comet",
-            "comet-pg",
             "crowdsec/config",
             "crowdsec/data",
             "traefik/logs",

@@ -4,7 +4,7 @@ parent: Services
 nav_order: 11
 ---
 
-# Indexers: Prowlarr, self-hosted Comet, and AltHub
+# Indexers: Prowlarr, hosted Zilean, and AltHub
 
 Prowlarr is the single place indexers are configured; everything syncs to Sonarr/Radarr via
 "Apps" (wired in [Prowlarr](prowlarr)). Any time after the stack is up
@@ -13,17 +13,17 @@ work.
 
 ## Recommended indexers
 
-| Indexer      | Type               | Cost               | Where it fits                           |
-| ------------ | ------------------ | ------------------ | --------------------------------------- |
-| Comet (Local) | torrent aggregator | free (self-hosted) | debrid-cached streams through Decypharr |
-| AltHub       | Usenet             | $20 lifetime       | Usenet streaming through TorBox         |
+| Indexer      | Type                     | Cost               | Where it fits                           |
+| ------------ | ------------------------ | ------------------ | --------------------------------------- |
+| Zilean       | torrent (DMM hashlist)   | free (hosted)      | debrid-cached streams through Decypharr |
+| AltHub       | Usenet                   | $20 lifetime       | Usenet streaming through TorBox         |
 
 Detailed provider recommendations live in [Providers](../providers).
 
-## Self-hosted Comet
+## Hosted Zilean
 
-The self-hosted **Comet (Local)** indexer is documented separately in [Comet](comet), including
-its DMM ingestion, native Torznab API, Prowlarr adapter, scraper settings, and troubleshooting.
+The hosted **Zilean (DMM)** indexer is documented separately in [Zilean](zilean), including the
+Prowlarr adapter and cache-verification notes.
 
 ## Adding a regular Usenet indexer (e.g. AltHub)
 

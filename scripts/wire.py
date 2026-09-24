@@ -26,8 +26,8 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA_ENV = ROOT / "stacks" / "media-server" / ".env"
 
-COMET_URL = "http://comet:8000"
-COMET_DEFINITION_FILE = "comet-local"
+ZILEAN_URL = "https://zileanfortheweebs.midnightignite.me"
+ZILEAN_DEFINITION_FILE = "zilean"
 
 SEERR_URL = "http://seerr:5055"
 SEERR_JELLYFIN_HOST = "jellyfin"
@@ -405,7 +405,7 @@ def prowlarr_change(
                 ("prowlarrUrl", "http://prowlarr:9696"),
             ]
             if name == "Sonarr":
-                # Comet returns cached anime as parent TV category 5000.
+                # Zilean (DMM) reports anime under the parent TV category 5000.
                 app_fields.append(("animeSyncCategories", [5000]))
             for field, value in app_fields:
                 old = field_value(existing, field)
@@ -470,13 +470,12 @@ def prowlarr_change(
     return Change("prowlarr", "update Arr applications", changes, apply)
 
 
-def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
-    """Reconcile the self-hosted Comet (Local) indexer in Prowlarr.
+def prowlarr_zilean_change(http: DockerHTTP, token: str) -> Change | None:
+    """Reconcile the hosted Zilean (DMM) indexer in Prowlarr.
 
-    The stack ships Comet (docs/services/comet.md) and its Cardigann definition
-    (data/prowlarr/Definitions/Custom/comet-local.yml) is mounted in via
-    prowlarr's /config dir (see compose.yaml), so `just wire` only has to
-    create or re-point/enable the indexer at the internal service URL.
+    The Zilean Cardigann definition (data/prowlarr/Definitions/Custom/zilean.yml)
+    is mounted in via prowlarr's /config dir (see compose.yaml), so `just wire`
+    only has to create or re-point/enable the indexer at the hosted service URL.
     """
     endpoint = "http://prowlarr:9696/api/v1/indexer"
     current = http.request("prowlarr", "GET", endpoint, token)
@@ -486,8 +485,8 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
             for indexer in current
             if indexer.get("implementation") == "Cardigann"
             and (
-                field_value(indexer, "definitionFile") == COMET_DEFINITION_FILE
-                or indexer.get("name", "").lower() == "comet (local)"
+                field_value(indexer, "definitionFile") == ZILEAN_DEFINITION_FILE
+                or indexer.get("name", "").lower() == "zilean"
             )
         ),
         None,
@@ -496,18 +495,11 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
         payload = json.loads(json.dumps(existing))
         changed = []
         for name, value in (
-            ("definitionFile", COMET_DEFINITION_FILE),
-            ("baseUrl", COMET_URL),
-            # Comet exposes debrid-cache availability, not swarm seeders.
-            ("torrentBaseSettings.appMinimumSeeders", "0"),
+            ("definitionFile", ZILEAN_DEFINITION_FILE),
+            ("baseUrl", ZILEAN_URL),
         ):
             old = field_value(existing, name)
-            equivalent = (
-                str(old) == str(value)
-                if name.endswith("appMinimumSeeders")
-                else old == value
-            )
-            if not equivalent:
+            if old != value:
                 changed.append(
                     f"{name}: {redacted(old, name)} -> {redacted(value, name)}"
                 )
@@ -519,7 +511,7 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
             return None
         return Change(
             "prowlarr",
-            "re-point the self-hosted Comet (Local) indexer",
+            "re-point the Zilean (DMM) indexer",
             changed,
             lambda: http.request(
                 "prowlarr",
@@ -531,14 +523,13 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
         )
 
     details = [
-        f"definitionFile: {COMET_DEFINITION_FILE}",
-        f"baseUrl: {COMET_URL}",
-        "torrentBaseSettings.appMinimumSeeders: 0",
+        f"definitionFile: {ZILEAN_DEFINITION_FILE}",
+        f"baseUrl: {ZILEAN_URL}",
     ]
 
     def apply() -> None:
         payload = {
-            "name": "Comet (Local)",
+            "name": "Zilean",
             "implementation": "Cardigann",
             "implementationName": "Cardigann",
             "configContract": "CardigannSettings",
@@ -546,9 +537,8 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
             "tags": [],
             "priority": 1,
             "fields": [
-                {"name": "definitionFile", "value": COMET_DEFINITION_FILE},
-                {"name": "baseUrl", "value": COMET_URL},
-                {"name": "torrentBaseSettings.appMinimumSeeders", "value": "0"},
+                {"name": "definitionFile", "value": ZILEAN_DEFINITION_FILE},
+                {"name": "baseUrl", "value": ZILEAN_URL},
             ],
         }
         for attempt in range(1, 4):
@@ -572,7 +562,7 @@ def prowlarr_comet_change(http: DockerHTTP, token: str) -> Change | None:
 
     return Change(
         "prowlarr",
-        "create the self-hosted Comet (Local) indexer",
+        "create the Zilean (DMM) indexer",
         details,
         apply,
     )
@@ -1451,7 +1441,7 @@ def main() -> int:
         if unknown_quality:
             changes.append(unknown_quality)
         for change in (
-            prowlarr_comet_change(http, keys["prowlarr"]),
+            prowlarr_zilean_change(http, keys["prowlarr"]),
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
             recyclarr_change(config_dir, keys),

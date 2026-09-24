@@ -123,13 +123,6 @@ DASHBOARD_PASSWORD_PROMPT = Prompt(
     "a unique password",
     "docs/ingress.md#traefik-dashboard",
 )
-COMET_DASHBOARD_PASSWORD_PROMPT = Prompt(
-    "Comet admin dashboard password",
-    "The password to open Comet's admin dashboard over the tailnet. It is stored "
-    "plaintext in stacks/media-server/.env for Comet to hash at login.",
-    "a unique password",
-    "docs/services/wiring.md",
-)
 CLOUDFLARE_PROMPT = Prompt(
     "Cloudflare DNS API token (blank to skip)",
     "A least-privilege token with Zone Read and DNS Edit for your domain, used for wildcard certificates.",
@@ -334,20 +327,6 @@ def configure_env(force: bool) -> list[str]:
         traefik.set("CROWDSEC_BOUNCER_API_KEY", secrets.token_hex(32))
         changes.append("CROWDSEC_BOUNCER_API_KEY")
 
-    if not media.get("COMET_POSTGRES_PASSWORD"):
-        media.set("COMET_POSTGRES_PASSWORD", secrets.token_hex(32))
-        changes.append("COMET_POSTGRES_PASSWORD")
-
-    if force or not media.get("COMET_DASHBOARD_PASSWORD"):
-        if confirm(
-            "Configure the Comet admin dashboard password?",
-            bool(media.get("COMET_DASHBOARD_PASSWORD")),
-        ):
-            password = prompt(COMET_DASHBOARD_PASSWORD_PROMPT, secret=True)
-            if password:
-                media.set("COMET_DASHBOARD_PASSWORD", password)
-                changes.append("COMET_DASHBOARD_PASSWORD")
-
     for key, default in (("SUB_DOMAIN_TRAEFIK", "traefik"),):
         value = validate_subdomain(traefik.get(key) or default, key)
         if traefik.set(key, value):
@@ -360,7 +339,6 @@ def configure_env(force: bool) -> list[str]:
         "prowlarr",
         "bazarr",
         "decypharr",
-        "comet",
     ):
         key = f"SUB_DOMAIN_{app.upper()}"
         value = validate_subdomain(media.get(key) or app, key)

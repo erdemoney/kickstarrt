@@ -140,9 +140,9 @@ services:
       PGID: ${ENV_PGID:-1000}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      # The stack's own Comet (Local) Cardigann definition
-      # (data/prowlarr/Definitions/Custom/comet-local.yml, tracked in git) is
-      # mounted in via the /config dir, so Prowlarr picks it up at startup and
+      # The stack's own Zilean Cardigann definition
+      # (data/prowlarr/Definitions/Custom/zilean.yml, tracked in git) is mounted
+      # in via the /config dir, so Prowlarr picks it up at startup and
       # `just wire` only registers the indexer.
       - ../../data/prowlarr:/config
     labels:
@@ -284,12 +284,13 @@ services:
       PGID: ${ENV_PGID:-1000}
       # Validate every Usenet segment before exposing a file to Sonarr/Radarr.
       # This prevents incomplete releases from reaching Arr and surfacing as the
-      # misleading "unable to determine if file is a sample" state.
-      USENET__IMPORT_AVAILABILITY_SAMPLE_PERCENT: "100"
+      # misleading "unable to determine if file is a sample" state. Decypharr's
+      # env overrides are read with a DECYPHARR_ prefix (see its config env.go).
+      DECYPHARR_USENET__IMPORT_AVAILABILITY_SAMPLE_PERCENT: "100"
       # Keep scheduled repair checks modest while still catching broken files.
-      USENET__AVAILABILITY_SAMPLE_PERCENT: "10"
+      DECYPHARR_USENET__AVAILABILITY_SAMPLE_PERCENT: "10"
       # Fail unavailable NZB processing instead of leaving it retrying forever.
-      USENET__PROCESSING_TIMEOUT: "10m"
+      DECYPHARR_USENET__PROCESSING_TIMEOUT: "10m"
     volumes:
       - /mnt/debrid:/mnt:rshared
       - ../../data/decypharr/configs:/app
@@ -303,121 +304,6 @@ services:
       - "traefik.http.routers.decypharr.rule=Host(`${SUB_DOMAIN_DECYPHARR}.${DOMAIN}`)"
       - "traefik.http.routers.decypharr.tls=true"
       - "traefik.http.services.decypharr.loadbalancer.server.port=8282"
-
-  comet:
-    # Debrid/torrent search add-on used as the stack's self-hosted indexer
-    # ("Comet (Local)" Prowlarr Cardigann adapter for Comet's native Torznab API, see
-    # docs/services/comet.md). The DMM ingester loads
-    # hashlists into comet's own Postgres and SCRAPE_DMM searches that local
-    # cache. No web UI worth exposing, so no Traefik labels and no published
-    # ports: Prowlarr alone talks to it at http://comet:8000 over the internal
-    # network. The one-time first DMM ingestion is the heavy one (10-30 min CPU,
-    # resumable on restart); subsequent cycles (DMM_INGEST_INTERVAL) are
-    # incremental. Upstream publishes no version tags, so the image is pinned by
-    # digest (index of `latest`, v2.58.0).
-    image: g0ldyy/comet@sha256:dca62133336e02784d02aaad861381820674d1c8e3e98a03797610b81ee4defe
-    container_name: comet
-    <<: *common
-    init: true
-    read_only: true
-    tmpfs:
-      - /tmp:size=64m,mode=1777
-    depends_on:
-      comet-postgres:
-        condition: service_healthy
-    environment:
-      DATABASE_TYPE: postgresql
-      DATABASE_URL: postgresql://comet:${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}@comet-postgres:5432/comet
-      # Tailnet-visible dashboard (https://comet.<DOMAIN>); `just init` writes
-      # this password to .env as COMET_DASHBOARD_PASSWORD. Comet's container env
-      # name is ADMIN_DASHBOARD_PASSWORD; keep the key here as upstream expects.
-      # CONFIGURE_PAGE_PASSWORD for /configure is left unset - the tailnet is the
-      # gate, like the other panels.
-      ADMIN_DASHBOARD_PASSWORD: ${COMET_DASHBOARD_PASSWORD:?set COMET_DASHBOARD_PASSWORD in stacks/media-server/.env}
-      # Scrapers: DMM from Comet's local hashlist DB, plus the public MediaFusion
-      # (mediafusion.elfhosted.com) and StremThru (stremthru.13377001.xyz)
-      # instances. Torrentio stays off: torrentio.strem.fun Cloudflare-challenges
-      # VPS/datacenter IPs. Debridio/AIOStreams are env-gated placeholders
-      # (set the SCRAPE_* toggles and API keys in stacks/media-server/.env).
-      SCRAPE_DMM: "true"
-      DMM_INGEST_ENABLED: "true"
-      DMM_INGEST_CONCURRENT_WORKERS: "1"
-      SCRAPE_MEDIAFUSION: "true"
-      SCRAPE_STREMTHRU: "true"
-      SCRAPE_TORRENTIO: "false"
-      SCRAPE_DEBRIDIO: "${SCRAPE_DEBRIDIO:-false}"
-      DEBRIDIO_API_KEY: "${DEBRIDIO_API_KEY:-}"
-      DEBRIDIO_PROVIDER: "${DEBRIDIO_PROVIDER:-realdebrid}"
-      DEBRIDIO_PROVIDER_KEY: "${DEBRIDIO_PROVIDER_KEY:-}"
-      SCRAPE_AIOSTREAMS: "${SCRAPE_AIOSTREAMS:-false}"
-      # AIOStreams has no public default, and Comet requires a non-empty URL even
-      # when the toggle is off (AIOStreamsConfig validates at import, crashing
-      # the container on ""), so the unset value is a non-empty placeholder.
-      AIOSTREAMS_URL: "${AIOSTREAMS_URL:-https://placeholder.invalid}"
-      AIOSTREAMS_USER_UUID_AND_PASSWORD: "${AIOSTREAMS_USER_UUID_AND_PASSWORD:-}"
-      # Anime: Nyaa, AnimeTosho, and SeaDex only fire for anime content, so they
-      # can't pollute the movie/TV Torznab feeds. Anime mapping is already on by
-      # default. These scrapers are enabled by default; set their toggles to false
-      # in .env to disable them. AnimeTosho defaults to `background` (Comet
-      # context mode, not a plain bool) because its public instance rate-limits
-      # (429) when hit by live Torznab searches; it still contributes to
-      # background pre-caching. Set SCRAPE_ANIMETOSHO=true (both) in .env to
-      # re-enable it for live searches.
-      SCRAPE_NYAA: "${SCRAPE_NYAA:-true}"
-      SCRAPE_ANIMETOSHO: "${SCRAPE_ANIMETOSHO:-background}"
-      SCRAPE_SEADEX: "${SCRAPE_SEADEX:-true}"
-      SEADEX_ANIME_ONLY: "${SEADEX_ANIME_ONLY:-true}"
-      # All enabled scrapers participate in live searches and background
-      # pre-caching; Comet deduplicates results in its cache.
-      SCRAPE_PEERFLIX: "${SCRAPE_PEERFLIX:-true}"
-      # Background pre-caching is modest on purpose (single worker, capped runs)
-      # to avoid hammering the public scrapers and this box's CPU/RAM.
-      BACKGROUND_SCRAPER_ENABLED: "true"
-      BACKGROUND_SCRAPER_CONCURRENT_WORKERS: "1"
-      BACKGROUND_SCRAPER_MAX_MOVIES_PER_RUN: "100"
-      BACKGROUND_SCRAPER_MAX_SERIES_PER_RUN: "100"
-      # Keep the process pool lean; raise alongside DMM_INGEST_CONCURRENT_WORKERS.
-      EXECUTOR_MAX_WORKERS: "1"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - ../../data/comet:/app/data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.comet.entrypoints=${COMET_ENTRYPOINTS:-https-tailnet}"
-      - "traefik.http.routers.comet.rule=Host(`${SUB_DOMAIN_COMET}.${DOMAIN}`)"
-      - "traefik.http.routers.comet.tls=true"
-      # Comet's root redirects to /configure; send the hostname root to the admin
-      # dashboard instead. Other paths (/stream, /manifest.json, /configure, etc.)
-      # pass through this same router unchanged.
-      - "traefik.http.routers.comet.middlewares=comet-admin-redirect"
-      - "traefik.http.middlewares.comet-admin-redirect.redirectregex.regex=^https?://([^/]+)/?$"
-      - "traefik.http.middlewares.comet-admin-redirect.redirectregex.replacement=https://$${1}/admin"
-      - "traefik.http.middlewares.comet-admin-redirect.redirectregex.permanent=true"
-      - "traefik.http.services.comet.loadbalancer.server.port=8000"
-    # The image ships its own HEALTHCHECK (python -m comet.healthcheck), so no
-    # healthcheck block is needed here.
-
-  comet-postgres:
-    # Comet's index database. shm_size is required: the default 64m fails the
-    # bulk DMM hashlist ingestion. Never publish the port - unlike every other
-    # container, this one has real credentials on Postgres.
-    # PG 18+ images use pg_ctlcluster-compatible layouts and require a single
-    # mount at /var/lib/postgresql (data lands in /var/lib/postgresql/<major>/docker).
-    image: postgres:18.6-alpine3.24
-    container_name: comet-postgres
-    <<: *common
-    shm_size: 256m
-    environment:
-      POSTGRES_DB: comet
-      POSTGRES_USER: comet
-      POSTGRES_PASSWORD: ${COMET_POSTGRES_PASSWORD:?set COMET_POSTGRES_PASSWORD in stacks/media-server/.env}
-    volumes:
-      - ../../data/comet-pg:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U comet -d comet"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   default:

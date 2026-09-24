@@ -1,10 +1,4 @@
-# Local custom formats used by the stack's profile configuration.
-resource_providers:
-  - name: kickstarrt-radarr-custom-formats
-    type: custom-formats
-    path: /config/custom-formats
-    service: radarr
-  - name: kickstarrt-sonarr-custom-formats
-    type: custom-formats
-    path: /config/custom-formats
-    service: sonarr
+# Local resource providers consumed by data/recyclarr/configs/*.yml. The stack
+# previously shipped a local DEBRID-CACHED custom format here; it is gone, so no
+# resource_providers are declared. This file stays so Recyclarr's default
+# settings file resolves cleanly.

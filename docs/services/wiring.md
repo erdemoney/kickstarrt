@@ -33,8 +33,8 @@ just wire --yes       # non-interactive use after reviewing the dry run
 
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
 reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
-Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the self-hosted
-**Comet (Local)** indexer (its git-tracked Prowlarr Cardigann adapter is mounted in with
+Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the hosted
+**Zilean (DMM)** indexer (its git-tracked Prowlarr Cardigann adapter is mounted in with
 Prowlarr's `/config`), Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
@@ -74,8 +74,7 @@ break CORS, and add latency; they are for browsers only).
 | prowlarr  | `http://prowlarr:9696`  | 9696 | Settings → General → API Key                    |
 | recyclarr | —                      | —    | automatic — nothing to paste (see below)        |
 | bazarr    | `http://bazarr:6767`    | 6767 | (outbound only)                                 |
-| decypharr | `http://decypharr:8282` | 8282 | Settings → API token (shown once after wizard)  |
-| comet     | `http://comet:8000`     | 8000 | (indexer, no API key — see [Comet](comet); admin dashboard `https://comet.<DOMAIN>/admin`, password set by `just init`) |
+| decypharr | `http://decypharr:8282` | 8282 | Settings → API token (shown once after wizard) |
 
 Rule of thumb: when any UI asks for another app's **URL + API key**, use the
 `http://<service>:<port>` from the table and the key from the target app. Sanity-check any
@@ -135,7 +134,7 @@ anyway: `link()` isn't implemented). Two constraints follow:
 ## Prowlarr application sync
 
 `just wire` provisions Prowlarr's Sonarr and Radarr application links and enables full sync.
-Every indexer added in Prowlarr, including the self-hosted [Comet (Local)](comet) indexer, is then pushed to both apps.
+Every indexer added in Prowlarr, including the hosted [Zilean](zilean) indexer, is then pushed to both apps.
 Choose and test indexers in Prowlarr; there is no reason to recreate the application links by
 hand unless you intentionally changed them.
 

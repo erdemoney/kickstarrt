@@ -84,10 +84,6 @@ radarr:
       - trash_ids: [af94e0fe497124d1f9ce732069ec8c3b] # WEB Tier 03
         assign_scores_to: [{ name: Direct Play, score: 1600 }]
 
-      # --- prefer Comet's debrid-ready cache candidates over uncached grabs ---
-      - trash_ids: [kickstarrt-debrid-cached]
-        assign_scores_to: [{ name: Direct Play, score: 300 }]
-
       # --- HDR: direct-plays on HDR clients (SDR-only household? zero these) ---
       - trash_ids: [493b6d1dbec3c3364c59d7607f7e3405] # HDR
         assign_scores_to: [{ name: Direct Play, score: 500 }]
