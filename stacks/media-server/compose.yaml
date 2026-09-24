@@ -204,43 +204,6 @@ services:
       retries: 3
       start_period: 300s
 
-  hunt:
-    build:
-      context: ../..
-      dockerfile: hunt/Dockerfile
-    image: kickstarrt/hunt:local
-    profiles: ["hunt"]
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    read_only: true
-    tmpfs:
-      - /tmp
-    environment:
-      HUNT_MODE: ${HUNT_MODE:-both}
-      HUNT_SONARR: ${HUNT_SONARR:-true}
-      HUNT_RADARR: ${HUNT_RADARR:-true}
-      HUNT_SONARR_API_KEY: ${HUNT_SONARR_API_KEY:-}
-      HUNT_RADARR_API_KEY: ${HUNT_RADARR_API_KEY:-}
-      HUNT_SONARR_URL: http://sonarr:8989/api/v3
-      HUNT_RADARR_URL: http://radarr:7878/api/v3
-      HUNT_MISSING_BATCH_SIZE: ${HUNT_MISSING_BATCH_SIZE:-10}
-      HUNT_UPGRADE_BATCH_SIZE: ${HUNT_UPGRADE_BATCH_SIZE:-5}
-      HUNT_DELAY_SECONDS: ${HUNT_DELAY_SECONDS:-60}
-      HUNT_MAX_ITEMS_PER_RUN: ${HUNT_MAX_ITEMS_PER_RUN:-100}
-      HUNT_MAX_QUEUE_SIZE: ${HUNT_MAX_QUEUE_SIZE:-0}
-      HUNT_COOLDOWN_DAYS: ${HUNT_COOLDOWN_DAYS:-7}
-      HUNT_STATE_FILE: /state/state.json
-      HUNT_LOCK_FILE: /tmp/hunt.lock
-    volumes:
-      - ../../data/hunt:/state
-    depends_on:
-      radarr:
-        condition: service_healthy
-      sonarr:
-        condition: service_healthy
-
   bazarr:
     image: lscr.io/linuxserver/bazarr:1.6.0
     container_name: bazarr

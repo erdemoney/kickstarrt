@@ -6,9 +6,11 @@ nav_order: 8
 
 # Back-catalog hunting
 
-The repository includes a small, ephemeral container that asks Sonarr and Radarr to search for
+The repository includes a small job that asks Sonarr and Radarr to search for
 monitored missing items and files below their quality cutoffs. It does not replace either
-application, download anything itself, or expose a web interface.
+application, download anything itself, or expose a web interface. Each run launches the repo's
+`scripts/hunt.py` inside an ephemeral container from a pinned stock `python` image, then removes
+the container.
 
 ## Setup
 

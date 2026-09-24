@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-"""Search Sonarr and Radarr for missing media and quality upgrades."""
+"""Search Sonarr and Radarr for missing media and quality upgrades.
+
+Run with no arguments inside the hunt container to execute a search. On the host,
+`just hunt-run` (and the optional systemd timer) launch that container via the
+`run` operation; `schedule`/`status`/`unschedule` manage the timer.
+"""
 
 from __future__ import annotations
 
 import fcntl
+import getpass
 import json
 import os
+import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -15,6 +23,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+
+DEFAULT_CALENDAR = "*-*-* 03:00:00"
+SERVICE_NAME = "kickstarrt-hunt"
+SERVICE_UNIT = f"/etc/systemd/system/{SERVICE_NAME}.service"
+TIMER_UNIT = f"/etc/systemd/system/{SERVICE_NAME}.timer"
 
 
 class HuntError(RuntimeError):
@@ -323,7 +337,7 @@ def hunt() -> None:
     )
 
 
-def main() -> int:
+def run_worker() -> int:
     lock_path = Path(os.environ.get("HUNT_LOCK_FILE", "/tmp/hunt.lock"))
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+") as lock:
@@ -335,9 +349,217 @@ def main() -> int:
     return 0
 
 
+def require_just() -> str:
+    from .common import ScriptError
+
+    just = shutil.which("just")
+    if just is None:
+        raise ScriptError("'just' not on PATH - install just before scheduling")
+    return just
+
+
+def run_container(mode: str) -> None:
+    from .common import EnvFile, ROOT, ScriptError, run
+
+    if mode not in {"missing", "upgrades", "both"}:
+        raise ScriptError("HUNT_MODE must be missing, upgrades, or both")
+    env = ROOT / "stacks" / "media-server" / ".env"
+    if not env.is_file():
+        raise ScriptError("no stacks/media-server/.env - run 'just init' first")
+    state = ROOT / "data" / "hunt"
+    state.mkdir(parents=True, exist_ok=True)
+    config = EnvFile(env)
+    image = os.environ.get("HUNT_IMAGE", "python:3.13-alpine3.22")
+    puid = config.get("ENV_PUID") or "1000"
+    pgid = config.get("ENV_PGID") or "1000"
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "internal",
+        "--user",
+        f"{puid}:{pgid}",
+        "--read-only",
+        "--tmpfs",
+        "/tmp",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges:true",
+        "-v",
+        f"{ROOT / 'scripts' / 'hunt.py'}:/app/hunt.py:ro",
+        "-v",
+        f"{state}:/state",
+        "--workdir",
+        "/app",
+        "-e",
+        f"HUNT_MODE={mode}",
+    ]
+    for line in env.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line.startswith("HUNT_") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        value = value.strip().strip("'\"")
+        if value:
+            command.extend(["-e", f"{key}={value}"])
+    command.extend([image, "python", "/app/hunt.py"])
+    run(command, f"hunt run ({mode})")
+
+
+def write_unit(path: str, content: str) -> None:
+    from .common import ScriptError
+
+    result = subprocess.run(
+        ["sudo", "tee", path],
+        input=content,
+        text=True,
+        stdout=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode:
+        raise ScriptError(f"could not write {path}")
+
+
+def schedule(calendar: str) -> None:
+    from .common import ROOT, ScriptError, run
+
+    if shutil.which("systemctl") is None:
+        raise ScriptError(
+            "systemd is unavailable; run 'just hunt-run' manually instead"
+        )
+    if shutil.which("sudo") is None:
+        raise ScriptError("sudo not found - install sudo before scheduling")
+    just = require_just()
+    if "\n" in calendar or "\r" in calendar or "\x00" in calendar:
+        raise ScriptError("invalid newline or NUL in calendar")
+    if shutil.which("systemd-analyze") is not None:
+        run(("systemd-analyze", "calendar", calendar), "validate hunt calendar")
+
+    user = getpass.getuser()
+    print(
+        "Hunt timer\n"
+        f"  Command : {just} hunt-run\n"
+        f"  Workdir : {ROOT}\n"
+        f"  Schedule: {calendar} (local server time)\n"
+        f"  User    : {user}\n"
+        "  Behavior: no catch-up; runs cannot overlap (in-container lock)\n"
+        f"  Units   : {TIMER_UNIT}\n"
+        f"            {SERVICE_UNIT}"
+    )
+    try:
+        confirmation = input("Proceed? [y/N] ")
+    except EOFError:
+        confirmation = ""
+    if confirmation.lower() not in {"y", "yes"}:
+        raise ScriptError("aborted")
+
+    service = "\n".join(
+        [
+            "[Unit]",
+            "Description=Search Sonarr and Radarr back catalogs",
+            "After=network-online.target docker.service",
+            "Wants=network-online.target",
+            "",
+            "[Service]",
+            "Type=oneshot",
+            f"User={user}",
+            f"WorkingDirectory={ROOT}",
+            f"ExecStart={just} hunt-run",
+            "",
+        ]
+    )
+    timer = "\n".join(
+        [
+            "[Unit]",
+            "Description=Run the Sonarr/Radarr back-catalog hunt",
+            "",
+            "[Timer]",
+            f"OnCalendar={calendar}",
+            "Persistent=false",
+            f"Unit={SERVICE_NAME}.service",
+            "",
+            "[Install]",
+            "WantedBy=timers.target",
+            "",
+        ]
+    )
+    write_unit(SERVICE_UNIT, service)
+    write_unit(TIMER_UNIT, timer)
+    run(("sudo", "systemctl", "daemon-reload"), "reload systemd")
+    run(
+        ("sudo", "systemctl", "enable", "--now", f"{SERVICE_NAME}.timer"),
+        "enable hunt timer",
+    )
+    print(f"\ninstalled {SERVICE_NAME}.{{service,timer}} - timer enabled and active")
+    status()
+    print("remove it later with 'just hunt-unschedule'.")
+
+
+def status() -> None:
+    from .common import ScriptError, run
+
+    if shutil.which("systemctl") is None:
+        raise ScriptError("systemd is unavailable")
+    run(
+        ("systemctl", "list-timers", f"{SERVICE_NAME}.timer", "--no-pager"),
+        "list hunt timer",
+    )
+
+
+def unschedule() -> None:
+    from .common import ScriptError, run
+
+    if shutil.which("systemctl") is None:
+        print("no systemd - nothing to uninstall")
+        return
+    if shutil.which("sudo") is None:
+        raise ScriptError("sudo not found - run these commands as root")
+    subprocess.run(
+        ["sudo", "systemctl", "disable", "--now", f"{SERVICE_NAME}.timer"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    subprocess.run(
+        ["sudo", "systemctl", "reset-failed", f"{SERVICE_NAME}.timer"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    run(("sudo", "rm", "-f", TIMER_UNIT, SERVICE_UNIT), "remove hunt units")
+    run(("sudo", "systemctl", "daemon-reload"), "reload systemd")
+    print(f"removed {SERVICE_NAME}.{{timer,service}} and stopped the timer.")
+
+
+def main(argv: list[str]) -> int:
+    if not argv:
+        return run_worker()
+
+    from .common import ScriptError
+
+    operation = argv[0]
+    try:
+        if operation == "run":
+            run_container(argv[1] if len(argv) > 1 else "both")
+        elif operation == "schedule":
+            schedule(argv[1] if len(argv) > 1 else DEFAULT_CALENDAR)
+        elif operation == "status":
+            status()
+        elif operation == "unschedule":
+            unschedule()
+        else:
+            raise ScriptError(f"unknown hunt operation: {operation}")
+    except ScriptError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
 if __name__ == "__main__":
     try:
-        raise SystemExit(main())
+        raise SystemExit(main(sys.argv[1:]))
     except HuntError as exc:
         print(f"error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc

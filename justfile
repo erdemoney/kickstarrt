@@ -3,6 +3,7 @@ set dotenv-load := false
 
 stack_list := shell("python3 -m scripts.stacks")
 restic_image := "restic/restic:0.19.1"
+hunt_image := "python:3.13-alpine3.22"
 
 # Show available recipes
 default:
@@ -187,20 +188,20 @@ maintenance-unschedule:
 # Run one ephemeral, rate-limited Sonarr/Radarr back-catalog hunt.
 [group('Maintenance')]
 hunt-run MODE="both":
-    docker compose -f stacks/media-server/compose.yaml run --build --rm --no-deps -e HUNT_MODE="{{ MODE }}" hunt
+    HUNT_IMAGE="{{ hunt_image }}" exec python3 -m scripts.hunt run "{{ MODE }}"
 
 # Install the ephemeral hunt systemd timer (default: 03:00 local time).
 [group('Maintenance')]
 hunt-schedule ON_CALENDAR="*-*-* 03:00:00":
-    python3 -m scripts.hunt_schedule schedule "{{ ON_CALENDAR }}"
+    python3 -m scripts.hunt schedule "{{ ON_CALENDAR }}"
 
 [group('Maintenance')]
 hunt-status:
-    python3 -m scripts.hunt_schedule status
+    python3 -m scripts.hunt status
 
 [group('Maintenance')]
 hunt-unschedule:
-    python3 -m scripts.hunt_schedule unschedule
+    python3 -m scripts.hunt unschedule
 
 # Read-only host, firewall, DNS, and container health checks.
 [group('Diagnostics')]
