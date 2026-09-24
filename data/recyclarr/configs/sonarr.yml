@@ -105,10 +105,10 @@ sonarr:
             qualities: [Bluray-1080p Remux, Bluray-1080p]
           - name: Bluray-2160p
           - name: WEBDL-1080p
-            qualities: [WEBRip-1080p, HDTV-1080p]
+            qualities: [WEBDL-1080p, WEBRip-1080p, HDTV-1080p]
           - name: Bluray-720p
           - name: WEBDL-720p
-            qualities: [WEBRip-720p, HDTV-720p]
+            qualities: [WEBDL-720p, WEBRip-720p, HDTV-720p]
           - name: Bluray-576p
           - name: Bluray-480p
           - name: WEB 480p
