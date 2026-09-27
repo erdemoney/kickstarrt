@@ -25,7 +25,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/jellyfin/config:/config
-      - /mnt/debrid:/mnt:rslave
+      - /mnt/usenet:/mnt/usenet
     tmpfs:
       - /transcode
     # No GPU passthrough here: VPS hosts are CPU-only, so Jellyfin transcodes in
@@ -81,7 +81,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/radarr:/config
-      - /mnt/debrid:/mnt:rslave
+      - /mnt/usenet:/mnt/usenet
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.radarr.entrypoints=${RADARR_ENTRYPOINTS:-https-tailnet}"
@@ -113,7 +113,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/sonarr:/config
-      - /mnt/debrid:/mnt:rslave
+      - /mnt/usenet:/mnt/usenet
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.sonarr.entrypoints=${SONARR_ENTRYPOINTS:-https-tailnet}"
@@ -140,10 +140,6 @@ services:
       PGID: ${ENV_PGID:-1000}
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      # The stack's own Zilean Cardigann definition
-      # (data/prowlarr/Definitions/Custom/zilean.yml, tracked in git) is mounted
-      # in via the /config dir, so Prowlarr picks it up at startup and
-      # `just wire` only registers the indexer.
       - ../../data/prowlarr:/config
     labels:
       - "traefik.enable=true"
@@ -214,7 +210,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/bazarr/config:/config
-      - /mnt/debrid:/mnt:rslave
+      - /mnt/usenet:/mnt/usenet
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bazarr.entrypoints=${BAZARR_ENTRYPOINTS:-https-tailnet}"
@@ -232,41 +228,68 @@ services:
       retries: 3
       start_period: 30s
 
-  decypharr:
-    image: cy01/blackhole:v2.5
-    container_name: decypharr
+  infinidysk:
+    image: ghcr.io/infinidysk/infinidysk:v1.5.0
+    container_name: infinidysk
     <<: *common
-    security_opt:
-      # FUSE mounts via setuid /usr/bin/fusermount3; the x-common no-new-privileges
-      # anchor would block the privilege raise and DFS fails to mount with
-      # "fusermount3: mount failed: Operation not permitted". Decypharr ships
-      # without it (see docs/services/decypharr.md).
-      - apparmor:unconfined
     environment:
       PUID: ${ENV_PUID:-1000}
       PGID: ${ENV_PGID:-1000}
-      # Validate every Usenet segment before exposing a file to Sonarr/Radarr.
-      # This prevents incomplete releases from reaching Arr and surfacing as the
-      # misleading "unable to determine if file is a sample" state. Decypharr's
-      # env overrides are read with a DECYPHARR_ prefix (see its config env.go).
-      DECYPHARR_USENET__IMPORT_AVAILABILITY_SAMPLE_PERCENT: "100"
-      # Keep scheduled repair checks modest while still catching broken files.
-      DECYPHARR_USENET__AVAILABILITY_SAMPLE_PERCENT: "10"
-      # Fail unavailable NZB processing instead of leaving it retrying forever.
-      DECYPHARR_USENET__PROCESSING_TIMEOUT: "10m"
+      TZ: ${TZ:-Etc/UTC}
+      FRONTEND_BACKEND_API_KEY: ${FRONTEND_BACKEND_API_KEY:-}
+      SECURE_COOKIES: "true"
+      TRUST_PROXY: "1"
+      # InfiniDysk's headless settings overlay is authoritative for these keys.
+      NZBDAV_CONFIG__API__KEY: ${FRONTEND_BACKEND_API_KEY:-}
+      NZBDAV_CONFIG__API__CATEGORIES: "tv,movies"
+      NZBDAV_CONFIG__API__IMPORT_STRATEGY: "strm"
+      NZBDAV_CONFIG__API__COMPLETED_DOWNLOADS_DIR: "/mnt/usenet/completed-downloads"
+      NZBDAV_CONFIG__API__ENSURE_ARTICLE_EXISTENCE_CATEGORIES: "tv,movies"
+      NZBDAV_CONFIG__API__ARTICLE_EXISTENCE_CHECK_MODE: "full"
+      NZBDAV_CONFIG__GENERAL__BASE_URL: "http://infinidysk:3000"
+      NZBDAV_CONFIG__MEDIA__LIBRARY_DIR: "/mnt/usenet/library"
+      NZBDAV_CONFIG__WEBDAV__USER: ${WEBDAV_USER:-kickstarrt}
+      NZBDAV_CONFIG__WEBDAV__PASS: ${WEBDAV_PASS:-}
+      NZBDAV_CONFIG__WEBDAV__ENFORCE_READONLY: "true"
+      NZBDAV_CONFIG__REPAIR__ENABLE: "true"
+      # Optional streaming tunables. Off/default is deliberate: with the segment
+      # cache off, every rewatch and seek re-fetches from the provider, and the
+      # VPS stays stateless. Uncomment to trade VPS disk for provider traffic --
+      # the default cache path is /config/segment-cache, already inside the
+      # data/infinidysk volume, so no new mount is needed.
+      # NZBDAV_CONFIG__USENET__SEGMENT_CACHE__ENABLED: "true"
+      # NZBDAV_CONFIG__USENET__SEGMENT_CACHE__MAX_GB: "10"
+      # Cap provider ingress; 1 Mbit/s = 125,000 bytes/s, 0 = unlimited. Never
+      # applies to cache hits or LAN delivery.
+      # NZBDAV_CONFIG__USENET__BANDWIDTH_LIMIT_MBPS: "0"
+      # Queue tuning. One worker is the upstream default: extra workers share the
+      # same provider connection pool and add no capacity, they just spread the
+      # same work wider. Raise only if season packs prove to be a bottleneck.
+      # NZBDAV_CONFIG__QUEUE__WORKER_COUNT: "1"
+      # The stuck-item watchdog fails an item after 3 cumulative stalls
+      # (5 minutes of no progress each), and a full article-existence STAT sweep
+      # is a long phase. Raise this before blaming the release if the queue
+      # reports stall-failures on large season packs.
+      # QUEUE_ITEM_STUCK_MINUTES: "5"
+      NZBDAV_CONFIG__USENET__PROVIDERS: >-
+        ${NZBDAV_CONFIG__USENET__PROVIDERS:-}
+      NZBDAV_CONFIG__ARR__INSTANCES: >-
+        ${NZBDAV_CONFIG__ARR__INSTANCES:-}
     volumes:
-      - /mnt/debrid:/mnt:rshared
-      - ../../data/decypharr/configs:/app
-    cap_add:
-      - SYS_ADMIN
-    devices:
-      - /dev/fuse:/dev/fuse:rwm
+      - ../../data/infinidysk:/config
+      - /mnt/usenet:/mnt/usenet
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.decypharr.entrypoints=${DECYPHARR_ENTRYPOINTS:-https-tailnet}"
-      - "traefik.http.routers.decypharr.rule=Host(`${SUB_DOMAIN_DECYPHARR}.${DOMAIN}`)"
-      - "traefik.http.routers.decypharr.tls=true"
-      - "traefik.http.services.decypharr.loadbalancer.server.port=8282"
+      - "traefik.http.routers.infinidysk.entrypoints=${INFINIDYSK_ENTRYPOINTS:-https-tailnet}"
+      - "traefik.http.routers.infinidysk.rule=Host(`${SUB_DOMAIN_INFINIDYSK}.${DOMAIN}`)"
+      - "traefik.http.routers.infinidysk.tls=true"
+      - "traefik.http.services.infinidysk.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:3000/healthz > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
 networks:
   default:

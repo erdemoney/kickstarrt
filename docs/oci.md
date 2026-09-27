@@ -143,9 +143,9 @@ node from there.
 
 Notes:
 
-- **This stack fits the A1 comfortably.** Debrid streaming keeps nothing on disk and the
-  Always-Free allotment is 12 GB RAM — plenty for Jellyfin, the \*arrs, and CrowdSec, with
-  the two cores leaving room for occasional CPU transcode.
+- **This stack fits the A1 comfortably.** Usenet streaming keeps the media on the provider — the
+  host stores only tiny `.strm` links — and the Always-Free allotment is 12 GB RAM, plenty for
+  Jellyfin, the \*arrs, and CrowdSec, with the two cores leaving room for occasional CPU transcode.
 - **Reserve the public IP before adding DNS.** An auto-assigned public IP is released when
   the instance stops and may come back different on a rebuild — which would strand the DNS
   records. On the instance page → **Attached VNICs** → the public IP → **Convert to Reserved

@@ -25,8 +25,9 @@ they travel between your device and the server, so your ISP or someone monitorin
 read the content. Your administrator manages the service and may be able to see your requests and
 viewing activity.
 
-No torrenting is done on your device. Any torrent-related downloading is handled safely on the server,
-then the content is transmitted to you over the encrypted HTTPS connection.
+No downloading happens on your device. Your administrator's server fetches the content from their
+Usenet provider over an encrypted connection, then it is transmitted to you over the encrypted
+HTTPS connection.
 
 ## Request something to watch
 

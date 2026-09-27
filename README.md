@@ -2,9 +2,9 @@
 
 # kickst**Arr**t
 
-**A public-IP media stack that runs itself.** Jellyfin + the \*arrs + a debrid gateway, served
-directly on a `:443` edge, guarded by CrowdSec, terminated by Traefik — all defined in one repo
-and brought up with a single command.
+**A public-IP media stack that runs itself.** Jellyfin + the \*arrs + a Usenet streaming gateway,
+served directly on a `:443` edge, guarded by CrowdSec, terminated by Traefik — all defined in one
+repo and brought up with a single command.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/erdemoney/kickstarrt-vps/ci.yml?logo=githubactions&logoColor=white&label=CI)](https://github.com/erdemoney/kickstarrt-vps/actions)
 [![Docs](https://img.shields.io/badge/docs-wiki-blue?logo=readthedocs&logoColor=white)](https://erdemoney.github.io/kickstarrt-vps/)
@@ -17,9 +17,9 @@ and brought up with a single command.
 
 ---
 
-kickst**Arr**t wires together everything a media library needs — **instant, debrid-based
-streaming that keeps nothing on disk**, automatic TLS, and edge security — as code, on a VPS.
-Direct Traefik `:443` ingress (Cloudflare is DNS-only — no video crosses its network), Tailscale
+kickst**Arr**t wires together everything a media library needs — **instant Usenet streaming that
+keeps nothing on disk**, automatic TLS, and edge security — as code, on a VPS. Direct Traefik
+`:443` ingress (Cloudflare is DNS-only — no video crosses its network), Tailscale
 + provider or UFW firewall controls, and no GPU.
 
 ## Architecture
@@ -35,7 +35,7 @@ Direct Traefik `:443` ingress (Cloudflare is DNS-only — no video crosses its n
   VPS public IP :443                           Traefik https-tailnet
   (ufw: 443 opened last;                        (panels + dashboard:
    :80 = https-redirect only,                   radarr sonarr prowlarr bazarr
-   :22 = tailnet only)                          decypharr; tailnet-only, always on)
+   :22 = tailnet only)                          infinidysk; tailnet-only, always on)
                  │                                │
                  ▼                                │
   Traefik https  ────► CrowdSec (WAF/blocking) ──┘
@@ -48,13 +48,13 @@ Direct Traefik `:443` ingress (Cloudflare is DNS-only — no video crosses its n
   │                             │   opt in with `just public enable <service>`
   │ radarr       sonarr         │
   │ prowlarr     bazarr         │   everything else (panels, dashboard):
-  │ recyclarr    decypharr      │   https-tailnet only
+  │ recyclarr    infinidysk     │   https-tailnet only
   └─────────────────────────────┘
 ```
 
-**The media loop:** Prowlarr finds releases → Sonarr/Radarr grab them → Decypharr resolves the
-torrent against your debrid provider into instant FUSE files → the \*arrs symlink them into the
-library → Jellyfin streams to any client. Zero local storage, immediately playable.
+**The media loop:** Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it
+fetches them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin
+streams from the provider. Zero local storage, immediately playable.
 
 ## Services
 
@@ -69,19 +69,19 @@ library → Jellyfin streams to any client. Zero local storage, immediately play
 | `prowlarr`  | Indexer manager, synced to the \*arrs |
 | `bazarr`    | Subtitle search & management |
 | `recyclarr` | TRaSH-Guide sync — ships **Direct Play** (+ Sonarr **Direct Play (Anime)**) quality profiles, applied to Radarr/Sonarr automatically |
-| `decypharr` | Debrid gateway — resolves grabs to instant FUSE streams |
+| `infinidysk` | Usenet streaming gateway — downloads NZBs, serves the SABnzbd API, writes `.strm` links |
 
 ## Key features
 
-- **Nothing stored locally** — imports are symlinks into the debrid mount: instant,
-  near-zero disk usage
+- **Nothing stored locally** — the library is made of tiny `.strm` links; media streams from your
+  Usenet provider on demand
 - **Automatic TLS** — Traefik issues a `*.DOMAIN` Let's Encrypt wildcard via Cloudflare
   DNS-01; services can be opted into public HTTPS with `just public enable <service>`
 - **Layered security** — Tailscale private administration, provider-firewall controls where
   available or host-firewall controls otherwise,
   Traefik TLS and entrypoint isolation, CrowdSec WAF, and application logins; `just health`
   checks the deployment without changing it
-- **Private admin panels** — the \*arrs, Decypharr and the Traefik dashboard resolve by name
+- **Private admin panels** — the \*arrs, InfiniDysk and the Traefik dashboard resolve by name
   *only on your tailnet* (CoreDNS + Tailscale split DNS): `https://radarr.<DOMAIN>` from any
   tailnet device, no public records, no extra login — the tailnet is the gate
   ([Tailnet DNS](https://erdemoney.github.io/kickstarrt-vps/tailnet))
@@ -106,7 +106,7 @@ just dns              # paste the printed nameserver into Tailscale (one-time; s
 just up               # networks -> config dirs -> the whole stack; panels resolve on your tailnet immediately
 ```
 
-After setup: point Jellyfin/Seerr at your debrid and \*arrs ([the docs](https://erdemoney.github.io/kickstarrt-vps/)),
+After setup: point Jellyfin/Seerr at your \*arrs ([the docs](https://erdemoney.github.io/kickstarrt-vps/)),
 then optionally enable public routers, add DNS records, and open the serving ports in your chosen firewall.
 
 Requires [Docker](https://docs.docker.com/engine/install/) and

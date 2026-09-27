@@ -24,7 +24,7 @@ nav_order: 16
 | `just restart <stack>`          | restart a stack                                                                   |
 | `just validate`                 | `docker compose config -q` on every stack (read-only — never writes a `.env`)     |
 | `just prepare`                  | create config dirs and `acme.json` (0600) (called by `just up`); use `--dry-run` to preview what would change |
-| `just wire`                     | interactively reconcile Arr/Decypharr/Prowlarr/Bazarr links, the hosted Zilean (DMM) indexer (register on first run), the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin/API key on first run, or minting the key from existing admin credentials), and Recyclarr secrets through REST APIs; use `--dry-run` to preview |
+| `just wire`                     | interactively reconcile Arr root folders, the **InfiniDysk (Usenet)** download clients and the matching InfiniDysk Arr registrations, Prowlarr's app links, Bazarr connections, Recyclarr secrets, and the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin/API key on first run, or minting the key from existing admin credentials) through REST APIs; use `--dry-run` to preview |
 | `just dns`                      | print the tailnet DNS resolver setup (see [Tailnet DNS](tailnet))                 |
 | `just networks`                 | create the shared `internal` network (pinned subnet `172.30.0.0/16`); use `--dry-run` to report the state without creating it |
 | `just public enable <svc>` / `just public disable <svc>` | enable or remove a service's public Traefik router; does not change UFW or DNS; use `--dry-run` to preview |
@@ -87,12 +87,13 @@ not attempt an automatic rollback.
 
 ## Backups
 
-This is a pure-debrid stack — the host holds nothing but config, so the whole backup story is
+This is a streaming stack — the host holds no media, only config, so the whole backup story is
 one target: the **config directory** — the repo's `data/` dir (`acme.json`, the
-Traefik configs, and each app's own state like the \*arr databases). Nothing in compose is
-precious — any container is one `just up` from a clean slate. The config directory is the
-only state you can't rebuild; if you snapshot exactly one thing, snapshot that (provider
-snapshot API, a cron'd rsync to another disk, ...).
+Traefik configs, and each app's own state like the \*arr databases and InfiniDysk's SQLite
+database). Nothing in compose is precious — any container is one `just up` from a clean slate. The
+config directory is the only state you can't rebuild; if you snapshot exactly one thing, snapshot
+that. The media itself needs no backup: it lives on your Usenet provider, and the library is
+rebuilt by re-downloading from the indexers if the host is ever lost.
 
 ### Offsite restic backups of the repo
 
@@ -215,6 +216,7 @@ for the case local snapshots can't help — the box itself disappearing.
 | -------------------------------------------- | ------------------------------------------------------------------------------ |
 | Renovate opened no PRs                       | see [Updates](updates) troubleshooting                                         |
 | New indexer/app link fails                   | check the URL+port against the [internal DNS table](services/wiring); revisit the API key |
+| InfiniDysk download client test fails        | the Arr client and InfiniDysk must share `FRONTEND_BACKEND_API_KEY`; see [InfiniDysk](services/infinidysk#troubleshooting) |
 | Direct Play / Direct Play (Anime) profile missing in Radarr/Sonarr | `docker logs recyclarr`; if an arr's API key was regenerated, run `just wire` |
 | Bouncer not blocking                         | recreate crowdsec + traefik after a key change; `cscli bouncers list`          |
 | Traefik won't start after this repo's change | first start downloads plugins — check outbound internet; `just validate` first |

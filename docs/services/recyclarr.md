@@ -12,16 +12,16 @@ syncs them daily. There is nothing to paste into either Arr UI.
 
 ## Why these profiles are custom
 
-The stack is designed for a CPU-only VPS and remote debrid playback. **Direct Play** therefore
+The stack is designed for a CPU-only VPS and remote Usenet streaming. **Direct Play** therefore
 optimizes for files clients can play without video re-encoding:
 
 - The quality ladder favors Remux, WEB, and Blu-ray releases at 2160p and 1080p.
 - HEVC is allowed, including 4K, because UHD releases are commonly HEVC and direct-play-capable
   clients can handle them.
 - Audio is not penalized because audio transcoding is comparatively inexpensive.
-- Debrid-cache state is not asserted at the indexer (Zilean mirrors the DMM hashlist without
-  per-hash cache checks); Decypharr's `download_uncached=false` gate is the cache verification at
-  grab time.
+- Availability is not asserted at the indexer; InfiniDysk verifies the release against your
+  Usenet provider at grab time, and repairs it in the background afterwards
+  ([InfiniDysk](infinidysk)).
 - Disk images, Dolby Vision without an HDR10 fallback, AV1, VP9, VC-1, MPEG-2, low-quality, and
   obfuscated releases receive `-10000` and are never grabbed.
 
@@ -33,7 +33,7 @@ hard exclusions.
 The quality ladders are completion-first: they run all the way down to **SDTV** (Sonarr) /
 **DVD-R** (Radarr), so a monitored missing episode or movie is *always* grabbable instead of
 staying empty while waiting for a 4K release. Once a low-tier landing fills the gap, subsequent
-searches upgrade it toward the profile ceiling for free over debrid. The `until_quality` ceilings
+searches upgrade it toward the profile ceiling for free over Usenet. The `until_quality` ceilings
 are untouched, so 4K is still chased - just never allowed to leave a gap behind.
 
 Sonarr's season packs carry a large preference bonus (`+5000`) so a grabbable pack always beats

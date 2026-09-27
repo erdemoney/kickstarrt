@@ -43,7 +43,7 @@ entryPoints:
   # TAILNET-only https: published only on TAILNET_IP (the box's tailnet address),
   # so it is reachable only by traffic that came through the tailnet - no IP
   # allow-list to attach or forget on each panel router. Panels
-  # (radarr/sonarr/prowlarr/bazarr/decypharr + the traefik dashboard) use this
+  # (radarr/sonarr/prowlarr/bazarr/infinidysk + the traefik dashboard) use this
   # one. Same middleware chain as https so panels behave identically, just
   # unreachable from the public path.
   https-tailnet:

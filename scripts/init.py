@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import ipaddress
+import json
 import os
 import secrets
 import subprocess
@@ -159,6 +160,36 @@ RESTIC_PASSWORD_PROMPT = Prompt(
     "a unique backup password",
     "docs/maintenance.md#cloudflare-r2-the-documented-path",
 )
+USENET_HOST_PROMPT = Prompt(
+    "Usenet server hostname",
+    "The TLS-capable news server hostname provided by your Usenet provider.",
+    "news.example.net",
+    "https://www.infinidysk.com/configuration/usenet/",
+)
+USENET_PORT_PROMPT = Prompt(
+    "Usenet server port",
+    "Use the port specified by your provider; 563 is the common TLS port.",
+    "563",
+    "https://www.infinidysk.com/configuration/usenet/",
+)
+USENET_USER_PROMPT = Prompt(
+    "Usenet username",
+    "The username for your news-server account. It is stored in the private media .env file.",
+    "provider account username",
+    "https://www.infinidysk.com/configuration/usenet/",
+)
+USENET_PASSWORD_PROMPT = Prompt(
+    "Usenet password",
+    "The password for your news-server account. It is stored in the private media .env file.",
+    "provider account password",
+    "https://www.infinidysk.com/configuration/usenet/",
+)
+USENET_CONNECTIONS_PROMPT = Prompt(
+    "Usenet connection allowance",
+    "Enter the actual concurrent connection allowance from your provider plan.",
+    "20",
+    "https://www.infinidysk.com/configuration/usenet/",
+)
 
 
 def valid_id(value: str, label: str) -> str:
@@ -167,6 +198,132 @@ def valid_id(value: str, label: str) -> str:
             f"invalid {label}: {value!r}; expected an integer from 0 to 65535"
         )
     return value
+
+
+def valid_port(value: str) -> str:
+    if not value.isdigit() or not 1 <= int(value) <= 65535:
+        raise ScriptError("expected a TCP port from 1 to 65535")
+    return value
+
+
+def valid_connections(value: str) -> str:
+    if not value.isdigit() or not 1 <= int(value) <= 500:
+        raise ScriptError("expected a connection allowance from 1 to 500")
+    return value
+
+
+def valid_tls(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized not in {"true", "false", "yes", "no", "y", "n"}:
+        raise ScriptError("expected yes or no")
+    return "true" if normalized in {"true", "yes", "y"} else "false"
+
+
+def non_empty(value: str) -> str:
+    value = value.strip()
+    if not value:
+        raise ScriptError("value must not be empty")
+    return value
+
+
+def compose_env_literal(value: str) -> str:
+    """Quote a .env value as a Compose literal, escaping embedded apostrophes."""
+    if "\n" in value or "\r" in value or "\x00" in value:
+        raise ScriptError("Usenet settings cannot contain newlines or NUL characters")
+    return "'" + value.replace("'", "\\'") + "'"
+
+
+def provider_from_env(media: EnvFile) -> dict[str, object] | None:
+    raw = media.get("NZBDAV_CONFIG__USENET__PROVIDERS")
+    if not raw:
+        return None
+    # EnvFile removes the outer quote pair. Compose treats `\\'` as an escaped
+    # apostrophe inside a single-quoted value; restore it before parsing the JSON.
+    raw = raw.replace("\\'", "'")
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ScriptError(
+            "NZBDAV_CONFIG__USENET__PROVIDERS is not valid JSON; run `just init --force` to replace it"
+        ) from exc
+    providers = value.get("Providers") if isinstance(value, dict) else None
+    if (
+        not isinstance(providers, list)
+        or len(providers) != 1
+        or not isinstance(providers[0], dict)
+    ):
+        raise ScriptError(
+            "NZBDAV_CONFIG__USENET__PROVIDERS must contain exactly one provider"
+        )
+    return providers[0]
+
+
+def configure_infinidysk(media: EnvFile, force: bool, changes: list[str]) -> None:
+    provider = provider_from_env(media)
+    if provider is None or force:
+        host = prompt(
+            USENET_HOST_PROMPT,
+            str((provider or {}).get("Host", "")),
+            validator=lambda value: validate_hostname(value, "Usenet server hostname"),
+        )
+        port = prompt(
+            USENET_PORT_PROMPT,
+            str((provider or {}).get("Port", "563")),
+            validator=valid_port,
+            default="563",
+        )
+        tls = prompt(
+            Prompt(
+                "Use TLS for the Usenet connection?",
+                "TLS is strongly recommended when supported by your news server.",
+                "yes",
+                "https://www.infinidysk.com/configuration/usenet/",
+            ),
+            str((provider or {}).get("UseSsl", "true")),
+            validator=valid_tls,
+            default="true",
+        )
+        username = prompt(
+            USENET_USER_PROMPT,
+            str((provider or {}).get("User", "")),
+            validator=non_empty,
+        )
+        password = prompt(
+            USENET_PASSWORD_PROMPT,
+            secret=True,
+            validator=non_empty,
+        )
+        connections = prompt(
+            USENET_CONNECTIONS_PROMPT,
+            str((provider or {}).get("MaxConnections", "")),
+            validator=valid_connections,
+        )
+        provider = {
+            "Type": 1,
+            "Host": host,
+            "Port": int(port),
+            "UseSsl": tls == "true",
+            "User": username,
+            "Pass": password,
+            "MaxConnections": int(connections),
+            "Nickname": "primary",
+        }
+        serialized = json.dumps({"Providers": [provider]}, separators=(",", ":"))
+        if media.set(
+            "NZBDAV_CONFIG__USENET__PROVIDERS", compose_env_literal(serialized)
+        ):
+            changes.append("InfiniDysk Usenet provider")
+
+    if not media.get("FRONTEND_BACKEND_API_KEY"):
+        key = secrets.token_urlsafe(32)
+        media.set("FRONTEND_BACKEND_API_KEY", key)
+        changes.append("InfiniDysk API key")
+    if not media.get("WEBDAV_USER"):
+        media.set("WEBDAV_USER", "kickstarrt")
+        changes.append("InfiniDysk WebDAV username")
+    if not media.get("WEBDAV_PASS"):
+        media.set("WEBDAV_PASS", secrets.token_urlsafe(32))
+        changes.append("InfiniDysk WebDAV password")
 
 
 def detected_ids() -> tuple[str, str]:
@@ -338,7 +495,7 @@ def configure_env(force: bool) -> list[str]:
         "sonarr",
         "prowlarr",
         "bazarr",
-        "decypharr",
+        "infinidysk",
     ):
         key = f"SUB_DOMAIN_{app.upper()}"
         value = validate_subdomain(media.get(key) or app, key)
@@ -355,7 +512,7 @@ def configure_env(force: bool) -> list[str]:
             f"Configured container identity: {uid}:{gid}\n"
             f"Current user identity:        {detected_uid}:{detected_gid}\n"
             "Keeping the configured identity is usually correct for an existing install.\n"
-            "See docs/services/decypharr.md for ownership details."
+            "See the service setup guide for container ownership details."
         )
         if force and confirm(
             "Replace the configured container identity with the current user?", False
@@ -368,6 +525,8 @@ def configure_env(force: bool) -> list[str]:
         changes.append("ENV_PUID")
     if media.set("ENV_PGID", gid):
         changes.append("ENV_PGID")
+
+    configure_infinidysk(media, force, changes)
 
     if force or not traefik.get("TRAEFIK_DASHBOARD_CREDENTIALS"):
         if confirm(

@@ -1,7 +1,7 @@
 title: kickstArrt
 description: >-
   Operations and setup wiki for a VPS media stack
-  (Traefik `:443` edge, Jellyfin, Seerr, Sonarr/Radarr/Prowlarr/Bazarr/Recyclarr, Decypharr).
+  (Traefik `:443` edge, Jellyfin, Seerr, Sonarr/Radarr/Prowlarr/Bazarr/Recyclarr, InfiniDysk).
 remote_theme: just-the-docs/just-the-docs
 color_scheme: light
 

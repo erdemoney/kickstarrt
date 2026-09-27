@@ -5,7 +5,7 @@ nav_order: 4
 
 # Tailnet DNS: admin panels by name
 
-The admin panels (Radarr, Sonarr, Prowlarr, Bazarr, Decypharr, the Traefik dashboard) have **no public DNS records** — inside your tailnet they resolve **by name**,
+The admin panels (Radarr, Sonarr, Prowlarr, Bazarr, InfiniDysk, the Traefik dashboard) have **no public DNS records** — inside your tailnet they resolve **by name**,
 `https://radarr.<DOMAIN>` and so on, with the same wildcard Let's Encrypt cert, no
 `/etc/hosts` editing, and no extra login. The one-time console registration happens during
 setup, **before** first boot ([Quickstart §7](quickstart#7-register-the-tailnet-dns-resolver));

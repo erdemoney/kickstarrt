@@ -10,59 +10,54 @@ The admin account is created on Jellyfin's **first login** (the setup wizard) �
 install, by `just wire`, which completes the wizard through its API and mints a `Kickstarrt` API key
 ([Service wiring → Automated wiring](wiring#automated-wiring)). From there
 the two things that need configuring are the libraries — they point at the library dirs on the
-shared bind (`/mnt/shows`, `/mnt/movies`) — and the transcode policy, tuned for a CPU-only VPS.
+shared bind (`/mnt/usenet/library/shows`, `/mnt/usenet/library/movies`) — and the transcode
+policy, tuned for a CPU-only VPS.
 
 > **Scanning is automatic.** `just wire` configures Sonarr/Radarr to push a library scan to
 > Jellyfin whenever media is imported, upgraded, or renamed (the *arr → Jellyfin connections,
-> library update on). Jellyfin's own filesystem watcher is deliberately not relied on: imports
-> arrive as symlink renames on the debrid FUSE mount, which do not always trigger it. You can
-> still run **Scan All Libraries** manually at any time.
+> library update on). You can still run **Scan All Libraries** manually at any time.
 
 ## 1. Libraries
 
-No path mapping needed: the compose already binds the whole shared tree into Jellyfin at `/mnt`
-(`- /mnt/debrid:/mnt:rslave`), so the library dirs (`/mnt/shows`, `/mnt/movies`), Decypharr's
-DFS mount (`/mnt/decypharr`), and the symlinks Decypharr hands over all resolve at the same
-places as in the \*arrs ([Decypharr](decypharr#visibility-of-the-mount)).
+No path mapping needed: the compose binds the whole shared tree into Jellyfin at its host path
+(`- /mnt/usenet:/mnt/usenet`), so the library dirs and InfiniDysk's staging dir resolve at the same
+places as in the \*arrs ([Service wiring](wiring#root-folders)).
 
 Dashboard → **Libraries** → **Add Media Library**:
 
 - **Content type** — Movies / Shows (or whatever your folder holds).
-- **Folders** → **+** → add the library folder on the shared bind, e.g. `/mnt/shows` or
-  `/mnt/movies`.
+- **Folders** → **+** → add the library folder, e.g. `/mnt/usenet/library/shows` or
+  `/mnt/usenet/library/movies`.
 - Save, then **Scan All Libraries**.
 
-If a library shows empty here but populated on the host, it's the classic mount-propagation
-mistake ([Decypharr → Visibility of the mount](decypharr#visibility-of-the-mount)).
+## 2. Recommended settings for a streaming library
 
-## 2. Recommended settings for a debrid-backed library
+These settings apply to any Jellyfin whose media is fetched on demand rather than stored locally.
+The exact labels can move between Jellyfin releases, but the goals are the same: let the media
+manager announce changes, and avoid making Jellyfin write beside the media.
 
-These settings also apply if you use Jellyfin with a debrid mount outside this stack. The exact
-labels can move between Jellyfin releases, but the goals are the same: let the media manager
-announce changes, and avoid making Jellyfin write back into a virtual or disposable filesystem.
-
-- **Real-time monitoring** — **off**. FUSE mounts and symlink renames do not consistently produce
-  the filesystem events Jellyfin expects. Sonarr/Radarr already send a scan request when they
-  import, upgrade, or rename an item; use **Scan All Libraries** for a manual catch-up scan.
+- **Real-time monitoring** — leave **on**. The library is made of ordinary `.strm` files in a
+  normal directory, so filesystem events do fire. The \*arr → Jellyfin scan connection is still
+  the reliable trigger; use **Scan All Libraries** for a manual catch-up scan.
 - **Save artwork into media folders** — **off** unless you deliberately want artwork beside the
-  media. Keep Jellyfin's metadata and artwork in its config directory instead of writing through
-  a symlink or into a debrid-backed path.
+  media. The library dirs are the \*arr root folders, and sidecar images written into them clutter
+  the import tree. Keep Jellyfin's metadata and artwork in its config directory.
 - **Chapter images and trickplay** — optional. They make seeking nicer on compatible clients, but
   generating and storing them costs CPU, disk space, and scan time. Leave them off on a small VPS
   or enable them only for libraries and users that benefit from them.
 - **TMDb API key** — consider adding your own key in Jellyfin's TMDb provider settings. It usually
   improves title, season, cast, and artwork matching for large or unusually named libraries and
   avoids relying entirely on the provider's shared rate limits. This is optional; it is a metadata
-  API key, not a debrid credential. Use a modest refresh schedule because metadata is local
+  API key, not a Usenet credential. Use a modest refresh schedule because metadata is local
   application state even though the media itself is remote, so large libraries can make the
   Jellyfin config directory grow.
 - **Subtitles** — prefer text subtitles that the client can render. Image subtitles or subtitles
   that must be burned into the picture require video transcoding; that is especially expensive on
   a CPU-only server.
 
-Do not add `/mnt/decypharr` as a library folder. It is Decypharr's read-only virtual mount, not the
-library root. The imported symlinks in `/mnt/shows` and `/mnt/movies` are the paths Jellyfin should
-index, and all media containers see those paths consistently.
+Do not add `/mnt/usenet/completed-downloads` as a library folder. It is InfiniDysk's staging area
+for finished releases, not library content; the imported `.strm` files in
+`/mnt/usenet/library/shows` and `/mnt/usenet/library/movies` are what Jellyfin should index.
 
 ## 3. Stack-specific playback settings
 
@@ -98,13 +93,15 @@ stays idle.
 
 If a library appears empty or a new import is missing:
 
-1. Confirm the library points to `/mnt/shows` or `/mnt/movies`, not `/mnt/decypharr`.
-2. Run **Scan All Libraries** and check the Jellyfin log for a broken symlink or mount error.
-3. Check that the paths are visible inside the Jellyfin container:
+1. Confirm the library points to `/mnt/usenet/library/shows` or `/mnt/usenet/library/movies`, not
+   to the staging directory.
+2. Run **Scan All Libraries** and check the Jellyfin log for a link it could not open.
+3. Check the paths are visible inside the Jellyfin container:
 
    ```bash
-   docker exec jellyfin ls -la /mnt/shows /mnt/movies /mnt/decypharr
+   docker exec jellyfin ls -la /mnt/usenet/library/shows /mnt/usenet/library/movies
    ```
 
-4. If the paths are empty only inside containers, check [Decypharr's mount propagation
-   rules](decypharr#visibility-of-the-mount).
+4. If an import exists but will not play, read the URL inside one `.strm` file and open it from the
+   Jellyfin container (`docker exec jellyfin curl -fsSI <url>`). The link must resolve to
+   InfiniDysk — see [InfiniDysk](infinidysk#troubleshooting).

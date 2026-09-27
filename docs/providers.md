@@ -5,39 +5,56 @@ nav_order: 14
 
 # Recommended providers
 
-Debrid provider picks that pair with the stack. Wiring runs through
-[Indexers](services/indexers) and [Decypharr](services/decypharr).
+Two subscriptions sit behind the stack: a **Usenet provider** (the storage InfiniDysk downloads
+from) and a **Usenet indexer** (where the \*arrs find releases). Wiring runs through
+[Indexers](services/indexers) and [InfiniDysk](services/infinidysk).
 
-## Torbox — debrid + Usenet streaming
+## Usenet provider
 
-- **Plan**: **Pro, ~$10/mo** — recommended for Usenet streaming.
-- **What it is**: a debrid provider with Usenet support that plugs straight into **Decypharr**.
-  Torrent results from Prowlarr are resolved to cached streams, and the Pro plan gives Decypharr's
-  Usenet engine a backend too.
-- **Setup**: create an account, grab an API key from the dashboard, add Torbox as a debrid
-  provider in Decypharr's wizard / config (`provider: "torbox"`).
-- **Pricing**: check <https://torbox.app> — Pro is the sweet spot if you want Usenet streaming
-  without a separate provider.
+InfiniDysk talks plain NNTP to your provider — there is no API key, no plug-in, and no
+provider-specific integration to configure. What matters is the connection detail your provider
+hands you, and the plan limits behind it:
 
-## AltHub — Usenet indexer
+- **Connection allowance** — the concurrent connections your account may hold. `just init` asks for
+  it, and it is a ceiling, not a target: set the number from your plan, because exceeding it gets
+  the connection throttled or blocked. It governs concurrency only, not how much you transfer.
+- **Transfer allowance** — how much you may pull per day or month, if the plan meters it. This
+  stack stores no media, so transfer tracks **watch time, not library size**: every play and every
+  seek re-fetches from the provider, at roughly 5–15 GB per two-hour 1080p WEB watch and 50–90 GB
+  per two-hour 4K remux watch ([InfiniDysk](services/infinidysk#provider-data-usage)). Prefer a
+  plan with generous transfer or no cap at all; an uncapped plan removes this from the decision
+  entirely.
+- **TLS** — use the encrypted port your provider documents (`563` is the common one). Turning
+  TLS off sends your credentials in cleartext.
+- **Retention and article availability** — how long releases stay in the news spool, and whether
+  your plan covers the articles a given release needs. This is the single most common reason a
+  grab fails even though the indexer found it.
 
-- **Price**: **$20 lifetime** (VIP).
-- **What it is**: a Newznab-compatible Usenet indexer; one-time payment, no recurring cost.
-- **Setup**: buy, then add the API key + Newznab URL from your AltHub profile in Prowlarr →
-  Indexers → **Newznab**. It syncs to Sonarr/Radarr like any other indexer.
+Look for a provider that publishes an explicit connection allowance and a retention period; both
+show up directly in the `just init` prompts.
+
+## Usenet indexer
+
+- **Newznab-compatible** is the requirement — Prowlarr adds it under Indexers → **+** → Newznab
+  with the URL and API key from the indexer's profile.
+- **AltHub** is a well-known one-time-payment Newznab indexer — check its current terms before
+  buying.
+- **Private Usenet trackers** (nzb-style invite sites) are the other common route; they work the
+  same way, one indexer at a time.
+
+Anything torrent-based is not useful here: there is no torrent client in the stack, and results
+from a torrent indexer cannot be fetched over NNTP
+([Indexers](services/indexers)).
 
 ## Honorable mentions
 
-- **Real-Debrid** — the classic debrid provider, well supported by Decypharr; largest cache
-  community.
-- **rrn / nzbgeek and friends** — extra Usenet indexers, mostly per-year; AltHub's lifetime deal
-  usually beats them on cost.
-- **trash-guides profiles** (applied automatically via Recyclarr) — not a subscription, but
-  the biggest quality upgrade for free.
+- **trash-guides profiles** (applied automatically via Recyclarr) — not a subscription, but the
+  biggest quality upgrade for free.
 
 ## Budget stack
 
-All-in cost with the defaults: **~$10/mo** (Torbox Pro) + **$20 one-time** (AltHub). Everything
-else in this stack is free and self-hosted.
+Cost is exactly two line items: **your Usenet provider** plus **whichever indexer you subscribe
+to**. Everything else in this stack — InfiniDysk, the \*arrs, Jellyfin, Traefik, CrowdSec — is
+free and self-hosted.
 
 > Pricing as of writing — confirm on vendor sites before subscribing.

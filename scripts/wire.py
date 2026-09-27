@@ -22,12 +22,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+try:
+    from .common import EnvFile
+except ImportError:  # direct invocation via `python3 scripts/wire.py`
+    from common import EnvFile
+
 
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA_ENV = ROOT / "stacks" / "media-server" / ".env"
-
-ZILEAN_URL = "https://zileanfortheweebs.midnightignite.me"
-ZILEAN_DEFINITION_FILE = "zilean"
+MEDIA_COMPOSE = ROOT / "stacks" / "media-server" / "compose.yaml"
 
 SEERR_URL = "http://seerr:5055"
 SEERR_JELLYFIN_HOST = "jellyfin"
@@ -240,7 +243,9 @@ def arr_download_client(
     )
     existing = next((x for x in current if x.get("name") == name), None)
     desired_fields = dict(fields)
-    desired_fields["tvCategory" if app == "sonarr" else "movieCategory"] = app
+    desired_fields["tvCategory" if app == "sonarr" else "movieCategory"] = (
+        "tv" if app == "sonarr" else "movies"
+    )
     if existing:
         payload = json.loads(json.dumps(existing))
         changed = []
@@ -259,10 +264,16 @@ def arr_download_client(
                 f"implementation: {existing.get('implementation')} -> {implementation}"
             )
             payload["implementation"] = implementation
-        secret_change = field_value(existing, "password") != desired_fields.get(
-            "password"
+        secret_field = next(
+            (
+                field
+                for field in ("apiKey", "password")
+                if desired_fields.get(field)
+                and field_value(existing, field) != desired_fields.get(field)
+            ),
+            None,
         )
-        if secret_change:
+        if secret_field:
             try:
                 http.request(
                     app,
@@ -274,11 +285,13 @@ def arr_download_client(
             except WireError:
                 pass
             else:
-                # The Arr API masks or omits stored passwords. A successful
-                # candidate test proves the existing secret works, so do not
-                # prompt for or rewrite a secret-only difference.
-                remove_field(payload, "password")
-                changed = [item for item in changed if not item.startswith("password:")]
+                # The Arr API may mask stored credentials. A successful
+                # candidate test proves the existing secret works, so preserve
+                # it rather than rewriting a secret-only difference.
+                remove_field(payload, secret_field)
+                changed = [
+                    item for item in changed if not item.startswith(f"{secret_field}:")
+                ]
         if not changed:
             return None
         endpoint = f"http://{app}:{8989 if app == 'sonarr' else 7878}/api/v3/downloadclient/{existing['id']}"
@@ -292,7 +305,7 @@ def arr_download_client(
     payload = {
         "name": name,
         "enable": True,
-        "protocol": "torrent" if implementation == "QBittorrent" else "usenet",
+        "protocol": "usenet",
         "implementation": implementation,
         "implementationName": implementation,
         "configContract": contract,
@@ -326,6 +339,54 @@ def root_folder_change(
         f"create root folder {path}",
         [f"path: {path}"],
         lambda: http.request(app, "POST", endpoint, key, {"path": path}),
+    )
+
+
+def infinidysk_arr_settings_change(
+    media_env: EnvFile, keys: dict[str, str]
+) -> Change | None:
+    """Keep InfiniDysk's headless Arr registrations aligned with the live apps."""
+    desired = {
+        "RadarrInstances": [{"Host": "http://radarr:7878", "ApiKey": keys["radarr"]}],
+        "SonarrInstances": [{"Host": "http://sonarr:8989", "ApiKey": keys["sonarr"]}],
+        "QueueRules": [],
+    }
+    serialized = json.dumps(desired, separators=(",", ":"))
+    current_raw = media_env.get("NZBDAV_CONFIG__ARR__INSTANCES")
+    try:
+        current = json.loads(current_raw) if current_raw else None
+    except json.JSONDecodeError as exc:
+        raise WireError(
+            "NZBDAV_CONFIG__ARR__INSTANCES in stacks/media-server/.env is invalid JSON"
+        ) from exc
+    if current == desired:
+        return None
+
+    def apply() -> None:
+        media_env.set("NZBDAV_CONFIG__ARR__INSTANCES", serialized)
+        media_env.write()
+        run_command(
+            [
+                "docker",
+                "compose",
+                "-f",
+                str(MEDIA_COMPOSE),
+                "up",
+                "-d",
+                "infinidysk",
+            ],
+            "recreate InfiniDysk with Arr connections",
+        )
+
+    return Change(
+        "infinidysk",
+        "register Sonarr and Radarr for health and queue management",
+        [
+            "Sonarr: http://sonarr:8989",
+            "Radarr: http://radarr:7878",
+            "API keys: redacted",
+        ],
+        apply,
     )
 
 
@@ -404,9 +465,6 @@ def prowlarr_change(
                 ("baseUrl", base_url),
                 ("prowlarrUrl", "http://prowlarr:9696"),
             ]
-            if name == "Sonarr":
-                # Zilean (DMM) reports anime under the parent TV category 5000.
-                app_fields.append(("animeSyncCategories", [5000]))
             for field, value in app_fields:
                 old = field_value(existing, field)
                 if old != value:
@@ -454,8 +512,6 @@ def prowlarr_change(
             ],
             "tags": [],
         }
-        if name == "Sonarr":
-            payload["fields"].append({"name": "animeSyncCategories", "value": [5000]})
         changes.append(f"add {name}: {base_url}")
         updates.append((endpoint, payload))
     if not changes:
@@ -468,104 +524,6 @@ def prowlarr_change(
             )
 
     return Change("prowlarr", "update Arr applications", changes, apply)
-
-
-def prowlarr_zilean_change(http: DockerHTTP, token: str) -> Change | None:
-    """Reconcile the hosted Zilean (DMM) indexer in Prowlarr.
-
-    The Zilean Cardigann definition (data/prowlarr/Definitions/Custom/zilean.yml)
-    is mounted in via prowlarr's /config dir (see compose.yaml), so `just wire`
-    only has to create or re-point/enable the indexer at the hosted service URL.
-    """
-    endpoint = "http://prowlarr:9696/api/v1/indexer"
-    current = http.request("prowlarr", "GET", endpoint, token)
-    existing = next(
-        (
-            indexer
-            for indexer in current
-            if indexer.get("implementation") == "Cardigann"
-            and (
-                field_value(indexer, "definitionFile") == ZILEAN_DEFINITION_FILE
-                or indexer.get("name", "").lower() == "zilean"
-            )
-        ),
-        None,
-    )
-    if existing:
-        payload = json.loads(json.dumps(existing))
-        changed = []
-        for name, value in (
-            ("definitionFile", ZILEAN_DEFINITION_FILE),
-            ("baseUrl", ZILEAN_URL),
-        ):
-            old = field_value(existing, name)
-            if old != value:
-                changed.append(
-                    f"{name}: {redacted(old, name)} -> {redacted(value, name)}"
-                )
-                set_field(payload, name, value)
-        if existing.get("enable") is not True:
-            changed.append(f"enable: {existing.get('enable')} -> True")
-            payload["enable"] = True
-        if not changed:
-            return None
-        return Change(
-            "prowlarr",
-            "re-point the Zilean (DMM) indexer",
-            changed,
-            lambda: http.request(
-                "prowlarr",
-                "PUT",
-                f"{endpoint}/{existing['id']}",
-                token,
-                payload,
-            ),
-        )
-
-    details = [
-        f"definitionFile: {ZILEAN_DEFINITION_FILE}",
-        f"baseUrl: {ZILEAN_URL}",
-    ]
-
-    def apply() -> None:
-        payload = {
-            "name": "Zilean",
-            "implementation": "Cardigann",
-            "implementationName": "Cardigann",
-            "configContract": "CardigannSettings",
-            "enable": True,
-            "tags": [],
-            "priority": 1,
-            "fields": [
-                {"name": "definitionFile", "value": ZILEAN_DEFINITION_FILE},
-                {"name": "baseUrl", "value": ZILEAN_URL},
-            ],
-        }
-        for attempt in range(1, 4):
-            try:
-                profiles = http.request(
-                    "prowlarr",
-                    "GET",
-                    "http://prowlarr:9696/api/v1/appprofile",
-                    token,
-                )
-                if isinstance(profiles, list) and profiles:
-                    ids = [p["id"] for p in profiles if p.get("id")]
-                    if ids:
-                        payload["appProfileId"] = min(ids)
-                http.request("prowlarr", "POST", endpoint, token, payload)
-                return
-            except WireError:
-                if attempt == 3:
-                    raise
-                time.sleep(10)
-
-    return Change(
-        "prowlarr",
-        "create the Zilean (DMM) indexer",
-        details,
-        apply,
-    )
 
 
 def bazarr_change(
@@ -1289,7 +1247,11 @@ def seerr_arr_change(
         "apiKey": keys[app],
         "useSsl": False,
         "baseUrl": "",
-        "activeDirectory": "/mnt/shows" if app == "sonarr" else "/mnt/movies",
+        "activeDirectory": (
+            "/mnt/usenet/library/shows"
+            if app == "sonarr"
+            else "/mnt/usenet/library/movies"
+        ),
         "is4k": False,
         "syncEnabled": True,
         "preventSearch": False,
@@ -1384,43 +1346,39 @@ def main() -> int:
         keys = {
             app: api_key(app, config_dir) for app in ("sonarr", "radarr", "prowlarr")
         }
+        media_env = EnvFile(MEDIA_ENV)
+        infinidysk_api_key = media_env.get("FRONTEND_BACKEND_API_KEY")
+        if not infinidysk_api_key:
+            raise WireError(
+                "FRONTEND_BACKEND_API_KEY is unset; run `just init` before `just wire`"
+            )
         http = DockerHTTP()
         changes: list[Change] = []
-        for app, path in (("sonarr", "/mnt/shows"), ("radarr", "/mnt/movies")):
+        infinidysk_change = infinidysk_arr_settings_change(media_env, keys)
+        if infinidysk_change:
+            changes.append(infinidysk_change)
+        for app, path in (
+            ("sonarr", "/mnt/usenet/library/shows"),
+            ("radarr", "/mnt/usenet/library/movies"),
+        ):
             change = root_folder_change(http, app, keys[app], path)
             if change:
                 changes.append(change)
-            port = 8989 if app == "sonarr" else 7878
-            for implementation, contract, name, fields in (
-                (
-                    "QBittorrent",
-                    "QBittorrentSettings",
-                    "Decypharr (debrid)",
-                    {
-                        "host": "decypharr",
-                        "port": 8282,
-                        "username": f"http://{app}:{port}",
-                        "password": keys[app],
-                    },
-                ),
-                (
-                    "Sabnzbd",
-                    "SabnzbdSettings",
-                    "Decypharr (usenet)",
-                    {
-                        "host": "decypharr",
-                        "port": 8282,
-                        "urlBase": "/sabnzbd",
-                        "username": f"http://{app}:{port}",
-                        "password": keys[app],
-                    },
-                ),
-            ):
-                change = arr_download_client(
-                    http, app, keys[app], implementation, contract, name, fields
-                )
-                if change:
-                    changes.append(change)
+            change = arr_download_client(
+                http,
+                app,
+                keys[app],
+                "Sabnzbd",
+                "SabnzbdSettings",
+                "InfiniDysk (Usenet)",
+                {
+                    "host": "infinidysk",
+                    "port": 3000,
+                    "apiKey": infinidysk_api_key,
+                },
+            )
+            if change:
+                changes.append(change)
         jellyfin_key: str | None = None
 
         def resolve_jellyfin_key() -> str | None:
@@ -1441,7 +1399,6 @@ def main() -> int:
         if unknown_quality:
             changes.append(unknown_quality)
         for change in (
-            prowlarr_zilean_change(http, keys["prowlarr"]),
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
             recyclarr_change(config_dir, keys),

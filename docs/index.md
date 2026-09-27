@@ -18,28 +18,28 @@ hosts.
           + DNS-01 certs; no video traffic)             (100.x.y.z = TAILNET_IP)
                           |                                 |
                           v                                 v
-             VPS public IP :443                          Traefik https-tailnet
-             (ufw: 443 opened last;                      (panels + dashboard:
-              :80 = https-redirect only,                  radarr sonarr prowlarr bazarr
-              :22 = tailnet only)                         decypharr; tailnet-only, always on)
-                          |                                 |
-                          v                                 |
-      Traefik https  ----> CrowdSec (WAF/blocking) -----------+
-      (PUBLIC_BIND:443)
-                          |
-                          v
-              Docker "internal" network
-              +-----------------------------+
-              | jellyfin     seerr          |   jellyfin + seerr also served on the tailnet
-              | radarr       sonarr         |
-              | prowlarr     bazarr         |   everything else (panels, dashboard):
-              | recyclarr    decypharr      |   https-tailnet only
-              +-----------------------------+
+              VPS public IP :443                          Traefik https-tailnet
+              (ufw: 443 opened last;                      (panels + dashboard:
+               :80 = https-redirect only,                  radarr sonarr prowlarr bazarr
+               :22 = tailnet only)                         infinidysk; tailnet-only, always on)
+                           |                                 |
+                           v                                 |
+       Traefik https  ----> CrowdSec (WAF/blocking) -----------+
+       (PUBLIC_BIND:443)
+                           |
+                           v
+               Docker "internal" network
+               +-----------------------------+
+               | jellyfin     seerr          |   jellyfin + seerr also served on the tailnet
+               | radarr       sonarr         |
+               | prowlarr     bazarr         |   everything else (panels, dashboard):
+               | recyclarr    infinidysk     |   https-tailnet only
+               +-----------------------------+
 ```
 
-Media flow: Prowlarr finds releases (incl. the hosted Zilean DMM indexer) → Sonarr/Radarr grab
-them → Decypharr resolves them into instant files on a FUSE mount → the \*arrs symlink them
-into the library → Jellyfin streams to any client; Seerr handles user requests.
+Media flow: Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it fetches
+them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin streams
+from the provider; Seerr handles user requests.
 
 ## The access model
 
@@ -60,9 +60,9 @@ the firewall separately. No per-app TLS configuration is involved.
 ## VPS sizing
 
 A streaming-only setup like this doesn't need much. **2 vCPU / 4 GB RAM** handles a small
-house; **4 vCPU / 8 GB** is comfortable if Jellyfin has to transcode to clients. The stack
-streams from debrid and never stores a media library on the host, so disk is just the OS +
-config — 10–20 GB is plenty (container images plus a bit of headroom).
+house; **4 vCPU / 8 GB** is comfortable if Jellyfin has to transcode to clients. Nothing but
+tiny `.strm` links ever lands in the library, so disk is just the OS + config — 10–20 GB is
+plenty (container images plus a bit of headroom).
 
 There is **no GPU passthrough here** — VPS hosts are CPU-only, so Jellyfin transcodes in
 software. Keep your library direct-play friendly (same codec/container as your clients) and
@@ -81,7 +81,7 @@ doesn't, so use **Ubuntu 26.04 Minimal** there instead. The full Oracle walkthro
 stacks/                  compose files (one folder per stack) + .env per stack
   traefik/               edge router on :443, CrowdSec container, CoreDNS, plugin + ACME
   media-server/          jellyfin, seerr, radarr, sonarr, prowlarr,
-                         recyclarr, bazarr, decypharr
+                         recyclarr, bazarr, infinidysk
 data/                    runtime config that lives in code
   traefik/               traefik.yml, dynamic.yml
   crowdsec/              acquis.yaml
@@ -103,7 +103,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Services](services)         | service-specific setup and operations for the media stack             |
 | [Service wiring](services/wiring) | internal DNS, API keys, media paths, and cross-service integrations |
 | [User guide](user-guide)     | simple Jellyfin and Seerr instructions for end users                 |
-| [Providers](providers)       | recommended debrid and Usenet streaming providers                    |
+| [Providers](providers)       | recommended Usenet provider and indexer picks                          |
 | [Adding services](services/extending) | how to extend the stack safely with more containers |
 | [Security](security)         | layered security model: Tailscale, UFW, Docker forwarding, Traefik, and CrowdSec |
 | [Ingress](ingress)           | direct `:443`: the security gate, DNS records, certificates, dashboard |
@@ -113,13 +113,13 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Oracle Cloud (free tier)](oci) | appendix: free VPS from zero to a running box                        |
 
 All app config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s
-and `just prepare` creates each app's runtime subdirectory there. Media is served from
-the debrid FUSE mount, so there is no local media directory to configure.
+and `just prepare` creates each app's runtime subdirectory there. Media streams from your Usenet
+provider, so the library on disk is only the `.strm` links under `/mnt/usenet`.
 
 For managing Radarr/Sonarr from your phone, see [Ruddarr](services/wiring#managing-from-your-phone).
 
 ## External references
 
-- Decypharr docs: <https://decypharr.com/guides>
+- InfiniDysk docs: <https://www.infinidysk.com/getting-started/>
 - Servarr wiki (Prowlarr quick start): <https://wiki.servarr.com/prowlarr/quick-start-guide>
 - CrowdSec documentation: <https://docs.crowdsec.net>

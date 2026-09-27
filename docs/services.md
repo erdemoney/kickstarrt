@@ -16,14 +16,13 @@ integration behavior.
 | --- | --- |
 | [Jellyfin](services/jellyfin) | Playback and library management |
 | [Seerr](services/seerr) | User requests |
-| [Decypharr](services/decypharr) | Debrid filesystem and download gateway |
+| [InfiniDysk](services/infinidysk) | Usenet download gateway and `.strm` streaming |
 | [Radarr](services/radarr) | Movie management |
 | [Sonarr](services/sonarr) | Series management |
 | [Prowlarr](services/prowlarr) | Indexer management and application sync |
-| [Zilean](services/zilean) | Debrid-packed DMM release indexer |
 | [Recyclarr](services/recyclarr) | Quality profile synchronization |
 | [Bazarr](services/bazarr) | Subtitle management |
 | [Back-catalog hunting](services/hunt) | Scheduled missing and quality-upgrade searches |
 | [Indexers](services/indexers) | Indexer workflow and provider choices |
 
-Provider subscriptions and pricing remain in the top-level [Providers](providers) page.
+The Usenet provider and indexer subscriptions live in the top-level [Providers](providers) page.

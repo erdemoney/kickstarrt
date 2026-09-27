@@ -64,8 +64,8 @@ and `:443` opens only when you separately open the public firewall ports, as the
 
 ## Why does Jellyfin transcode in software (no GPU)?
 
-VPS hosts are CPU-only — there's no `/dev/dri` to pass through. In practice, debrid streams
-arrive in client-friendly codecs and direct-play covers nearly everything (sizing guidance in
+VPS hosts are CPU-only — there's no `/dev/dri` to pass through. In practice, Usenet-stored
+releases arrive in client-friendly codecs and direct-play covers nearly everything (sizing guidance in
 the [overview](index)); transcoding is the exception, and a 2–4 vCPU box handles it when it
 happens. The stack leans into this: the shipped
 [Direct Play and Direct Play (Anime) quality profiles](services/recyclarr) score

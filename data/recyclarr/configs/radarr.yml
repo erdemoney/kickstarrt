@@ -35,7 +35,7 @@ radarr:
         # and the ladder runs down to DVD-R so a missing movie is ALWAYS
         # grabbable - completion first, quality second. Once a low-tier release
         # lands, Radarr keeps upgrading it toward the ceiling for free over
-        # debrid. The disc-image and junk tiers stay listed (disabled) so their
+        # Usenet. The disc-image and junk tiers stay listed (disabled) so their
         # sort order and cutoff behavior stay deterministic.
         qualities:
           - name: Remux-2160p

@@ -85,7 +85,7 @@ def apply_owned(paths: list[Path], puid: int, pgid: int) -> None:
         return
     if shutil.which("sudo") is None:
         print(
-            "warning: no root or sudo available; cannot prepare /mnt/debrid",
+            "warning: no root or sudo available; cannot prepare /mnt/usenet",
             file=sys.stderr,
         )
         return
@@ -126,8 +126,14 @@ def main() -> int:
 
         media_paths = owned_paths(
             [
-                Path("/mnt/debrid") / name
-                for name in ("", "decypharr", "shows", "movies", "downloads")
+                Path("/mnt/usenet") / name
+                for name in (
+                    "",
+                    "library",
+                    "library/shows",
+                    "library/movies",
+                    "completed-downloads",
+                )
             ],
             puid,
             pgid,
@@ -146,7 +152,7 @@ def main() -> int:
             "prowlarr",
             "recyclarr",
             "bazarr/config",
-            "decypharr/configs",
+            "infinidysk",
             "hunt",
             "crowdsec/config",
             "crowdsec/data",

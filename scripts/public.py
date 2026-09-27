@@ -20,7 +20,7 @@ SERVICES = {
     "sonarr": "SONARR_ENTRYPOINTS",
     "prowlarr": "PROWLARR_ENTRYPOINTS",
     "bazarr": "BAZARR_ENTRYPOINTS",
-    "decypharr": "DECYPHARR_ENTRYPOINTS",
+    "infinidysk": "INFINIDYSK_ENTRYPOINTS",
 }
 PUBLIC_ENTRYPOINTS = "https,https-tailnet"
 

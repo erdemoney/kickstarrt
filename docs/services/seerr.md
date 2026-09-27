@@ -8,7 +8,7 @@ nav_order: 2
 
 Seerr is the user-facing request portal for the stack. Users browse available movies and
 shows, submit requests, and Seerr sends them to Radarr or Sonarr. Those applications then
-use the normal indexer and Decypharr workflow to acquire and import the media.
+use the normal indexer and InfiniDysk workflow to acquire and import the media.
 
 ## 1. First login
 
@@ -47,8 +47,8 @@ share the `internal` Docker network ([Service wiring](wiring#docker-networking))
 
 | Application | Internal URL             | Root folder    |
 | ----------- | ------------------------ | -------------- |
-| Radarr      | `http://radarr:7878`     | `/mnt/movies`  |
-| Sonarr      | `http://sonarr:8989`     | `/mnt/shows`   |
+| Radarr      | `http://radarr:7878`     | `/mnt/usenet/library/movies`  |
+| Sonarr      | `http://sonarr:8989`     | `/mnt/usenet/library/shows`   |
 
 It matches each Seerr server by hostname and port, re-asserts the connection fields (internal
 URL, API key from the \*arr, root folder, sync enabled), and pins the shipped **Direct Play**
@@ -64,9 +64,9 @@ The same wiring is documented with the rest of the service integrations in [Serv
 ## 4. Request flow
 
 After the integrations are connected, users can search Seerr and request movies or shows.
-Seerr pushes approved requests to Radarr or Sonarr, which handle indexers and debrid streaming
-imports. Once the item is available in the configured library, Jellyfin scans it and Seerr
-updates the request status.
+Seerr pushes approved requests to Radarr or Sonarr, which handle indexers and Usenet downloads
+through InfiniDysk. Once the item is available in the configured library, Jellyfin scans it and
+Seerr updates the request status.
 
 Keep Seerr, Jellyfin, Radarr, and Sonarr on the same internal network and use their service
 names for app-to-app connections. Public hostnames are for browser access only.

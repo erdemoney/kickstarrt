@@ -35,12 +35,4 @@ data/recyclarr/configs/*
 !data/recyclarr/configs/radarr.yml
 !data/recyclarr/configs/sonarr.yml
 # Prowlarr's runtime state (config.xml, DB, logs, downloaded indexer
-# definitions) stays ignored; only the shipped Zilean Cardigann definition is
-# tracked.
-!data/prowlarr/
-data/prowlarr/*
-!data/prowlarr/Definitions/
-data/prowlarr/Definitions/*
-!data/prowlarr/Definitions/Custom/
-data/prowlarr/Definitions/Custom/*
-!data/prowlarr/Definitions/Custom/zilean.yml
+# definitions) stays ignored.

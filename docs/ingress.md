@@ -27,8 +27,9 @@ the rule they enforce:
    boot ([Tailnet DNS](tailnet)), and that's where the [app wiring](services/wiring) happens.
 2. **Minimum before exposing each app: its setup is finished** — an admin account exists and
    auth is on: Jellyfin (admin on first login), Sonarr/Radarr/Prowlarr/Bazarr
-   (Settings → General → Authentication), Seerr (admin on first login), Decypharr (wizard
-   completed). An app that goes public before its login exists is claimable by anyone.
+   (Settings → General → Authentication), Seerr (admin on first login), InfiniDysk (admin
+   account created on first login). An app that goes public before its login exists is claimable by
+   anyone.
 3. **Only then open the door** — enable the public router for each selected service with
    `just public enable <service>`, add its A record, then open `443/tcp` and `80/tcp` in either
    the selected firewall: the provider firewall in provider-firewall mode, or UFW in UFW mode.

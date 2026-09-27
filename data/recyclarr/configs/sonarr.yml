@@ -51,7 +51,7 @@ sonarr:
         # and the ladder runs all the way down to SDTV so a missing episode is
         # ALWAYS grabbable - completion first, quality second. Once a low-tier
         # release lands, Sonarr keeps upgrading it toward the ceiling for free
-        # over debrid. The junk tiers below stay listed (disabled) so their
+        # over Usenet. The junk tiers below stay listed (disabled) so their
         # sort order and cutoff behavior stay deterministic. Sonarr names its
         # remux qualities "Bluray-<res> Remux" (unlike Radarr).
         qualities:

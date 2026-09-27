@@ -14,12 +14,12 @@ documented below.
 
 ## Automated wiring
 
-After the first-run admin accounts and Decypharr wizard are complete, `just wire` can
+After the first-run admin accounts and the InfiniDysk admin account exist, `just wire` can
 reconcile the repeatable cross-service links through the applications' REST APIs — including
 Seerr's own first-login wizard, which it completes through the Jellyfin login. It does
-not edit `config.xml`, `config.json`, `seerr/config/settings.json`, or Decypharr's `auth.json`;
-those files are read only to bootstrap API credentials. Requests run from inside the containers,
-so the internal service names remain private.
+not edit `config.xml`, `config.json`, `seerr/config/settings.json`, or InfiniDysk's own
+database; those are read only to bootstrap API credentials. Requests run from inside the
+containers, so the internal service names remain private.
 
 The default mode is interactive. It discovers the current configuration, displays each
 service-level change with secrets redacted, and asks for confirmation before applying it.
@@ -32,10 +32,8 @@ just wire --yes       # non-interactive use after reviewing the dry run
 ```
 
 The command handles Arr root folders, the **Download Client** entries that Sonarr/Radarr use to
-reach Decypharr (and that make Decypharr **auto-detect** those apps — no manual entry in
-Decypharr → Settings → Arrs), Prowlarr's Sonarr/Radarr application links, the hosted
-**Zilean (DMM)** indexer (its git-tracked Prowlarr Cardigann adapter is mounted in with
-Prowlarr's `/config`), Bazarr's Sonarr/Radarr
+reach InfiniDysk and the matching **Arr registrations** in InfiniDysk (health polling and queue
+rules), Prowlarr's Sonarr/Radarr application links, Bazarr's Sonarr/Radarr
 connections, Recyclarr's native secret file plus initial sync, and the Sonarr/Radarr → **Jellyfin**
 connections that push a library scan on import — no more manual "Scan All Libraries" in Jellyfin.
 On a fresh Jellyfin install, `just wire` also creates the admin account and a `Kickstarrt` API key
@@ -47,7 +45,7 @@ If the Jellyfin wizard is already complete and no key is in use, it
 prompts for the existing admin credentials to mint one; `--yes` cannot prompt, so it errors and
 skips those connections (run `just wire` in a terminal to provision the key, or generate one in
 Dashboard → API Keys and re-run). Subtitle providers, language profiles, and indexer
-choices, plus the Decypharr provider/mount wizard, remain GUI steps because they require
+choices, plus the InfiniDysk admin account, remain GUI steps because they require
 user-specific choices or first-run authentication.
 
 ## Docker networking
@@ -74,7 +72,7 @@ break CORS, and add latency; they are for browsers only).
 | prowlarr  | `http://prowlarr:9696`  | 9696 | Settings → General → API Key                    |
 | recyclarr | —                      | —    | automatic — nothing to paste (see below)        |
 | bazarr    | `http://bazarr:6767`    | 6767 | (outbound only)                                 |
-| decypharr | `http://decypharr:8282` | 8282 | Settings → API token (shown once after wizard) |
+| infinidysk | `http://infinidysk:3000` | 3000 | generated `FRONTEND_BACKEND_API_KEY` in `stacks/media-server/.env` |
 
 Rule of thumb: when any UI asks for another app's **URL + API key**, use the
 `http://<service>:<port>` from the table and the key from the target app. Sanity-check any
@@ -83,60 +81,48 @@ link from inside the network:
 
 ## Root folders
 
-Sonarr/Radarr root folders must point at paths inside their own containers. The Decypharr DFS
-mount (`/mnt/decypharr`) is a **read-only virtual filesystem** — its root only ever holds
-Decypharr's own entries (provider folders, virtual
-folders), and creating directories under it fails with `Operation not supported`, even as root.
-The library therefore lives in **plain directories on the shared bind tree**, siblings of the
-mount:
+Sonarr/Radarr root folders must point at paths inside their own containers. Everything the
+stack serves lives under one shared bind, `/mnt/usenet`, mounted at the same absolute path in
+every media container:
 
-- Sonarr → `/mnt/shows`
-- Radarr → `/mnt/movies`
+- Sonarr → `/mnt/usenet/library/shows`
+- Radarr → `/mnt/usenet/library/movies`
 
-`just prepare` creates and owns the library dirs and Decypharr's staging dir (`/mnt/shows`,
-`/mnt/movies`, `/mnt/downloads` — to `ENV_PUID`/`ENV_PGID`), so there's nothing to run first —
-no mount-ordering, because they're ordinary dirs the *arrs can write whatever the DFS
-mount state. (By hand it's just `mkdir -p /mnt/debrid/shows /mnt/debrid/movies
-/mnt/debrid/downloads` on the host — no sudo once the tree is owned by the PUID.) Then
-**Add Root Folder** in Sonarr/Radarr.
+`just prepare` creates and owns the whole tree to `ENV_PUID`/`ENV_PGID` (`/mnt/usenet`,
+`library/`, `library/shows`, `library/movies`, `completed-downloads`), so there's nothing to run
+first and no startup order to respect. By hand it is just
+`mkdir -p /mnt/usenet/library/{shows,movies} /mnt/usenet/completed-downloads` on the host — no
+sudo once the tree is owned by the PUID. Then **Add Root Folder** in Sonarr/Radarr; `just wire`
+does it for you.
 
 Every service that touches media — `sonarr`, `radarr`, `bazarr` (subtitles land next to the
-video) and `jellyfin` (playback) — reaches both halves through the shared bind
-`- /mnt/debrid:/mnt:rslave`: the library dirs at `/mnt/shows` `/mnt/movies`, Decypharr's
-staging dir at `/mnt/downloads`, and the DFS mount
-at `/mnt/decypharr`, so the symlinks Decypharr stages into its download folder resolve at the
-same place everywhere. Then in
-Jellyfin add the libraries the same way ([Jellyfin setup](jellyfin) covers libraries plus the
-transcode policy). Also set Jellyfin → Playback → **Transcode path**
-to `/transcode` (a tmpfs — transcode scratch never hits disk; this edition transcodes in
-software, so keep the library direct-play friendly).
+video), `jellyfin` (playback) and `infinidysk` (staging and repair checks) — reaches the
+library, the staging directory and InfiniDysk's `http://infinidysk:3000` links through that one
+bind, so a path is spelled the same everywhere. Then in Jellyfin add the libraries the same way
+([Jellyfin setup](jellyfin) covers libraries plus the transcode policy). Also set
+Jellyfin → Playback → **Transcode path** to `/transcode` (a tmpfs — transcode scratch never hits
+disk; this edition transcodes in software, so keep the library direct-play friendly).
 
-If those paths look empty inside a container, check mount propagation
-([Decypharr](decypharr#visibility-of-the-mount)).
+## Imports are STRM links, not copies
 
-## Imports are symlinks, not hardlinks
+There is no local download here: InfiniDysk writes a `.strm` file per item, and importing renames
+it into the root folder — a few kilobytes, where the payload streams from your Usenet provider at
+playback. Two consequences follow:
 
-There's no local download to hardlink here: Decypharr hands the \*arrs a **symlink** into its
-FUSE mount, and importing renames that link into the root folder — the payload never lands on
-disk, it streams from the debrid provider at playback (FUSE debrid mounts can't hardlink
-anyway: `link()` isn't implemented). Two constraints follow:
-
-- **Keep Decypharr's download folder and the \*arr root folders on the same filesystem.** The
-  staging dir `/mnt/downloads` and the roots `/mnt/shows` + `/mnt/movies` are all real dirs on
-  the shared bind, so the import is a rename of a tiny symlink — instant. If they straddle
-  filesystems the \*arrs fall back to copying, and copying a symlink *dereferences* it: the
-  entire file gets pulled from debrid onto local disk.
-- **Every consumer must resolve the symlink target at the same path.** What's stored in the
-  library is an absolute path into the mount, so `sonarr`, `radarr`, `bazarr`, and `jellyfin`
-  all bind `/mnt/decypharr` at the identical path. Change it in one place and that app sees a
-  library full of dangling links.
+- **The staging directory and the root folders must be on the same filesystem.** InfiniDysk
+  stages finished releases in `/mnt/usenet/completed-downloads` and the roots are
+  `/mnt/usenet/library/shows` + `/mnt/usenet/library/movies`, all real dirs on the same bind, so
+  the import is a rename — instant.
+- **The link's URL must be reachable from the media server.** The URL is written with InfiniDysk's
+  base URL, `http://infinidysk:3000`, and Jellyfin resolves that name because both sit on the
+  `internal` network. A `.strm` file is a URL, not a path, so a media server that cannot reach
+  that address sees an unplayable library even though the files look right.
 
 ## Prowlarr application sync
 
 `just wire` provisions Prowlarr's Sonarr and Radarr application links and enables full sync.
-Every indexer added in Prowlarr, including the hosted [Zilean](zilean) indexer, is then pushed to both apps.
-Choose and test indexers in Prowlarr; there is no reason to recreate the application links by
-hand unless you intentionally changed them.
+Every indexer added in Prowlarr is then pushed to both apps. Choose and test indexers in Prowlarr;
+there is no reason to recreate the application links by hand unless you intentionally changed them.
 
 ## Seerr → Jellyfin + Radarr + Sonarr (requests)
 
