@@ -29,13 +29,35 @@ sonarr:
     base_url: http://sonarr:8989
     api_key: !secret sonarr_api_key
 
-    # TRaSH Guide preferred file sizes (min/max/preferred MB-per-minute).
-    # Anime table (trash-guides "Anime/Animated/Cartoons"): far lower min
-    # MB/min than the generic series table, so low-bitrate/older anime encodes
+    # Use the anime table's relaxed minimums so low-bitrate/older anime encodes
     # aren't rejected on size before scoring. Quality definitions are
-    # instance-wide in Sonarr, so this relaxes min sizes for all profiles.
+    # instance-wide in Sonarr, so the 375 MB/min (~50 Mbps average) ceiling
+    # applies to both regular and anime profiles. Keep preferred just under the
+    # ceiling so larger eligible releases remain favored.
     quality_definition:
       type: anime
+      preferred_ratio: 0.99
+      qualities:
+        - { name: SDTV, max: 375 }
+        - { name: WEBRip-480p, max: 375 }
+        - { name: WEBDL-480p, max: 375 }
+        - { name: DVD, max: 375 }
+        - { name: Bluray-480p, max: 375 }
+        - { name: Bluray-576p, max: 375 }
+        - { name: HDTV-720p, max: 375 }
+        - { name: HDTV-1080p, max: 375 }
+        - { name: WEBRip-720p, max: 375 }
+        - { name: WEBDL-720p, max: 375 }
+        - { name: Bluray-720p, max: 375 }
+        - { name: WEBRip-1080p, max: 375 }
+        - { name: WEBDL-1080p, max: 375 }
+        - { name: Bluray-1080p, max: 375 }
+        - { name: Bluray-1080p Remux, max: 375 }
+        - { name: HDTV-2160p, max: 375 }
+        - { name: WEBRip-2160p, max: 375 }
+        - { name: WEBDL-2160p, max: 375 }
+        - { name: Bluray-2160p, max: 375 }
+        - { name: Bluray-2160p Remux, max: 375 }
 
     quality_profiles:
       - name: Direct Play

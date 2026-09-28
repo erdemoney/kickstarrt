@@ -17,9 +17,27 @@ radarr:
     base_url: http://radarr:7878
     api_key: !secret radarr_api_key
 
-    # TRaSH Guide preferred file sizes (min/max/preferred MB-per-minute)
+    # Keep the TRaSH minimum sizes, but cap releases at about 50 Mbps average
+    # (375 MB/min). Recyclarr quality definitions are instance-wide; preferred
+    # stays just under the cap so larger eligible releases remain favored.
     quality_definition:
       type: movie
+      preferred_ratio: 0.99
+      qualities:
+        - { name: HDTV-720p, max: 375 }
+        - { name: WEBDL-720p, max: 375 }
+        - { name: WEBRip-720p, max: 375 }
+        - { name: Bluray-720p, max: 375 }
+        - { name: HDTV-1080p, max: 375 }
+        - { name: WEBDL-1080p, max: 375 }
+        - { name: WEBRip-1080p, max: 375 }
+        - { name: Bluray-1080p, max: 375 }
+        - { name: Remux-1080p, max: 375 }
+        - { name: HDTV-2160p, max: 375 }
+        - { name: WEBDL-2160p, max: 375 }
+        - { name: WEBRip-2160p, max: 375 }
+        - { name: Bluray-2160p, max: 375 }
+        - { name: Remux-2160p, max: 375 }
 
     quality_profiles:
       - name: Direct Play

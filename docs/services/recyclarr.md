@@ -16,6 +16,10 @@ The stack is designed for a CPU-only VPS and remote Usenet streaming. **Direct P
 optimizes for files clients can play without video re-encoding:
 
 - The quality ladder favors Remux, WEB, and Blu-ray releases at 2160p and 1080p.
+- Quality definitions keep TRaSH's minimum sizes but cap files at **375 MB/min** (about
+  **50 Mbps average**), with the preferred size just below that ceiling. This per-quality file-size
+  limit is shared by all profiles in each Arr instance: oversized releases are rejected, while
+  eligible 4K remuxes remain possible. It does not cap instantaneous bitrate or re-encode media.
 - HEVC is allowed, including 4K, because UHD releases are commonly HEVC and direct-play-capable
   clients can handle them.
 - Audio is not penalized because audio transcoding is comparatively inexpensive.
