@@ -24,20 +24,20 @@ radarr:
       type: movie
       preferred_ratio: 0.99
       qualities:
-        - { name: HDTV-720p, max: 375 }
-        - { name: WEBDL-720p, max: 375 }
-        - { name: WEBRip-720p, max: 375 }
-        - { name: Bluray-720p, max: 375 }
-        - { name: HDTV-1080p, max: 375 }
-        - { name: WEBDL-1080p, max: 375 }
-        - { name: WEBRip-1080p, max: 375 }
-        - { name: Bluray-1080p, max: 375 }
-        - { name: Remux-1080p, max: 375 }
-        - { name: HDTV-2160p, max: 375 }
-        - { name: WEBDL-2160p, max: 375 }
-        - { name: WEBRip-2160p, max: 375 }
-        - { name: Bluray-2160p, max: 375 }
-        - { name: Remux-2160p, max: 375 }
+        - { name: HDTV-720p, max: 375, preferred: 375 }
+        - { name: WEBDL-720p, max: 375, preferred: 375 }
+        - { name: WEBRip-720p, max: 375, preferred: 375 }
+        - { name: Bluray-720p, max: 375, preferred: 375 }
+        - { name: HDTV-1080p, max: 375, preferred: 375 }
+        - { name: WEBDL-1080p, max: 375, preferred: 375 }
+        - { name: WEBRip-1080p, max: 375, preferred: 375 }
+        - { name: Bluray-1080p, max: 375, preferred: 375 }
+        - { name: Remux-1080p, max: 375, preferred: 375 }
+        - { name: HDTV-2160p, max: 375, preferred: 375 }
+        - { name: WEBDL-2160p, max: 375, preferred: 375 }
+        - { name: WEBRip-2160p, max: 375, preferred: 375 }
+        - { name: Bluray-2160p, max: 375, preferred: 375 }
+        - { name: Remux-2160p, max: 375, preferred: 375 }
 
     quality_profiles:
       - name: Direct Play

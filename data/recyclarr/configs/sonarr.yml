@@ -38,26 +38,26 @@ sonarr:
       type: anime
       preferred_ratio: 0.99
       qualities:
-        - { name: SDTV, max: 375 }
-        - { name: WEBRip-480p, max: 375 }
-        - { name: WEBDL-480p, max: 375 }
-        - { name: DVD, max: 375 }
-        - { name: Bluray-480p, max: 375 }
-        - { name: Bluray-576p, max: 375 }
-        - { name: HDTV-720p, max: 375 }
-        - { name: HDTV-1080p, max: 375 }
-        - { name: WEBRip-720p, max: 375 }
-        - { name: WEBDL-720p, max: 375 }
-        - { name: Bluray-720p, max: 375 }
-        - { name: WEBRip-1080p, max: 375 }
-        - { name: WEBDL-1080p, max: 375 }
-        - { name: Bluray-1080p, max: 375 }
-        - { name: Bluray-1080p Remux, max: 375 }
-        - { name: HDTV-2160p, max: 375 }
-        - { name: WEBRip-2160p, max: 375 }
-        - { name: WEBDL-2160p, max: 375 }
-        - { name: Bluray-2160p, max: 375 }
-        - { name: Bluray-2160p Remux, max: 375 }
+        - { name: SDTV, max: 375, preferred: 375 }
+        - { name: WEBRip-480p, max: 375, preferred: 375 }
+        - { name: WEBDL-480p, max: 375, preferred: 375 }
+        - { name: DVD, max: 375, preferred: 375 }
+        - { name: Bluray-480p, max: 375, preferred: 375 }
+        - { name: Bluray-576p, max: 375, preferred: 375 }
+        - { name: HDTV-720p, max: 375, preferred: 375 }
+        - { name: HDTV-1080p, max: 375, preferred: 375 }
+        - { name: WEBRip-720p, max: 375, preferred: 375 }
+        - { name: WEBDL-720p, max: 375, preferred: 375 }
+        - { name: Bluray-720p, max: 375, preferred: 375 }
+        - { name: WEBRip-1080p, max: 375, preferred: 375 }
+        - { name: WEBDL-1080p, max: 375, preferred: 375 }
+        - { name: Bluray-1080p, max: 375, preferred: 375 }
+        - { name: Bluray-1080p Remux, max: 375, preferred: 375 }
+        - { name: HDTV-2160p, max: 375, preferred: 375 }
+        - { name: WEBRip-2160p, max: 375, preferred: 375 }
+        - { name: WEBDL-2160p, max: 375, preferred: 375 }
+        - { name: Bluray-2160p, max: 375, preferred: 375 }
+        - { name: Bluray-2160p Remux, max: 375, preferred: 375 }
 
     quality_profiles:
       - name: Direct Play
