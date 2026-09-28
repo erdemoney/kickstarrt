@@ -41,7 +41,7 @@ it) and restart the container rather than trying to save them in the UI.
 | `webdav.user` / `webdav.pass` / `webdav.enforce-readonly` | generated / generated / on | a credential for third-party players, no deletes |
 | `repair.enable` | `true` | background health checks over the library |
 | `usenet.providers` | your NNTP account | written by `just init` |
-| `arr.instances` | Radarr + Sonarr, with API keys | written by `just wire` |
+| `arr.instances` | Radarr + Sonarr, with API keys and queue rules | written by `just wire` |
 | `api.ensure-article-existence-categories` + `api.article-existence-check-mode` | `tv,movies` + `full` | verify a release is complete *before* the Arr is told it downloaded |
 | `api.key` | mirrors `FRONTEND_BACKEND_API_KEY` | one key for frontend↔backend auth and for the Arr download clients |
 
@@ -90,6 +90,48 @@ InfiniDysk rejects a release, that failure is the signal the Arr uses to search 
 Registering Radarr and Sonarr in InfiniDysk (which `just wire` does with
 `NZBDAV_CONFIG__ARR__INSTANCES`) additionally lights up the Overview **Arr health** widget and lets
 the queue rules act on stuck imports.
+
+### Automatic queue management
+
+That same JSON carries a `QueueRules` array, written by `just wire`, so the Arr apps never
+accumulate queue items that nothing will ever resolve. A rule matches when its `Message` is a
+**case-sensitive substring** of the queue record's status text, and when several rules match the
+strongest action wins; only records the Arr reports as completed or awaiting import are touched, so
+a release that is still downloading is never removed. `Action` is the upstream ordinal: `1` remove,
+`2` remove and blocklist, `3` remove, blocklist, and search.
+
+| Reason | Action | Why |
+| --- | --- | --- |
+| `Sample`, `No audio tracks detected`, `No files found are eligible for import`, `Episode was not found in the grabbed release` | remove, blocklist, search | the release itself is unusable, so get a different one |
+| `Not an upgrade for existing episode/movie file`, `Not a Custom Format upgrade` | remove, blocklist | a valid release that lost to what is already imported; don't search again, just stop re-grabbing it |
+| `Episode file already imported` | remove | clears the duplicate without recording the upload as rejected |
+
+Everything else is deliberately left at the upstream default of **Do Nothing**, which holds the
+record in Awaiting import for you to look at: releases matched by ID, `Invalid season or episode`,
+`Single episode file contains all episodes in seasons`, `Found archive file, might need to be
+extracted`, and both the `Episode(s) was/were unexpected considering the folder name` and
+`Unable to determine if file is a sample` cases. Each of those can still be the right file — a
+season-numbering disagreement needs a manual import, and an archive can be a layout InfiniDysk
+mounts but the Arr does not unpack. Blocklisting them would throw away a usable release and burn
+one of the three replacement searches.
+
+Two things to know about the rules that act. `No files found are eligible for import` is usually a
+property of the release, but it is also what a misconfigured completed-downloads path looks like, so
+check the shared path in the table above the first time you see it fire repeatedly. And
+remove-and-blocklist records article IDs from the rejected download, so a later NZB carrying any of
+them is failed before import even under a different release name — which is the point, but it is
+why an over-broad rule is expensive.
+
+`just wire` is the only writer of this JSON, so edit the `INFINIDYSK_QUEUE_RULES` list in
+`scripts/wire.py` and re-run `just wire`, rather than reaching for the Settings UI. The Arr Apps
+page will show these fields **read-only with a "Managed by `NZBDAV_CONFIG__ARR__INSTANCES`" badge**,
+and that is the expected result rather than a sign the setting failed to apply: a config key backed
+by an environment variable is authoritative, so the UI disables the control to keep it from being
+edited into a value the next recreate would discard. There is no separate environment variable for
+queue rules to switch to — `arr.instances` is a single config item holding the instances, the rules,
+and the replacement-search limits together, so it locks as one unit. `QueueReplacementSearchLimit` /
+`QueueReplacementSearchWindowMinutes` live in the same JSON if you want to change the cap from the
+upstream default of three searches per media item per 30 minutes.
 
 ## Provider data usage
 

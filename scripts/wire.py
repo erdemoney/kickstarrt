@@ -37,6 +37,33 @@ SEERR_JELLYFIN_HOST = "jellyfin"
 SEERR_JELLYFIN_PORT = 8096
 SEERR_JELLYFIN_SERVER_TYPE = 2  # MediaServerType.JELLYFIN
 
+# InfiniDysk Automatic queue management, as ArrConfig.QueueRule in the upstream
+# backend. Rules match a completed/import-pending queue record's status messages
+# by case-sensitive substring, and the strongest match wins, so a message may
+# match more than one rule. Action is ArrConfig.QueueAction: 1 Remove,
+# 2 RemoveAndBlocklist, 3 RemoveAndBlocklistAndSearch.
+#
+# Only reasons that are a property of the release itself are configured. Omitted
+# reasons keep the upstream default of Do Nothing, which leaves the record in
+# Awaiting import for an operator: releases matched by ID, archive layouts, and
+# sample/season-numbering ambiguities can all be importable after a manual
+# lookup, and blocklisting them would reject a usable release.
+INFINIDYSK_QUEUE_RULES = [
+    # Permanently unusable media: discard the release and ask for a replacement.
+    {"Message": "Sample", "Action": 3},
+    {"Message": "No audio tracks detected", "Action": 3},
+    {"Message": "No files found are eligible for import", "Action": 3},
+    {"Message": "Episode was not found in the grabbed release", "Action": 3},
+    # A valid release that simply lost to what is already in the library. Drop
+    # it and keep it out of future searches, but do not trigger another search.
+    {"Message": "Not an upgrade for existing episode file", "Action": 2},
+    {"Message": "Not an upgrade for existing movie file", "Action": 2},
+    {"Message": "Not a Custom Format upgrade", "Action": 2},
+    # Already in the library: clear the duplicate without recording the upload
+    # as rejected, so InfiniDysk's re-grab protection stays out of the way.
+    {"Message": "Episode file already imported", "Action": 1},
+]
+
 
 class WireError(RuntimeError):
     pass
@@ -349,7 +376,7 @@ def infinidysk_arr_settings_change(
     desired = {
         "RadarrInstances": [{"Host": "http://radarr:7878", "ApiKey": keys["radarr"]}],
         "SonarrInstances": [{"Host": "http://sonarr:8989", "ApiKey": keys["sonarr"]}],
-        "QueueRules": [],
+        "QueueRules": INFINIDYSK_QUEUE_RULES,
     }
     serialized = json.dumps(desired, separators=(",", ":"))
     current_raw = media_env.get("NZBDAV_CONFIG__ARR__INSTANCES")
@@ -385,6 +412,7 @@ def infinidysk_arr_settings_change(
             "Sonarr: http://sonarr:8989",
             "Radarr: http://radarr:7878",
             "API keys: redacted",
+            f"queue rules: {len(INFINIDYSK_QUEUE_RULES)}",
         ],
         apply,
     )
