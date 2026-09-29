@@ -764,7 +764,12 @@ def bazarr_jellyfin_change(
     }
 
     def normalized(value: Any, field: str) -> Any:
-        if field.endswith("_library") or field.endswith("_library_ids"):
+        if field in {
+            "settings-jellyfin-movie_library",
+            "settings-jellyfin-movie_library_ids",
+            "settings-jellyfin-series_library",
+            "settings-jellyfin-series_library_ids",
+        }:
             return sorted(str(item) for item in (value or []))
         return value
 
