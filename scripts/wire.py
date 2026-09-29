@@ -187,6 +187,8 @@ class DockerHTTP:
                 if not values:
                     values = [""]
                 for item in values:
+                    if isinstance(item, bool):
+                        item = str(item).lower()
                     command.extend(["--data-urlencode", f"{name}={item}"])
         try:
             result = subprocess.run(
