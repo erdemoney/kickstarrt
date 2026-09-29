@@ -1361,77 +1361,34 @@ def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
                 "seerr", "POST", f"{base}/api/v1/settings/jellyfin", key, payload
             )
         try:
+            # This stack pins Seerr 3.4.1, whose library sync and enable actions
+            # are GET query parameters. Do not GET the bare library endpoint:
+            # that version treats it as a write that disables every library.
             synced = http.request(
                 "seerr",
-                "POST",
-                f"{base}/api/v1/settings/jellyfin/library/sync",
+                "GET",
+                f"{base}/api/v1/settings/jellyfin/library?sync=1",
                 key,
             )
-            modern_library_api = True
         except HTTPWireError as exc:
-            if exc.status != 404:
-                if "NoLibraries" in str(exc) or "GroupedFolders" in str(exc):
-                    print(
-                        "  note: Seerr found no Jellyfin media libraries; create them in "
-                        "Jellyfin (Dashboard -> Media Libraries) and re-run",
-                    )
-                else:
-                    print(f"  note: Seerr could not sync Jellyfin libraries: {exc}")
-                return
-            # Seerr before 3.5 used GET query parameters for these mutations.
-            try:
-                synced = http.request(
-                    "seerr",
-                    "GET",
-                    f"{base}/api/v1/settings/jellyfin/library?sync=1",
-                    key,
-                )
-            except WireError as fallback_exc:
-                if "NoLibraries" in str(fallback_exc) or "GroupedFolders" in str(
-                    fallback_exc
-                ):
-                    print(
-                        "  note: Seerr found no Jellyfin media libraries; create them in "
-                        "Jellyfin (Dashboard -> Media Libraries) and re-run",
-                    )
-                else:
-                    print(
-                        "  note: Seerr could not sync Jellyfin libraries: "
-                        f"{fallback_exc}"
-                    )
-                return
-            modern_library_api = False
-        except WireError as exc:
             if "NoLibraries" in str(exc) or "GroupedFolders" in str(exc):
-                print(
-                    "  note: Seerr found no Jellyfin media libraries; create them in "
-                    "Jellyfin (Dashboard -> Media Libraries) and re-run",
-                )
-            else:
-                print(f"  note: Seerr could not sync Jellyfin libraries: {exc}")
-            return
-        if modern_library_api:
-            libraries = synced if isinstance(synced, list) else []
-            for library in libraries:
-                library_id = library.get("id")
-                if library_id and library.get("enabled") is not True:
-                    http.request(
-                        "seerr",
-                        "PUT",
-                        f"{base}/api/v1/settings/jellyfin/library/{library_id}",
-                        key,
-                        {"enabled": True},
-                    )
-        else:
-            libraries = synced if isinstance(synced, list) else []
-            ids = [str(lib["id"]) for lib in libraries if lib.get("id")]
-            if ids:
-                http.request(
-                    "seerr",
-                    "GET",
-                    f"{base}/api/v1/settings/jellyfin/library?enable={','.join(ids)}",
-                    key,
-                )
+                raise WireError(
+                    "Seerr found no Jellyfin media libraries; create them in "
+                    "Jellyfin (Dashboard -> Media Libraries) and re-run"
+                ) from exc
+            raise
+        except WireError as exc:
+            raise WireError(f"could not sync Seerr Jellyfin libraries: {exc}") from exc
+
+        libraries = synced if isinstance(synced, list) else []
+        ids = [str(library["id"]) for library in libraries if library.get("id")]
+        if ids:
+            http.request(
+                "seerr",
+                "GET",
+                f"{base}/api/v1/settings/jellyfin/library?enable={','.join(ids)}",
+                key,
+            )
 
         # Read back persisted state: some Seerr versions have changed library
         # mutation semantics, and a successful HTTP response alone is not enough
