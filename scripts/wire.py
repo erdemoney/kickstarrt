@@ -1335,9 +1335,10 @@ def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
         changed.append(
             f"mediaServerType: {media_server_type} -> {SEERR_JELLYFIN_SERVER_TYPE}"
         )
-    stored = http.request(
-        "seerr", "GET", f"{base}/api/v1/settings/jellyfin/library", key
-    )
+    # Seerr 3.4.1's GET /settings/jellyfin/library mutates state: without an
+    # `enable` query parameter it saves every library as disabled. Read the
+    # library flags from the Jellyfin settings resource, which is read-only.
+    stored = payload.get("libraries")
     libraries = stored if isinstance(stored, list) else []
     disabled = [lib for lib in libraries if not lib.get("enabled")]
     if not changed and not disabled and libraries:
@@ -1410,10 +1411,7 @@ def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
                 print(f"  note: Seerr could not sync Jellyfin libraries: {exc}")
             return
         if modern_library_api:
-            libraries = http.request(
-                "seerr", "GET", f"{base}/api/v1/settings/jellyfin/library", key
-            )
-            libraries = libraries if isinstance(libraries, list) else []
+            libraries = synced if isinstance(synced, list) else []
             for library in libraries:
                 library_id = library.get("id")
                 if library_id and library.get("enabled") is not True:
@@ -1437,9 +1435,15 @@ def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
 
         # Read back persisted state: some Seerr versions have changed library
         # mutation semantics, and a successful HTTP response alone is not enough
-        # to ensure the next `just wire` run converges.
-        verified = http.request(
-            "seerr", "GET", f"{base}/api/v1/settings/jellyfin/library", key
+        # to ensure the next `just wire` run converges. The settings endpoint is
+        # safe for this read on both old and current Seerr versions.
+        verified_settings = http.request(
+            "seerr", "GET", f"{base}/api/v1/settings/jellyfin", key
+        )
+        verified = (
+            verified_settings.get("libraries")
+            if isinstance(verified_settings, dict)
+            else []
         )
         still_disabled = [
             library
