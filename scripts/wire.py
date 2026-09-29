@@ -183,7 +183,11 @@ class DockerHTTP:
             )
         if form is not None:
             for name, value in form.items():
-                command.extend(["--data-urlencode", f"{name}={value}"])
+                values = value if isinstance(value, list) else [value]
+                if not values:
+                    values = [""]
+                for item in values:
+                    command.extend(["--data-urlencode", f"{name}={item}"])
         try:
             result = subprocess.run(
                 command, capture_output=True, text=True, check=False
@@ -620,6 +624,170 @@ def bazarr_change(
     return Change(
         "bazarr",
         "update Sonarr/Radarr connections",
+        changes,
+        lambda: http.request("bazarr", "POST", endpoint, bazarr_key, form=form),
+    )
+
+
+def jellyfin_library_selections(http: DockerHTTP, token: str) -> dict[str, list[str]]:
+    """Return Bazarr's names and ids for Jellyfin movie and TV libraries."""
+    libraries = http.request(
+        "jellyfin",
+        "GET",
+        "http://jellyfin:8096/Library/VirtualFolders",
+        headers={"Authorization": f'MediaBrowser Token="{token}"'},
+    )
+    if not isinstance(libraries, list):
+        raise WireError("Jellyfin returned an invalid library list")
+
+    selected: dict[str, list[tuple[str, str]]] = {"movie": [], "series": []}
+    for library in libraries:
+        collection = library.get("CollectionType")
+        kind = (
+            "movie"
+            if collection == "movies"
+            else "series"
+            if collection == "tvshows"
+            else None
+        )
+        library_id = library.get("ItemId")
+        name = library.get("Name")
+        if kind and library_id and name:
+            selected[kind].append((str(name), str(library_id)))
+
+    return {
+        "movie_library": [name for name, _ in sorted(selected["movie"])],
+        "movie_library_ids": [
+            library_id for _, library_id in sorted(selected["movie"])
+        ],
+        "series_library": [name for name, _ in sorted(selected["series"])],
+        "series_library_ids": [
+            library_id for _, library_id in sorted(selected["series"])
+        ],
+    }
+
+
+def bazarr_jellyfin_change(
+    config_dir: Path,
+    http: DockerHTTP,
+    jellyfin_key: Callable[[], str | None],
+    dry_run: bool = False,
+) -> Change | None:
+    """Enable Bazarr's Jellyfin refresh integration and select its libraries."""
+    config_path, bazarr_key = bazarr_api_key(config_dir)
+    endpoint = "http://bazarr:6767/api/system/settings"
+    current = http.request("bazarr", "GET", endpoint, bazarr_key)
+    general = current.get("general", {})
+    jellyfin = current.get("jellyfin", {})
+
+    # Read Bazarr's persisted scalar so key rotation converges even if its API
+    # response omits or masks the connected service key.
+    stored_key = yaml_section_value(config_path, "jellyfin", "apikey")
+    token = stored_key if stored_key and jellyfin_key_valid(http, stored_key) else None
+    if token is None:
+        token = jellyfin_key()
+
+    if token is None:
+        if not dry_run:
+            return None
+        # There is no key to enumerate the libraries in a preview. Still report
+        # the planned integration; the apply closure is not run during --dry-run.
+
+        def apply_after_key_provisioning() -> None:
+            resolved = jellyfin_key()
+            if resolved is None:
+                raise WireError("could not obtain a Jellyfin API key for Bazarr")
+            discovered = jellyfin_library_selections(http, resolved)
+            http.request(
+                "bazarr",
+                "POST",
+                endpoint,
+                bazarr_key,
+                form={
+                    "settings-general-use_jellyfin": True,
+                    "settings-jellyfin-url": "http://jellyfin:8096",
+                    "settings-jellyfin-apikey": resolved,
+                    "settings-jellyfin-refresh_method": "immediate",
+                    "settings-jellyfin-update_movie_library": True,
+                    "settings-jellyfin-update_series_library": True,
+                    "settings-jellyfin-movie_library": discovered["movie_library"],
+                    "settings-jellyfin-movie_library_ids": discovered[
+                        "movie_library_ids"
+                    ],
+                    "settings-jellyfin-series_library": discovered["series_library"],
+                    "settings-jellyfin-series_library_ids": discovered[
+                        "series_library_ids"
+                    ],
+                },
+            )
+
+        return Change(
+            "bazarr",
+            "connect to Jellyfin for subtitle refreshes",
+            [
+                "enabled: True",
+                "server: http://jellyfin:8096",
+                "API key: provision/reuse a Jellyfin key (redacted)",
+                "movie and show libraries: discover when a key is available",
+                "refresh metadata after movie and episode subtitle changes",
+            ],
+            apply_after_key_provisioning,
+        )
+
+    libraries = jellyfin_library_selections(http, token)
+    desired: dict[str, Any] = {
+        "settings-general-use_jellyfin": True,
+        "settings-jellyfin-url": "http://jellyfin:8096",
+        "settings-jellyfin-apikey": token,
+        "settings-jellyfin-refresh_method": "immediate",
+        "settings-jellyfin-update_movie_library": True,
+        "settings-jellyfin-update_series_library": True,
+        "settings-jellyfin-movie_library": libraries["movie_library"],
+        "settings-jellyfin-movie_library_ids": libraries["movie_library_ids"],
+        "settings-jellyfin-series_library": libraries["series_library"],
+        "settings-jellyfin-series_library_ids": libraries["series_library_ids"],
+    }
+    existing: dict[str, Any] = {
+        "settings-general-use_jellyfin": general.get("use_jellyfin"),
+        "settings-jellyfin-url": jellyfin.get("url"),
+        "settings-jellyfin-apikey": stored_key,
+        "settings-jellyfin-refresh_method": jellyfin.get("refresh_method"),
+        "settings-jellyfin-update_movie_library": jellyfin.get("update_movie_library"),
+        "settings-jellyfin-update_series_library": jellyfin.get(
+            "update_series_library"
+        ),
+        "settings-jellyfin-movie_library": jellyfin.get("movie_library") or [],
+        "settings-jellyfin-movie_library_ids": jellyfin.get("movie_library_ids") or [],
+        "settings-jellyfin-series_library": jellyfin.get("series_library") or [],
+        "settings-jellyfin-series_library_ids": jellyfin.get("series_library_ids")
+        or [],
+    }
+
+    def normalized(value: Any, field: str) -> Any:
+        if field.endswith("_library") or field.endswith("_library_ids"):
+            return sorted(str(item) for item in (value or []))
+        return value
+
+    form: dict[str, Any] = {}
+    changes = []
+    for field, value in desired.items():
+        old = existing[field]
+        if normalized(old, field) == normalized(value, field):
+            continue
+        form[field] = value
+        if "apikey" in field:
+            display = "secret redacted"
+        elif isinstance(value, list):
+            display = f"{len(old or [])} -> {len(value)} selected"
+        else:
+            display = f"{old} -> {value}"
+        changes.append(f"{field}: {display}")
+    if not changes:
+        return None
+
+    return Change(
+        "bazarr",
+        "update Jellyfin connection and subtitle refresh settings",
         changes,
         lambda: http.request("bazarr", "POST", endpoint, bazarr_key, form=form),
     )
@@ -1429,6 +1597,9 @@ def main() -> int:
         for change in (
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
+            bazarr_jellyfin_change(
+                config_dir, http, resolve_jellyfin_key, dry_run=args.dry_run
+            ),
             recyclarr_change(config_dir, keys),
         ):
             if change:
