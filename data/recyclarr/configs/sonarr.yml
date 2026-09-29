@@ -164,16 +164,6 @@ sonarr:
       - trash_ids: [d84935abd3f8556dcd51d4f27e22d0a6] # WEB Tier 03
         assign_scores_to: [{ name: Direct Play, score: 1600 }]
 
-      # --- prefer season packs (TRaSH Guide official CF, release type 3) ---
-      # Big bonus (clears the top tier scores) so that when a pack is grabbable
-      # it always wins over scattered single-episode grabs. Still subject to
-      # Sonarr's all-or-nothing pack rule: packs only grab when they upgrade
-      # every episode or the whole season is missing.
-      - trash_ids: [3bc5f395426614e155e585a2f056cdf1] # Season Pack
-        assign_scores_to:
-          - { name: Direct Play, score: 5000 }
-          - { name: Direct Play (Anime), score: 5000 }
-
       # --- anime release-group tiers (SeaDex groups, TRaSH anime guide scores) ---
       - trash_ids: [949c16fe0a8147f50ba82cc2df9411c9] # Anime BD Tier 01
         assign_scores_to: [{ name: Direct Play (Anime), score: 1400 }]
@@ -221,9 +211,8 @@ sonarr:
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
       - trash_ids: [b2550eb333d27b75833e25b8c2557b38] # 10bit (0 = tie-break only)
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
-      # Big enough to outrank every anime release-group tier (max 1400) so a
+      # Big enough to outrank every anime release-group tier (max 1400), so a
       # dual-audio release always beats an otherwise-better sub-only one.
-      # Stays under the +5000 Season Pack, so packs remain preferred.
       - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio (prefer over subs-only)
         assign_scores_to: [{ name: Direct Play (Anime), score: 2000 }]
 
