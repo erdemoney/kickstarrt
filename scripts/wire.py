@@ -1470,6 +1470,9 @@ def seerr_arr_change(
     }
     if existing:
         payload = json.loads(json.dumps(existing))
+        # Seerr identifies the record in the URL; its request schema rejects
+        # the read-only id field in the body.
+        payload.pop("id", None)
         changed = []
         for name, value in desired.items():
             old = payload.get(name)
