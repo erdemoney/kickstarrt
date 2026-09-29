@@ -1409,9 +1409,11 @@ def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
             else:
                 print(f"  note: Seerr could not sync Jellyfin libraries: {exc}")
             return
-        libraries = synced if isinstance(synced, list) else []
-        ids = [str(lib["id"]) for lib in libraries if lib.get("id")]
         if modern_library_api:
+            libraries = http.request(
+                "seerr", "GET", f"{base}/api/v1/settings/jellyfin/library", key
+            )
+            libraries = libraries if isinstance(libraries, list) else []
             for library in libraries:
                 library_id = library.get("id")
                 if library_id and library.get("enabled") is not True:
@@ -1422,12 +1424,36 @@ def seerr_jellyfin_change(http: DockerHTTP, key: str) -> Change | None:
                         key,
                         {"enabled": True},
                     )
-        elif ids:
-            http.request(
-                "seerr",
-                "GET",
-                f"{base}/api/v1/settings/jellyfin/library?enable={','.join(ids)}",
-                key,
+        else:
+            libraries = synced if isinstance(synced, list) else []
+            ids = [str(lib["id"]) for lib in libraries if lib.get("id")]
+            if ids:
+                http.request(
+                    "seerr",
+                    "GET",
+                    f"{base}/api/v1/settings/jellyfin/library?enable={','.join(ids)}",
+                    key,
+                )
+
+        # Read back persisted state: some Seerr versions have changed library
+        # mutation semantics, and a successful HTTP response alone is not enough
+        # to ensure the next `just wire` run converges.
+        verified = http.request(
+            "seerr", "GET", f"{base}/api/v1/settings/jellyfin/library", key
+        )
+        still_disabled = [
+            library
+            for library in (verified if isinstance(verified, list) else [])
+            if library.get("enabled") is not True
+        ]
+        if still_disabled:
+            names = ", ".join(
+                str(library.get("name") or library.get("id"))
+                for library in still_disabled
+            )
+            raise WireError(
+                "Seerr still reports Jellyfin libraries as disabled after the "
+                f"enable request: {names}"
             )
 
     return Change("seerr", "update Jellyfin connection", details, apply)
