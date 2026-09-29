@@ -51,6 +51,15 @@ manager announce changes, and avoid making Jellyfin write beside the media.
   API key, not a Usenet credential. Use a modest refresh schedule because metadata is local
   application state even though the media itself is remote, so large libraries can make the
   Jellyfin config directory grow.
+- **TheTVDB for matching Sonarr episode order** — TMDb and TVDB can divide a series into different
+  seasons, especially for anime. If Sonarr and Jellyfin disagree on season/episode placement, install
+  Jellyfin's official **TheTVDB** plugin from **Dashboard → Plugins → Catalog**, then restart
+  Jellyfin. Installing the plugin alone does not enable it for a library: open **Dashboard →
+  Libraries → Shows → Manage Library** and enable **TheTVDB** as a metadata fetcher for **Series**,
+  **Season**, and **Episode**. Put it before TMDb in the fetcher order when TVDB is the order Sonarr
+  uses. For an existing mismatched series, use **Identify** to select its TVDB entry, then refresh
+  metadata for that series with **Replace all metadata**. For example, *Hunter x Hunter (2011)* uses
+  TVDB ID `252322`. This changes Jellyfin's metadata, not the Sonarr-managed filenames.
 - **Subtitles** — prefer text subtitles that the client can render. Image subtitles or subtitles
   that must be burned into the picture require video transcoding; that is especially expensive on
   a CPU-only server.
