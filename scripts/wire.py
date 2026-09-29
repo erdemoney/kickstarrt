@@ -1419,7 +1419,11 @@ def seerr_arr_language_profile(http: DockerHTTP, app: str, key: str) -> int | No
 
 
 def seerr_arr_change(
-    http: DockerHTTP, seerr_key: str, app: str, keys: dict[str, str]
+    http: DockerHTTP,
+    seerr_key: str,
+    app: str,
+    keys: dict[str, str],
+    media_env: EnvFile,
 ) -> Change | None:
     """Reconcile one *arr server in Seerr (radarr -> movies, sonarr -> shows).
 
@@ -1432,6 +1436,10 @@ def seerr_arr_change(
     base = SEERR_URL
     display = "Sonarr" if app == "sonarr" else "Radarr"
     port = 8989 if app == "sonarr" else 7878
+    domain = media_env.get("DOMAIN").strip()
+    if not domain:
+        raise WireError("DOMAIN is unset in stacks/media-server/.env")
+    subdomain = media_env.get(f"SUB_DOMAIN_{app.upper()}") or app
     endpoint = f"{base}/api/v1/settings/{app}"
     servers = http.request("seerr", "GET", endpoint, seerr_key)
     servers = servers if isinstance(servers, list) else []
@@ -1450,6 +1458,7 @@ def seerr_arr_change(
         "apiKey": keys[app],
         "useSsl": False,
         "baseUrl": "",
+        "externalUrl": f"https://{subdomain}.{domain}",
         "activeDirectory": (
             "/mnt/usenet/library/shows"
             if app == "sonarr"
@@ -1617,8 +1626,8 @@ def main() -> int:
         if seerr_mint_first_run(http, seerr_key, args.dry_run, args.yes):
             for change in (
                 seerr_jellyfin_change(http, seerr_key),
-                seerr_arr_change(http, seerr_key, "radarr", keys),
-                seerr_arr_change(http, seerr_key, "sonarr", keys),
+                seerr_arr_change(http, seerr_key, "radarr", keys, media_env),
+                seerr_arr_change(http, seerr_key, "sonarr", keys, media_env),
             ):
                 if change:
                     changes.append(change)
