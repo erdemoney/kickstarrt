@@ -142,7 +142,7 @@ type `?` for a short explanation, an example, and the relevant documentation ref
   Leave it empty to do it later.
 - Your **Usenet account** — InfiniDysk's provider prompts: server hostname, port, TLS, username,
   password, and your plan's connection allowance.
-- **InfiniDysk's** API key and WebDAV password are generated for you.
+- **InfiniDysk's** API key is generated for you.
 - Optionally sets up **restic backups to Cloudflare R2** — answer `y` to be prompted, or skip
   and fill `.env.restic` later ([Maintenance](maintenance)).
 
@@ -336,7 +336,7 @@ window to do first-run setup, while no app can be reached by strangers. The orde
 InfiniDysk first, because the \*arrs download through it.
 
 1. **InfiniDysk** — the only GUI step is creating its admin account at
-   `https://infinidysk.<DOMAIN>`. The Usenet provider, WebDAV, import strategy and Arr
+   `https://infinidysk.<DOMAIN>`. The Usenet provider, STRM import strategy and Arr
    registrations are already configured → [InfiniDysk](services/infinidysk).
 2. **\*arrs** — run `just wire` on the box. It provisions root folders and the
    InfiniDysk download clients, Prowlarr sync, Bazarr connections, Recyclarr's API secrets, and

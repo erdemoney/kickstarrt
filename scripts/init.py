@@ -318,12 +318,6 @@ def configure_infinidysk(media: EnvFile, force: bool, changes: list[str]) -> Non
         key = secrets.token_urlsafe(32)
         media.set("FRONTEND_BACKEND_API_KEY", key)
         changes.append("InfiniDysk API key")
-    if not media.get("WEBDAV_USER"):
-        media.set("WEBDAV_USER", "kickstarrt")
-        changes.append("InfiniDysk WebDAV username")
-    if not media.get("WEBDAV_PASS"):
-        media.set("WEBDAV_PASS", secrets.token_urlsafe(32))
-        changes.append("InfiniDysk WebDAV password")
 
 
 def detected_ids() -> tuple[str, str]:

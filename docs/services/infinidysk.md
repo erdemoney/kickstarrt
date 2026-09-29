@@ -38,7 +38,6 @@ it) and restart the container rather than trying to save them in the UI.
 | `api.completed-downloads-dir` | `/mnt/usenet/completed-downloads` | where finished releases are staged before import |
 | `general.base-url` | `http://infinidysk:3000` | the absolute URL written into each `.strm` file |
 | `media.library-dir` | `/mnt/usenet/library` | the library tree health checks walk |
-| `webdav.user` / `webdav.pass` / `webdav.enforce-readonly` | generated / generated / on | a credential for third-party players, no deletes |
 | `repair.enable` | `true` | background health checks over the library |
 | `usenet.providers` | your NNTP account | written by `just init` |
 | `arr.instances` | Radarr + Sonarr, with API keys and queue rules | written by `just wire` |
