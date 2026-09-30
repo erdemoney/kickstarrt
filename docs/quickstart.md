@@ -64,6 +64,36 @@ address is your SSH address from now on.
 The script installs the `ufw-docker` executable but does not install UFW or change firewall
 rules. Choose the firewall model in [§6](#6-choose-the-firewall-model).
 
+### Set the box's time zone
+
+The stack bind-mounts the VPS's `/etc/localtime` into its containers, so schedules and log
+timestamps follow the **host's** zone — the overnight [maintenance](maintenance#scheduled-maintenance)
+timer and the [hunt](services/hunt) runs default to 03:00 local. Do it now, before the first boot:
+
+```bash
+sudo timedatectl set-timezone America/Los_Angeles   # your IANA zone, e.g. America/Los_Angeles or UTC
+timedatectl                                         # confirm: Time zone + System clock synchronized
+```
+
+Use the **IANA name** for the region you live in — not an offset or abbreviation. The zone
+database carries the DST rules, so tracked offsets switch every season automatically. Provider
+images ship as **UTC**, which is a fine choice if you want one. The `System clock synchronized: yes`
+line is NTP (`systemd-timesyncd`, on by default on Debian and Ubuntu): a wrong *clock* is a sync
+problem, a wrong *hour* is a zone problem.
+
+A container keeps the zone file it was created with, so on a stack that's already running, change
+the zone and then recreate it:
+
+```bash
+just down && just up
+```
+
+Check that a container agrees with the host:
+
+```bash
+docker compose -f stacks/media-server/compose.yaml exec jellyfin date
+```
+
 ## 3. Verify SSH over the tailnet
 
 From your workstation:

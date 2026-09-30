@@ -41,14 +41,17 @@ service name, for example `http://sonarr:8989`; they should not use public hostn
    backup scope. Do not bind-mount the repository source tree.
 4. Run the container with `ENV_PUID`/`ENV_PGID` where the image supports them, and document any
    ownership or elevated capability requirement.
-5. Add a healthcheck when the image exposes a reliable local endpoint or command.
-6. Keep the service on the internal network unless another container needs to reach it.
-7. Expose it through Traefik only when necessary. Admin services should use the
+5. Mount the host's time zone read-only (`/etc/localtime:/etc/localtime:ro`) so schedules and log
+   timestamps follow the VPS's local time, like the rest of the stack
+   ([Quickstart → Set the box's time zone](quickstart#set-the-boxs-time-zone)).
+6. Add a healthcheck when the image exposes a reliable local endpoint or command.
+7. Keep the service on the internal network unless another container needs to reach it.
+8. Expose it through Traefik only when necessary. Admin services should use the
    `https-tailnet` entrypoint; public services need a deliberate security review, authentication,
    and an entry in the public-hostname procedure. For the built-in services, use
    `just public enable <service>` rather than editing Compose labels.
-8. Add its configuration and operational notes to the appropriate docs page.
-9. Run `just validate`, `just update <service>`, and `just health` before using it.
+9. Add its configuration and operational notes to the appropriate docs page.
+10. Run `just validate`, `just update <service>`, and `just health` before using it.
 
 ## Services worth considering
 

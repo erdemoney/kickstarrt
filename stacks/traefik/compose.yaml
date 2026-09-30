@@ -125,6 +125,7 @@ services:
       - ${TAILNET_IP:?set TAILNET_IP in the stack .env}:53:53/tcp
     command: ["-conf", "/Corefile"]
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - ../../data/coredns/Corefile:/Corefile:ro
     networks:
       - internal

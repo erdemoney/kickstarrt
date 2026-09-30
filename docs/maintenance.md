@@ -59,7 +59,8 @@ via PR when [upstream](https://github.com/chaifeng/ufw-docker/releases) publishe
 ### Scheduled maintenance
 
 The optional systemd timer applies merged Renovate updates during a quiet window. Install it with
-the default schedule of 03:00 in the server's local timezone:
+the default schedule of 03:00 **host-local time** — the timer runs on the host, outside the
+containers, so it follows the VPS's time zone ([set it in the Quickstart](quickstart#set-the-boxs-time-zone)):
 
 ```
 just maintenance-schedule

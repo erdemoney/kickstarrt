@@ -36,7 +36,17 @@ def require_config() -> None:
 
 
 def restic(*args: str, repo_mount: str | None = None, read_only: bool = False) -> None:
-    command = ["docker", "run", "--rm", "--env-file", str(ENV_FILE), "-v", CACHE_VOLUME]
+    command = [
+        "docker",
+        "run",
+        "--rm",
+        "--env-file",
+        str(ENV_FILE),
+        "-v",
+        "/etc/localtime:/etc/localtime:ro",
+        "-v",
+        CACHE_VOLUME,
+    ]
     if repo_mount:
         suffix = ":/repo:ro" if read_only else ":/repo"
         command.extend(["-v", f"{repo_mount}{suffix}"])
@@ -51,6 +61,8 @@ def repository_initialized() -> bool:
         "--rm",
         "--env-file",
         str(ENV_FILE),
+        "-v",
+        "/etc/localtime:/etc/localtime:ro",
         "-v",
         CACHE_VOLUME,
         IMAGE,
