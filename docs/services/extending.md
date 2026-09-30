@@ -43,7 +43,7 @@ service name, for example `http://sonarr:8989`; they should not use public hostn
    ownership or elevated capability requirement.
 5. Mount the host's time zone read-only (`/etc/localtime:/etc/localtime:ro`) so schedules and log
    timestamps follow the VPS's local time, like the rest of the stack
-   ([Quickstart → Set the box's time zone](quickstart#set-the-boxs-time-zone)).
+   ([Quickstart → Set the box's time zone](../quickstart#set-the-boxs-time-zone)).
 6. Add a healthcheck when the image exposes a reliable local endpoint or command.
 7. Keep the service on the internal network unless another container needs to reach it.
 8. Expose it through Traefik only when necessary. Admin services should use the

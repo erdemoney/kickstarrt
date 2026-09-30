@@ -110,7 +110,7 @@ After setup: point Jellyfin/Seerr at your \*arrs ([the docs](https://erdemoney.g
 then optionally enable public routers, add DNS records, and open the serving ports in your chosen firewall.
 
 Requires [Docker](https://docs.docker.com/engine/install/) and
-[just](https://just.systems/man/en/chapter_4.html) — your distro's package manager or a
+[just](https://just.systems/man/en/installation.html) — your distro's package manager or a
 [release binary](https://github.com/casey/just/releases). Both are installed by the bootstrap
 script above, which also adds the invoking user to Docker's group.
 
