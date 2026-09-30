@@ -45,11 +45,15 @@ containers during its scheduled maintenance window.
   onboarded; with no config at a default path and no onboarding PR, it skips the repository as
   `disabled-no-config` and exits 0 — a green run that silently does nothing, with no PRs and no
   dependency dashboard issue.
-- minor/patch bumps are grouped into one PR; **major** bumps go to a separate PR, one per
-  dependency (`separateMultipleMajor`).
+- Docker-image minor/patch bumps are grouped into a media-stack PR; Docker major bumps are split
+  out by dependency (`separateMultipleMajor`). GitHub Actions updates are grouped separately from
+  image updates, with major and non-major updates kept separate.
+- Renovate creates PRs as soon as it can push the update branch. There is no dashboard approval
+  step; GitHub's configured token permissions still apply. The default PR rate limit is two new
+  PRs per hour.
 - `automerge: false` — nothing merges without you.
-- A **dependency dashboard** issue lists every managed image and which have updates pending; the
-  schedule/blocker per dependency can be toggled via issue comments.
+- A **dependency dashboard** issue tracks managed dependencies and updates blocked by scheduling,
+  rate limits, or approval requirements. Its checkboxes can force eligible updates to run early.
 - Pins are preserved: bumps go `:v3.4.1` → `:v3.5.0`, never `:latest`.
 
 ## Prerequisites (one time)
@@ -57,10 +61,10 @@ containers during its scheduled maintenance window.
 1. Repo hosted on GitHub (it is).
 2. A **Personal Access Token** with write access, stored as the `RENOVATE_TOKEN` Actions secret:
    - Create at <https://github.com/settings/tokens>.
-   - Classic: scope `repo` (simplest — includes branch push).
-   - Fine-grained: `Contents`, `Pull requests`, `Issues` all **read and write** (read alone fails
-     with `Write access to repository not granted` because Renovate pushes branches), restricted
-     to this repo.
+   - Classic: scopes `repo` and `workflow` (`repo` allows branch pushes; `workflow` allows
+     GitHub Actions dependency updates to change files under `.github/workflows/`).
+   - Fine-grained: `Contents`, `Pull requests`, and `Issues` **read and write**, plus `Workflows`
+     **write** so Renovate can update `.github/workflows/`; restrict the token to this repo.
 3. Store it once as a repo **Actions secret**. From the repository root:
 
    ```bash
@@ -180,8 +184,10 @@ PRs deserve reading the release notes first.
 
 - **No PRs?** Check the Renovate run under Actions — its log states exactly what it saw
   (e.g. `Dependency extraction complete ... depCount`).
+- **Push rejected for a GitHub Actions update**: the `RENOVATE_TOKEN` also needs `Workflows: write`
+  (fine-grained) or the `workflow` scope (classic), in addition to branch-push access.
 - **`Write access to repository not granted`** at push time: token needs `Contents: read and
-write` (fine-grained) or `repo` (classic), allowed on this repository.
+  write` (fine-grained) or `repo` (classic), allowed on this repository.
 - **Token expired/wrong**: re-set `RENOVATE_TOKEN` (`gh secret set RENOVATE_TOKEN` from the
   repository root, or Settings → Secrets and variables → Actions), then re-run via
   `workflow_dispatch`.

@@ -30,11 +30,26 @@
   "packageRules": [
     {
       "automerge": false,
+      "groupName": "github-actions",
+      "groupSlug": "github-actions",
+      "labels": [
+        "renovate"
+      ],
+      "matchManagers": [
+        "github-actions"
+      ]
+    },
+    {
+      "automerge": false,
       "groupName": "media-stack minor/patch",
       "groupSlug": "media-stack-minor-patch",
       "labels": [
         "renovate",
         "minor/patch"
+      ],
+      "matchManagers": [
+        "custom.regex",
+        "docker-compose"
       ],
       "matchUpdateTypes": [
         "minor",
@@ -48,6 +63,10 @@
       "labels": [
         "renovate",
         "major"
+      ],
+      "matchManagers": [
+        "custom.regex",
+        "docker-compose"
       ],
       "matchUpdateTypes": [
         "major"
