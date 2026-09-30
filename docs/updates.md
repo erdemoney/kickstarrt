@@ -36,12 +36,14 @@ containers during its scheduled maintenance window.
 
 - `.github/workflows/renovate.yml` runs daily at `06:00 UTC` (and on manual
   `workflow_dispatch`).
-- `.github/renovate-config.json` is the **global** config. The basename deliberately avoids the
-  auto-discovered repo-config names (`renovate.json`, `.renovaterc`, ...) so Renovate loads it as
-  _global_ config. The workflow supplies the current repository through
-  `RENOVATE_REPOSITORIES`, so the same fork-safe configuration works in the upstream repository
-  and in private forks. It enables the `docker-compose`, `github-actions`, and `pre-commit`
-  managers, plus a custom manager for the Restic image in `justfile`.
+- `.github/renovate.json` is the config. The name is Renovate's auto-discovered repo-config
+  location, which is what keeps the repository **onboarded**. The workflow also supplies the
+  current repository through `RENOVATE_REPOSITORIES`, so the same configuration works in the
+  upstream repository and in private forks. It enables the `docker-compose`, `github-actions`,
+  and `pre-commit` managers, plus a custom manager for the Restic and hunt images in `justfile`.
+- Do **not** rename that file. With `onboarding: false` and no auto-discovered config, Renovate
+  skips the repository as `disabled-no-config` and exits 0 — a green run that silently does
+  nothing, with no PRs and no dependency dashboard issue.
 - minor/patch bumps are grouped into one PR; **major** bumps go to a separate PR, one per
   dependency (`separateMultipleMajor`).
 - `automerge: false` — nothing merges without you.
@@ -61,8 +63,7 @@ containers during its scheduled maintenance window.
 3. Store it once as a repo **Actions secret**. From the repository root:
 
    ```bash
-   REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
-   gh secret set RENOVATE_TOKEN --repo "$REPO"
+   gh secret set RENOVATE_TOKEN
    ```
 
    The command prompts securely for the token. Alternatively use GitHub → repo **Settings →
@@ -73,27 +74,28 @@ A GitHub App install is _not_ needed — this is the self-hosted action setup.
 ## GitHub repository setup
 
 Run these commands once after forking. They are safe to run again if a workflow is already
-enabled.
+enabled. Run them from the repository root: every `gh` command below infers the repository from
+the checkout's remote, so no `--repo` flag is needed. `REPO` exists only for the `gh api` calls,
+which take an explicit `owner/repo` path.
 
 ```bash
-REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
-
 # Confirm the workflows exist, then enable them in the fork.
-gh workflow list --repo "$REPO"
-gh workflow enable ci.yml --repo "$REPO"
-gh workflow enable renovate.yml --repo "$REPO"
-gh workflow enable pages.yml --repo "$REPO"
+gh workflow list
+gh workflow enable ci.yml
+gh workflow enable renovate.yml
+gh workflow enable pages.yml
 
 # Configure GitHub Pages to deploy from the Pages workflow.
+REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 gh api --method PUT "repos/$REPO/pages" --field build_type=workflow
 
 # Run CI and Renovate manually when verifying the setup.
-gh workflow run ci.yml --repo "$REPO"
-gh workflow run renovate.yml --repo "$REPO"
-gh run list --repo "$REPO"
+gh workflow run ci.yml
+gh workflow run renovate.yml
+gh run list
 # Follow a run until it finishes, or inspect only failed-step logs.
-gh run watch --repo "$REPO"
-gh run view <RUN_ID> --log-failed --repo "$REPO"
+gh run watch
+gh run view <RUN_ID> --log-failed
 ```
 
 If the Pages site has never been created, use GitHub → repo **Settings → Pages**, choose
@@ -142,9 +144,9 @@ Rulesets**.
 
 ## First onboarding
 
-1. `.github/renovate-config.json` + `.github/workflows/renovate.yml` already exist on `main`.
+1. `.github/renovate.json` + `.github/workflows/renovate.yml` already exist on `main`.
 2. Set the `RENOVATE_TOKEN` secret (above).
-3. Run once manually with `gh workflow run renovate.yml --repo "$REPO"`, or use GitHub → Actions
+3. Run once manually with `gh workflow run renovate.yml`, or use GitHub → Actions
    → **Renovate** → _Run workflow_, or wait for the cron.
    The first run opens PRs for any outdated tags. If every image is already current there are
    simply no PRs yet — the first ones appear when a newer tag is published. (No "onboarding"
@@ -179,11 +181,12 @@ PRs deserve reading the release notes first.
   (e.g. `Dependency extraction complete ... depCount`).
 - **`Write access to repository not granted`** at push time: token needs `Contents: read and
 write` (fine-grained) or `repo` (classic), allowed on this repository.
-- **Token expired/wrong**: re-set `RENOVATE_TOKEN` (`gh secret set RENOVATE_TOKEN --repo "$REPO"`
-  or Settings → Secrets and variables → Actions), then re-run via `workflow_dispatch`.
+- **Token expired/wrong**: re-set `RENOVATE_TOKEN` (`gh secret set RENOVATE_TOKEN` from the
+  repository root, or Settings → Secrets and variables → Actions), then re-run via
+  `workflow_dispatch`.
 - **Validate config locally before pushing**:
 
   ```bash
   docker run --rm -v "$PWD":/repo ghcr.io/renovatebot/renovate:latest \
-      renovate-config-validator /repo/.github/renovate-config.json
+      renovate-config-validator /repo/.github/renovate.json
   ```

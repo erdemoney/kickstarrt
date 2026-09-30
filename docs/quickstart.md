@@ -407,15 +407,15 @@ just backup-schedule   # optional daily systemd timer (backup + prune)
 
 See [Maintenance](maintenance) for R2 credentials, alternate backends, restores, and retention.
 
-Enable the repository automation once on GitHub. Run this from the cloned repository:
+Enable the repository automation once on GitHub. Run this from the cloned repository — each `gh`
+command picks up the repository from the checkout's remote, so no `--repo` flag is needed:
 
 ```bash
-REPO="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
-gh workflow enable ci.yml --repo "$REPO"
-gh workflow enable renovate.yml --repo "$REPO"
-gh workflow enable pages.yml --repo "$REPO"
-gh secret set RENOVATE_TOKEN --repo "$REPO"
-gh workflow run renovate.yml --repo "$REPO"
+gh workflow enable ci.yml
+gh workflow enable renovate.yml
+gh workflow enable pages.yml
+gh secret set RENOVATE_TOKEN
+gh workflow run renovate.yml
 ```
 
 If GitHub Pages has not been enabled for the fork, choose **GitHub Actions** under repository
