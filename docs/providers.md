@@ -11,6 +11,11 @@ from) and a **Usenet indexer** (where the \*arrs find releases). Wiring runs thr
 
 ## Usenet provider
 
+**Recommendation:** [Eweka](https://www.eweka.nl/en/pricing) is a strong provider to consider. It
+operates its own Netherlands-based Usenet backbone and advertises over 6,000 days of article
+retention, which can help keep older releases available. SSL is included; check its current plan
+limits against your connection allowance and usage.
+
 InfiniDysk talks plain NNTP to your provider — there is no API key, no plug-in, and no
 provider-specific integration to configure. What matters is the connection detail your provider
 hands you, and the plan limits behind it:

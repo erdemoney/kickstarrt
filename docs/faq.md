@@ -71,6 +71,28 @@ happens. The stack leans into this: the shipped
 [Direct Play and Direct Play (Anime) quality profiles](services/recyclarr) score
 anything that would force a video transcode out of the grab candidates entirely.
 
+## Why Usenet instead of torrents or Debrid?
+
+Usenet fits this stack's workflow: Prowlarr finds releases, Sonarr/Radarr send them to InfiniDysk,
+and InfiniDysk retrieves them from a provider and exposes them to Jellyfin as `.strm` links. This
+doesn't depend on a live torrent swarm or require a torrent client and its seeding setup. It's an
+architectural choice, not a claim that Usenet is always better: availability depends on the indexer,
+provider retention, and article availability, and playback and seeking use provider transfer
+([Providers](providers)).
+
+Debrid adds a third-party cache or host whose available content and integrations can change under
+legal or rightsholder pressure. For example, Real-Debrid confirmed content filtering in response to
+legal obligations after reports of cached-torrent access errors in May 2026; it had also announced
+anti-piracy measures after a notice from French film distributors in 2024
+([TorrentFreak's report](https://torrentfreak.com/real-debrids-renewed-piracy-crackdown-follows-corporate-restructuring/)).
+That is a concrete example of service restrictions changing availability, not a prediction that
+every Debrid service will close.
+
+There is also a difference in how users participate in torrent sharing. A normal torrent client
+uploads pieces to other peers while downloading and can continue seeding afterward. Debrid users
+generally consume cached torrents without seeding from their own devices, so they contribute less
+directly to the swarm; what a Debrid provider seeds from its own infrastructure varies by service.
+
 ## Why Ubuntu on Oracle Cloud but Debian elsewhere?
 
 Debian stable is the safe default — minimal, long support cycles, and most providers ship a

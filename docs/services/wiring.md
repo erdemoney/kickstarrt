@@ -1,7 +1,6 @@
 ---
 title: Service wiring
-parent: Services
-nav_order: 4
+nav_order: 19
 ---
 
 # Service wiring: networking and app integrations

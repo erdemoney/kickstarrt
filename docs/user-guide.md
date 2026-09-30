@@ -36,6 +36,8 @@ HTTPS connection.
 3. For a show, choose whether to request the whole show or specific seasons.
 4. Check the request status from your requests list.
 
+When requesting anime, choose the **Direct Play (Anime)** quality profile.
+
 Requests can take a few minutes to become available. Once a request is ready, it will appear in
 Jellyfin. If a title is already available, Seerr will show that instead of asking you to request
 it again.
@@ -56,7 +58,6 @@ The web app works on most devices, but a dedicated app usually provides a better
 - **Official Jellyfin apps** for Android, Android TV/Google TV, iPhone, iPad, Apple TV, and desktop
   computers
 - **Samsung Tizen** app for compatible Samsung smart TVs
-- **Infuse** for iPhone, iPad, Apple TV, and Mac
 - **Swiftfin** for iPhone, iPad, and Apple TV
 - **Kodi with the Jellyfin add-on** for devices where Kodi is already installed
 
@@ -68,7 +69,7 @@ your administrator.
 
 - If new content is not visible, refresh the page or close and reopen the app.
 - If playback fails, try a different audio track or temporarily turn subtitles off.
-- If playback buffers, try lowering the playback quality or using a wired or stronger Wi-Fi connection.
+- If playback buffers, try using a wired or stronger Wi-Fi connection.
 - If a request has not become available after a reasonable wait, contact your administrator.
 
 When reporting a problem, include the title, the device and app you are using, and any error message

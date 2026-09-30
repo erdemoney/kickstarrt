@@ -1,7 +1,6 @@
 ---
 title: Back-catalog hunting
-parent: Services
-nav_order: 8
+nav_order: 20
 ---
 
 # Back-catalog hunting

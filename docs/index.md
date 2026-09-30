@@ -102,6 +102,8 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Tailnet DNS](tailnet)       | admin panels by name over the tailnet: CoreDNS + split DNS mechanics |
 | [Services](services)         | service-specific setup and operations for the media stack             |
 | [Service wiring](services/wiring) | internal DNS, API keys, media paths, and cross-service integrations |
+| [Back-catalog hunting](services/hunt) | scheduled missing and quality-upgrade searches |
+| [Indexers](services/indexers) | indexer workflow and provider choices |
 | [User guide](user-guide)     | simple Jellyfin and Seerr instructions for end users                 |
 | [Providers](providers)       | recommended Usenet provider and indexer picks                          |
 | [Adding services](services/extending) | how to extend the stack safely with more containers |
