@@ -29,6 +29,15 @@
   ],
   "packageRules": [
     {
+      "matchManagers": [
+        "docker-compose"
+      ],
+      "matchPackageNames": [
+        "lscr.io/linuxserver/jellyfin"
+      ],
+      "versioning": "loose"
+    },
+    {
       "automerge": false,
       "groupName": "github-actions",
       "groupSlug": "github-actions",
