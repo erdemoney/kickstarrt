@@ -41,9 +41,10 @@ containers during its scheduled maintenance window.
   current repository through `RENOVATE_REPOSITORIES`, so the same configuration works in the
   upstream repository and in private forks. It enables the `docker-compose`, `github-actions`,
   and `pre-commit` managers, plus a custom manager for the Restic and hunt images in `justfile`.
-- Do **not** rename that file. With `onboarding: false` and no auto-discovered config, Renovate
-  skips the repository as `disabled-no-config` and exits 0 — a green run that silently does
-  nothing, with no PRs and no dependency dashboard issue.
+- Do **not** rename that file. Renovate treats an auto-discovered config as proof the repository is
+  onboarded; with no config at a default path and no onboarding PR, it skips the repository as
+  `disabled-no-config` and exits 0 — a green run that silently does nothing, with no PRs and no
+  dependency dashboard issue.
 - minor/patch bumps are grouped into one PR; **major** bumps go to a separate PR, one per
   dependency (`separateMultipleMajor`).
 - `automerge: false` — nothing merges without you.
@@ -150,7 +151,7 @@ Rulesets**.
    → **Renovate** → _Run workflow_, or wait for the cron.
    The first run opens PRs for any outdated tags. If every image is already current there are
    simply no PRs yet — the first ones appear when a newer tag is published. (No "onboarding"
-   PR, because the global config already exists on the default branch.)
+   PR, because the config is already on the default branch at an auto-discovered path.)
 
 ## Day-to-day flow
 

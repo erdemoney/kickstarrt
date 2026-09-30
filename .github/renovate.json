@@ -27,7 +27,6 @@
   "labels": [
     "renovate"
   ],
-  "onboarding": false,
   "packageRules": [
     {
       "automerge": false,
