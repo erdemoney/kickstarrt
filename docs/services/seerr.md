@@ -12,9 +12,7 @@ then sends approved requests to Radarr or Sonarr.
 ## Stack setup
 
 Open `https://seerr.<DOMAIN>` over the tailnet. `just wire` can complete Seerr's first-run setup
-through Jellyfin login and reconcile its Jellyfin, Radarr, and Sonarr connections. Create the
-Jellyfin libraries first; wiring enables those libraries for requests. See
-[Service wiring](wiring#seerr--jellyfin--radarr--sonarr-requests) for connection details.
+through Jellyfin login. Create Jellyfin libraries first so they are available for requests.
 
 Seerr's configuration is stored under `data/seerr/config`. The panel is tailnet-only by default;
 to publish it, run `just public enable seerr`, then follow [Traefik's public access steps](traefik#public-access).

@@ -21,7 +21,8 @@ caching is disabled, and a Cloudflare Tunnel routes traffic through that same ed
 So this stack moves **no video through Cloudflare's network**: public hostnames are DNS-only
 A records straight to the VPS, and Cloudflare only answers recursive DNS lookups and the ACME
 `_acme-challenge` TXT record. That is unreservedly compliant — and since the box has a static
-public IP, there's nothing to hide anyway. Details: [Traefik](services/traefik).
+public IP, there's nothing to hide anyway. See [Cloudflare](cloudflare) for record setup and
+[Traefik](services/traefik) for routing.
 
 ## Why no Cloudflare Tunnel?
 
@@ -96,7 +97,7 @@ directly to the swarm; what a Debrid provider seeds from its own infrastructure 
 ## Why Ubuntu on Oracle Cloud but Debian elsewhere?
 
 Debian stable is the safe default — minimal, long support cycles, and most providers ship a
-Debian image. Oracle's catalog doesn't offer one, so the [OCI guide](oci) uses **Ubuntu 26.04
+Debian image. Oracle's catalog doesn't offer one, so the [Oracle Cloud guide](vps-setup/oracle-cloud) uses **Ubuntu 26.04
 Minimal**.
 
 ## Why does CrowdSec fail open?

@@ -128,7 +128,7 @@ CLOUDFLARE_PROMPT = Prompt(
     "Cloudflare DNS API token (blank to skip)",
     "A least-privilege token with Zone Read and DNS Edit for your domain, used for wildcard certificates.",
     "paste the token from Cloudflare",
-    "docs/quickstart.md (CLOUDFLARE_DNS_TOKEN section)",
+    "docs/cloudflare.md#api-token-for-certificates",
 )
 R2_ACCOUNT_PROMPT = Prompt(
     "R2 account ID",

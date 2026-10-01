@@ -54,7 +54,7 @@ collected in the [FAQ](faq).
 **HTTPS comes out of the box.** Traefik's ACME provider issues a **Let's Encrypt wildcard
 certificate for `*.DOMAIN`** via the Cloudflare DNS-01 challenge (`CLOUDFLARE_DNS_TOKEN`),
 renewed automatically. Every service's UI is available on the tailnet immediately; opt a service
-into public routing with `just public enable <service>`, then add its [A record](services/traefik) and open
+into public routing with `just public enable <service>`, then add its [A record](cloudflare) and open
 the firewall separately. No per-app TLS configuration is involved.
 
 ## VPS sizing
@@ -72,8 +72,8 @@ you'll rarely transcode at all ([FAQ](faq#why-does-jellyfin-transcode-in-softwar
 
 **Debian** (stable) is the safe default — minimal, long support cycles, and every Docker
 guide assumes it. Most providers offer a Debian 12 image out of the box; Oracle Cloud
-doesn't, so use **Ubuntu 26.04 Minimal** there instead. The full Oracle walkthrough is the
-[OCI appendix](oci).
+doesn't, so use **Ubuntu 26.04 Minimal** there instead. The full Oracle walkthrough is in
+[VPS Setup](vps-setup/oracle-cloud).
 
 ## Repository layout
 
@@ -100,6 +100,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | --- | --- |
 | [Quickstart](quickstart) | Ordered walkthrough: tailnet access, firewall, initialization, first boot, app setup, and public access. |
 | [Tailscale](tailscale) | Private administration, tailnet access, and split DNS. |
+| [Cloudflare](cloudflare) | Domain setup, DNS-only service records, and certificate API token. |
 | [Service wiring](services/wiring) | Internal DNS, API keys, media paths, and cross-service integrations. |
 | [Services](services) | Stack-specific notes and official references for each service. |
 | [Providers](providers) | Recommended Usenet provider and indexer options. |
@@ -107,7 +108,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Adding services](services/extending) | How to extend the stack safely with more containers. |
 | [Security](security) | Layered security model: Tailscale, firewall, Traefik, and CrowdSec. |
 | [Maintenance](maintenance) | Day-to-day operations, [backups](maintenance/backups), [back-catalog hunting](maintenance/hunt), and [Updates & CI](maintenance/updates). |
-| [Oracle Cloud (free tier)](oci) | Appendix: free VPS from zero to a running box. |
+| [VPS Setup](vps-setup) | General provider checklist, [Oracle Cloud](vps-setup/oracle-cloud), and [other providers](vps-setup/other-providers). |
 | [FAQ](faq) | Design decisions and common questions. |
 
 All app config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s

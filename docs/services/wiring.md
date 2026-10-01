@@ -1,6 +1,6 @@
 ---
 title: Service wiring
-nav_order: 5
+nav_order: 6
 ---
 
 # Service wiring: networking and app integrations

@@ -13,15 +13,15 @@ are opt-in; management services remain tailnet-only. For the complete security m
 
 ## Public access
 
-Public traffic follows **Cloudflare DNS-only A record → VPS public IP `:443` → Traefik → service**.
-Cloudflare provides DNS and the DNS-01 certificate challenge; it does not proxy video. There is no
-Cloudflare Tunnel. Port `80` only redirects HTTP to HTTPS. See the [FAQ](../faq#why-cant-i-proxy-media-through-cloudflare)
-for the reason media hostnames must stay DNS-only.
+Public traffic follows **Cloudflare DNS-only record → VPS public IP `:443` → Traefik → service**.
+Cloudflare provides DNS and the DNS-01 certificate challenge; it does not proxy video. Port `80`
+only redirects HTTP to HTTPS. See [Cloudflare](../cloudflare) for DNS setup and the
+[FAQ](../faq#why-cant-i-proxy-media-through-cloudflare) for the DNS-only requirement.
 
 To publish a service, complete its first-run setup and authentication, then:
 
 1. Enable its Traefik router: `just public enable <service>`.
-2. Add a DNS-only Cloudflare A record for `<service>.<DOMAIN>` pointing to the VPS public IP.
+2. Add a DNS-only A record for `<service>.<DOMAIN>` following [Cloudflare's instructions](../cloudflare#public-dns-records).
 3. Open TCP ports `443` and `80` in the selected firewall. In UFW mode:
 
    ```bash
@@ -36,7 +36,8 @@ sequence and rollback guidance are in [Quickstart: Go public](../quickstart#12-g
 
 Traefik's ACME provider uses the Cloudflare DNS-01 challenge and `CLOUDFLARE_DNS_TOKEN` to issue a
 Let's Encrypt wildcard certificate for `*.DOMAIN`. Issuance and renewal are automatic; no public
-DNS record or inbound port is needed for the challenge. The certificate can be checked in the
+DNS record or inbound port is needed for the challenge. Configure the token as described in
+[Cloudflare](../cloudflare#api-token-for-certificates). The certificate can be checked in the
 Traefik dashboard.
 
 There is no Let's Encrypt account to create ([FAQ](../faq#why-is-there-no-lets-encrypt-account-to-create)).

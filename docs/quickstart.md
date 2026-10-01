@@ -18,9 +18,9 @@ Before you start, have:
 - **A VPS** — any provider, ≥ 2 vCPU / 4 GB RAM ([sizing](index)), with SSH access you can
   reach. Bring it up in the next section.
 - **A domain you control** — used for every panel URL (`radarr.<DOMAIN>`, …) and the wildcard
-  TLS cert, so pick something you can keep. It should be **served by Cloudflare** (DNS records,
-  the DNS-01 cert challenge, and R2 backups all live there): move the domain's nameservers to
-  Cloudflare first if it isn't already.
+  TLS cert, so pick something you can keep. It should be **served by Cloudflare** for DNS records
+  and the DNS-01 certificate challenge. See [Cloudflare](cloudflare) for domain and token setup;
+  Cloudflare R2 is an optional backup destination.
 - **Cloudflare account** with the domain (and an API token made during configuration; **Cloudflare
   R2** for the optional restic backups).
 - **Tailscale account** — you'll approve the box into your tailnet in the next section and
@@ -33,8 +33,8 @@ Before you start, have:
 Any provider, any box with ≥ 2 vCPU / 4 GB RAM (sizing notes in the [overview](index)). Use a
 **Debian 12** or **Ubuntu LTS** image — every command in this wiki is written for them. On
 Oracle Cloud, use **Ubuntu 26.04 Minimal** instead (no Debian image there);
-the [OCI appendix](oci) walks the whole creation, including the `443`/`80` ingress rules
-you'll need much later.
+[VPS Setup → Oracle Cloud](vps-setup/oracle-cloud) walks through the creation, including the
+`443`/`80` ingress rules you'll need much later.
 
 The one thing you need from the provider: SSH access to the fresh box (a key you injected at
 creation, or however the provider does first login).
@@ -114,7 +114,7 @@ the `100.x.y.z` address is the one that matters later.
 > and run `sudo tailscale up` again; do not rely on public SSH remaining available after
 > host-firewall setup. If the provider's console uses a local OS password, set a long random one while
 > tailnet SSH still works, without enabling SSH password authentication. On Oracle Cloud,
-> Ubuntu images configure no console password by default; the [OCI appendix](oci#3-recovery-the-console-break-glass)
+> Ubuntu images configure no console password by default; the [Oracle Cloud guide](vps-setup/oracle-cloud#3-recovery-the-console-break-glass)
 > shows the one-time setup and recovery procedure.
 
 ## 4. Fork and clone the repository
@@ -169,7 +169,7 @@ type `?` for a short explanation, an example, and the relevant documentation ref
 - An optional username/password prompt writes `TRAEFIK_DASHBOARD_CREDENTIALS` for the
   [Traefik dashboard](services/traefik#configuration-and-dashboard).
 - `CLOUDFLARE_DNS_TOKEN` — enter it when ready; `just init` verifies it against Cloudflare.
-  Leave it empty to do it later.
+  Leave it empty to do it later; setup is in [Cloudflare → API token](cloudflare#api-token-for-certificates).
 - Your **Usenet account** — InfiniDysk's provider prompts: server hostname, port, TLS, username,
   password, and your plan's connection allowance.
 - **InfiniDysk's** API key is generated for you.
@@ -184,22 +184,9 @@ understanding are:
 
 ### `CLOUDFLARE_DNS_TOKEN` — Cloudflare (wildcard TLS)
 
-This token is the entire Let's Encrypt prerequisite: DNS-01 is how Traefik proves ownership of
-`*.DOMAIN` ([Traefik → Certificates](services/traefik#certificates)).
-
-1. Open [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token** →
-   **Create custom token**, with two permissions on `DOMAIN`:
-    - **Zone → Zone → Read** — resolves the domain to a zone ID before any record can be edited.
-   - **Zone → DNS → Edit** — creates and deletes the `_acme-challenge` TXT records.
-2. **Zone Resources** → **Include** → **Specific zone** → your `DOMAIN` (least privilege —
-   not "All zones").
-3. Create — `just init` verifies the token against Cloudflare's API right after you enter it,
-   so a bad paste or revoked token fails immediately. To re-check an existing token:
-
-```bash
-curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
-  -H "Authorization: Bearer <token>"   # expect "status": "active"
-```
+Traefik uses this scoped token for DNS-01 wildcard certificates. Follow the
+[Cloudflare token setup](cloudflare#api-token-for-certificates); `just init` verifies the token
+when entered.
 
 ### `TRAEFIK_DASHBOARD_CREDENTIALS` — htpasswd blob
 
@@ -435,11 +422,11 @@ the serving ports — in that order.
 just public enable jellyfin seerr
 ```
 
-   Use `just public status` to review the current router selection. In Cloudflare DNS, add **A
-   records** for each enabled hostname, such as `seerr.<DOMAIN>` and `jellyfin.<DOMAIN>`, pointing
-   at the VPS's **public IP**, **Proxy status: DNS only** (grey cloud — never proxied,
-   [why](faq#why-cant-i-proxy-media-through-cloudflare)). Detailed steps in
-    [Traefik → Public access](services/traefik#public-access).
+   Use `just public status` to review the current router selection. Add a DNS-only A record for
+   each enabled hostname, such as `seerr.<DOMAIN>` and `jellyfin.<DOMAIN>`, following
+   [Cloudflare's public DNS instructions](cloudflare#public-dns-records). Then open the serving
+   ports below; the [Traefik procedure](services/traefik#public-access) explains how the router,
+   DNS record, and firewall fit together.
  2. In **UFW mode**, open the public ports separately:
 
 ```bash

@@ -1,16 +1,17 @@
 ---
 title: Oracle Cloud (free tier)
-nav_order: 18
+parent: VPS Setup
+nav_order: 1
 ---
 
 # Appendix: Oracle Cloud free-tier VPS
 
 The provider-specific walkthrough from zero to a running Ubuntu 26.04 box on Oracle Cloud
 **Always Free**. Once the box exists, everything else is the standard
-[Quickstart](quickstart). The overview's [access model](index#the-access-model) applies here
+[Quickstart](../quickstart). The overview's [access model](../index#the-access-model) applies here
 like everywhere: the box's only public serving door is `:443`, opened last; a short public-SSH
 window during setup is closed according to the firewall choice in
-[Quickstart §6](quickstart#6-choose-the-firewall-model).
+[Quickstart §6](../quickstart#6-choose-the-firewall-model).
 
 ## 0. About the free tier
 
@@ -56,7 +57,7 @@ internet gateway + route that give it outbound internet:
 Security Lists, or Networking → Virtual cloud networks → `kickstarrt-vcn` → Security Lists →
 `Default Security List for kickstarrt-vcn`). Leave the wizard's default `22` ingress rule
 alone **for now** — that's the door you `ssh` in through during setup. Keep public `80` and
-`443` closed during setup; add their ingress rules at [Quickstart §12](quickstart#12-go-public-last)
+`443` closed during setup; add their ingress rules at [Quickstart §12](../quickstart#12-go-public-last)
 when you deliberately publish services. If you choose UFW mode, the host rules in Quickstart
 §6 provide the additional per-port enforcement. The `22` rule is deleted after tailnet SSH is
 confirmed in §6; in provider firewall mode, make that provider-rule change yourself.
@@ -72,12 +73,12 @@ confirmed in §6; in provider firewall mode, make that provider-rule change your
 | **Placement → Availability domain** | leave the default — regions differ (some have a single AD, others several); it doesn't matter for this stack |
 | **Image** | **Change image** → Operating system **Ubuntu** → Version **Canonical Ubuntu 26.04 Minimal aarch64** — choose the Minimal **aarch64** build for this Arm shape (don't pick the x86 variant) |
 | **Shape** | **Change shape** → **VM.Standard.A1.Flex** (Ampere, Arm): **2 OCPU / 12 GB / 2 Gbps** — the console spells it "2 core OCPU, 12 GB memory, 2 Gbps network bandwidth", the Always-Free ARM allotment. The only valid shape for this stack: every image in `stacks/` publishes `arm64` builds, and the x86 shapes (e.g. `VM.Standard.E2.1.Micro` at 1 GB) are not a valid choice. The shape must show **Always Free-eligible** |
-| **Networking → Primary VNIC** | select existing VCN `kickstarrt-vcn` and its **public subnet** (the one the wizard created); private IPv4 **automatically assigned**; **Public IPv4 address: Automatically assign** — the box gets its public IP here; public serving ports remain closed until the [going-public](quickstart#12-go-public-last) step |
+| **Networking → Primary VNIC** | select existing VCN `kickstarrt-vcn` and its **public subnet** (the one the wizard created); private IPv4 **automatically assigned**; **Public IPv4 address: Automatically assign** — the box gets its public IP here; public serving ports remain closed until the [going-public](../quickstart#12-go-public-last) step |
 | **Add SSH keys** | paste your **workstation's public key** (`~/.ssh/id_ed25519.pub`) — it's how you get in: during setup over the public IP, and over the tailnet afterwards. Canonical Ubuntu images configure **no console password**, so this key is the only way onto the box. Never leave it empty |
 | **Storage → Boot volume** | default (≈ 46.6 GB, Oracle-managed encryption, in-transit encryption on) — no extra block volumes |
 
 **Advanced options**: leave everything default — no cloud-init script (first-run setup
-happens over SSH, exactly like any other VPS — [Quickstart §2](quickstart#2-get-in-join-the-tailnet)),
+happens over SSH, exactly like any other VPS — [Quickstart §2](../quickstart#2-get-in-join-the-tailnet)),
 and the Secure Boot / TPM toggles off.
 
 **Create**, then wait a few minutes for provisioning.
@@ -92,10 +93,10 @@ details page note the **Public IP address**, then:
 ssh ubuntu@<PUBLIC-IP>     # key you pasted at creation; proceed even if a "host key" prompt appears
 ```
 
-Then continue with the [Quickstart](quickstart#2-get-in-join-the-tailnet): the bootstrap
+Then continue with the [Quickstart](../quickstart#2-get-in-join-the-tailnet): the bootstrap
 one-liner installs the stack's prerequisites and joins the box to your tailnet — approve the
 auth URL it prints, and it hands you the tailnet address that becomes your SSH address from
-then on. Once tailnet SSH is confirmed, [Quickstart §6](quickstart#6-choose-the-firewall-model)
+then on. Once tailnet SSH is confirmed, [Quickstart §6](../quickstart#6-choose-the-firewall-model)
 closes the `22` door in UFW mode (delete the VCN ingress rule and lock UFW to tailnet-only) or
 leaves it open only if that is an intentional provider-firewall policy. Every later login should
 normally go over the tailnet.
@@ -150,7 +151,7 @@ Notes:
   the instance stops and may come back different on a rebuild — which would strand the DNS
   records. On the instance page → **Attached VNICs** → the public IP → **Convert to Reserved
   IP** (or Networking → IP management → Reserve public IP, then assign it). Reserved public
-  IPs are Always-Free eligible. This *is* the IP your [A records](services/traefik#public-access)
+  IPs are Always-Free eligible. This *is* the IP your [A records](../cloudflare#public-dns-records)
   point at.
 - Oracle **reclaims Always-Free instances it considers idle** (low CPU/network for a while).
   This stack mostly benches idle between streams, so the box can vanish without warning; the

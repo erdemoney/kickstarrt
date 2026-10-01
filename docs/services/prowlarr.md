@@ -24,16 +24,6 @@ with the stack's Usenet workflow.
 `just wire` creates the Radarr and Sonarr application connections. Do not recreate those
 application connections manually unless you have intentionally changed them.
 
-## Internal connections
-
-Prowlarr reaches the other containers over the `internal` network:
-
-```text
-http://radarr:7878
-http://sonarr:8989
-```
-
-Use service names for application URLs, never public hostnames or `localhost`. See [Service
-wiring](wiring) for the shared networking model and the
+See [Service wiring](wiring) for the shared networking model and the
 [Prowlarr quick-start guide](https://wiki.servarr.com/prowlarr/quick-start-guide) for product
 documentation.

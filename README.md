@@ -119,10 +119,11 @@ script above, which also adds the invoking user to Docker's group.
 In reading order for a first deploy:
 
 - [**Quickstart**](https://erdemoney.github.io/kickstarrt-vps/quickstart) — the ordered walkthrough: get in via Tailscale, choose the firewall, secrets, first boot, app setup, go public
-- [**Tailscale**](https://erdemoney.github.io/kickstarrt-vps/tailscale) · [**Service wiring**](https://erdemoney.github.io/kickstarrt-vps/services/wiring) — private access and app integrations
+- [**Tailscale**](https://erdemoney.github.io/kickstarrt-vps/tailscale) · [**Cloudflare**](https://erdemoney.github.io/kickstarrt-vps/cloudflare) — private access, DNS, and certificates
+- [**Service wiring**](https://erdemoney.github.io/kickstarrt-vps/services/wiring) — app integrations
 - [**Services**](https://erdemoney.github.io/kickstarrt-vps/services) · [**Providers**](https://erdemoney.github.io/kickstarrt-vps/providers) — stack-specific app notes and provider recommendations
 - [**Security**](https://erdemoney.github.io/kickstarrt-vps/security) · [**Adding services**](https://erdemoney.github.io/kickstarrt-vps/services/extending) — security model and extending the stack
 - [**Traefik**](https://erdemoney.github.io/kickstarrt-vps/services/traefik) — HTTPS routing and public exposure
 - [**Maintenance**](https://erdemoney.github.io/kickstarrt-vps/maintenance) · [**Updates & CI**](https://erdemoney.github.io/kickstarrt-vps/maintenance/updates) — ongoing ops
-- [**Oracle Cloud (free tier)**](https://erdemoney.github.io/kickstarrt-vps/oci) — appendix: free VPS from zero
+- [**VPS Setup**](https://erdemoney.github.io/kickstarrt-vps/vps-setup) — Oracle Cloud walkthrough and guidance for other providers
 - [**FAQ**](https://erdemoney.github.io/kickstarrt-vps/faq) — the design decisions, answered

@@ -60,15 +60,4 @@ current account requirements and quotas when configuring either provider.
 separate ASR service and can generate subtitles when downloaded ones are unavailable. See
 [Bazarr's wiki](https://wiki.bazarr.media/) for supported providers and configuration.
 
-## Honorable mentions
-
-- **trash-guides profiles** (applied automatically via Recyclarr) — not a subscription, but the
-  biggest quality upgrade for free.
-
-## Budget stack
-
-Cost is exactly two line items: **your Usenet provider** plus **whichever indexer you subscribe
-to**. Everything else in this stack — InfiniDysk, the \*arrs, Jellyfin, Traefik, CrowdSec — is
-free and self-hosted.
-
 > Pricing as of writing — confirm on vendor sites before subscribing.

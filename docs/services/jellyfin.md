@@ -12,27 +12,35 @@ key. It also configures Sonarr and Radarr to trigger a library scan after import
 
 ## Libraries
 
-Add these folders as Movies and Shows libraries:
+In Dashboard → **Libraries** → **Add Media Library**, create a Movies library and a Shows library.
+For each one, choose the matching folder:
 
 ```text
 /mnt/usenet/library/movies
 /mnt/usenet/library/shows
 ```
 
-The shared bind is mounted at the same path in Jellyfin and the *arrs, so no path mapping is
-needed ([Service wiring](wiring#root-folders)). Do not add `/mnt/usenet/completed-downloads`;
-that is InfiniDysk's staging area, not library content. For TV series whose episode order differs
-between Jellyfin and Sonarr, choose matching metadata providers or identify the series using its
-TVDB entry.
+Save each library, then scan. The shared bind is mounted at the same path in Jellyfin and the *arrs,
+so no path mapping is needed ([Service wiring](wiring#root-folders)). Do not add
+`/mnt/usenet/completed-downloads`; that is InfiniDysk's staging area, not library content.
 
 ## CPU-only playback
 
-The VPS has no GPU, so set Jellyfin's **Transcoding path** to `/transcode` (a tmpfs) and disable
-video transcoding for each user. Keep conversion without video re-encoding (remux) and audio
-transcoding enabled. Unsupported video formats then fail rather than consuming CPU on a software
-transcode. The shipped **Direct Play** profiles in [Recyclarr](recyclarr) favor formats that work
-with this policy. See the [Jellyfin playback documentation](https://jellyfin.org/docs/general/clients/codec-support/)
-for playback and transcoding settings.
+The VPS has no GPU. Set Dashboard → **Playback** → **Transcoding path** to `/transcode` (a tmpfs),
+then disable video transcoding for every user: Dashboard → **Users** → edit a user → **Access** →
+**Media playback**.
+
+| Playback setting | Value |
+| --- | --- |
+| Allow video playback that requires transcoding | Off |
+| Allow video playback that requires conversion without re-encoding (remux) | On |
+| Allow audio playback that requires transcoding | On |
+
+Repeat for each user; new users inherit the default, which allows video transcoding. With this
+policy, video that needs re-encoding fails instead of consuming CPU, while remux and audio
+transcoding remain available. The shipped **Direct Play** profiles in [Recyclarr](recyclarr) favor
+formats compatible with this policy. See the [Jellyfin playback documentation](https://jellyfin.org/docs/general/clients/codec-support/)
+for other playback settings.
 
 ## Troubleshooting
 
