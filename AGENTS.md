@@ -9,6 +9,10 @@
 
 ## Making changes
 
+- Keep `main` as the production branch. Develop changes on short-lived feature or fix branches and merge them through pull requests; do not run production from a long-lived testing branch.
+- Once a feature or fix is complete and its relevant local checks pass, open a pull request from its feature branch targeting `main`.
+- Before merging, run the relevant local checks and ensure pull-request CI passes. Use a separate staging host or isolated environment for risky changes, with separate configuration, secrets, and persistent data.
+- Deploy production from `main` using `just maintenance-run` (or the scheduled maintenance job), then verify with `just health` and relevant service logs. Revert a problematic change through Git and redeploy; deployment does not automatically roll back.
 - When adding or removing a stack, update `stacks/manifest.txt`; recipes discover stacks from that manifest.
 - Keep service behavior, Compose configuration, and relevant `docs/` pages aligned. `docs/` is the operational reference for deployment and service-specific behavior.
 - Preserve existing Compose and Python conventions. Administration scripts should report actionable failures via `ScriptError`; use dry-run modes where available for changes with external effects.

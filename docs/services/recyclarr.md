@@ -8,8 +8,7 @@ nav_order: 9
 
 Recyclarr synchronizes the tracked quality profiles into Radarr and Sonarr. The container reads
 `data/recyclarr/configs/radarr.yml` and `sonarr.yml`, creates the profiles on the first run, and
-syncs them daily. There is nothing to paste into either Arr UI. For configuration syntax, see the
-[official Recyclarr documentation](https://recyclarr.dev/wiki/).
+syncs them daily. There is nothing to paste into either Arr UI.
 
 ## Why these profiles are custom
 
@@ -75,3 +74,7 @@ If a profile is missing or an Arr API key was regenerated, run `just wire`, then
 ```bash
 docker logs recyclarr
 ```
+
+## Further reading
+
+- [Official Recyclarr documentation](https://recyclarr.dev/wiki/)

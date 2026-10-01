@@ -201,9 +201,9 @@ top-level archive.
 - **The Usenet provider is unreachable** — the host must be able to reach
   `news.example.net:563` outbound. Try it from the box: `openssl s_client -connect <host>:563`.
 
-## Reference
+## Further reading
 
-- InfiniDysk docs: <https://www.infinidysk.com/getting-started/> (first run, Docker,
-  [headless config](https://www.infinidysk.com/configuration/headless/),
-  [import strategies](https://www.infinidysk.com/guides/import-strategies/),
-  [Arr Apps](https://www.infinidysk.com/configuration/arrs/))
+- [InfiniDysk getting started](https://www.infinidysk.com/getting-started/) (first run and Docker)
+- [Headless configuration](https://www.infinidysk.com/configuration/headless/)
+- [Import strategies](https://www.infinidysk.com/guides/import-strategies/)
+- [Arr Apps](https://www.infinidysk.com/configuration/arrs/)

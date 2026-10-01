@@ -22,7 +22,10 @@ monitor the desired content in Sonarr/Radarr. `just wire` leaves these user-spec
 untouched.
 
 Set subtitle storage to **Alongside Media File** if you want subtitles beside the `.strm` library
-entries. These settings and labels can change between Bazarr versions; see its
-[setup guide](https://wiki.bazarr.media/Getting-Started/Setup-Guide/) for the full walkthrough.
+entries. These settings and labels can change between Bazarr versions.
 
 For provider recommendations, see [Providers → Subtitle providers](../providers#subtitle-providers).
+
+## Further reading
+
+- [Bazarr setup guide](https://wiki.bazarr.media/Getting-Started/Setup-Guide/)

@@ -17,5 +17,6 @@ through Jellyfin login. Create Jellyfin libraries first so they are available fo
 Seerr's configuration is stored under `data/seerr/config`. The panel is tailnet-only by default;
 to publish it, run `just public enable seerr`, then follow [Traefik's public access steps](traefik#public-access).
 
-For request management and user-facing settings, see the
-[Seerr documentation](https://docs.seerr.dev/).
+## Further reading
+
+- [Seerr documentation](https://docs.seerr.dev/)
