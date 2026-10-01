@@ -434,7 +434,8 @@ sudo ufw allow 80/tcp
 
 These are the real network rules: `443` serves the enabled apps and `80` serves only the
 http → https redirect. The A records above are the other half of the door. In provider firewall
-mode, open the equivalent ports in the provider firewall instead.
+mode, open the equivalent ports in the provider firewall instead. On Oracle Cloud, follow the
+[OCI ingress-rule steps](vps-setup/oracle-cloud#opening-public-ingress-ports).
 
 Because the [ufw-docker](https://github.com/chaifeng/ufw-docker) gate routes container traffic through UFW, these two rules are exactly
 what lets Docker-forwarded `:443`/`:80` through — the same syntax that opened the tailnet

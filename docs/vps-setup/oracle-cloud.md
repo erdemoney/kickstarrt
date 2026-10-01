@@ -62,6 +62,29 @@ when you deliberately publish services. If you choose UFW mode, the host rules i
 §6 provide the additional per-port enforcement. The `22` rule is deleted after tailnet SSH is
 confirmed in §6; in provider firewall mode, make that provider-rule change yourself.
 
+### Opening public ingress ports
+
+When you are ready to publish services, open the VCN page in the Oracle Cloud console, select
+**Security** → **Default Security List for `<vcn-name>`** → **Security rules** → **Add ingress
+rules**. Add one rule for each port you need: TCP `443` for HTTPS, and TCP `80` for the HTTP-to-HTTPS
+redirect.
+
+For each rule, use:
+
+| Field | Value |
+| ----- | ----- |
+| **Source type** | CIDR |
+| **Source CIDR** | `0.0.0.0/0` |
+| **IP protocol** | TCP |
+| **Source port range** | All source ports (leave the field empty) |
+| **Destination port range** | The port for this rule: `443` or `80` |
+
+`0.0.0.0/0` allows connections from any IPv4 address. A narrower CIDR, such as `0.0.0.0/16`,
+allows only a small address range and will not make the service reachable by everyone. These are
+provider-firewall rules; if you chose UFW mode, also open the same ports in UFW as described in
+[Quickstart §12](../quickstart#12-go-public-last). Keep the ports closed until you deliberately
+publish services.
+
 ## 2. Create the compute instance
 
 [Compute → Instances → Create instance](https://cloud.oracle.com/compute/instances/create):
