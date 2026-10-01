@@ -358,7 +358,7 @@ InfiniDysk first, because the \*arrs download through it.
    InfiniDysk download clients, Prowlarr sync, Bazarr connections, Recyclarr's API secrets, and
    the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin account and API
    key on first run, or minting the key from the existing admin credentials). Finish
-    language profiles in the GUI → [Service wiring](services/wiring).
+    language profiles in the GUI → [Bazarr](services/bazarr).
 3. **Jellyfin** — a fresh `just wire` already created the admin account and API key, so finish the
    setup: add the libraries under `/mnt/usenet/library/shows` and
    `/mnt/usenet/library/movies` and set the transcode path → [Jellyfin](services/jellyfin).

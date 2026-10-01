@@ -10,8 +10,7 @@ Sonarr manages series, searches through Prowlarr, and imports completed releases
 
 Open `https://sonarr.<DOMAIN>` over the tailnet and create the administrator account. `just wire`
 configures the root folder (`/mnt/usenet/library/shows`), InfiniDysk download client, and app
-connections. If you regenerate the API key, run `just wire` again. The shared path model is in
-[Service wiring](wiring#root-folders).
+connections. If you regenerate the API key, run `just wire` again.
 
 ## Quality profiles
 

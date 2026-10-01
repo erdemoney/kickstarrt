@@ -11,30 +11,25 @@ It uses direct Traefik `:443` ingress (Cloudflare is DNS-only) and is designed f
 hosts.
 
 ```text
-                      Internet                           Tailscale
-                          |                                 |
-                          v                                 v
-          Cloudflare DNS (grey-cloud A records          tailnet IP :443
-          + DNS-01 certs; no video traffic)             (100.x.y.z = TAILNET_IP)
-                          |                                 |
-                          v                                 v
-              VPS public IP :443                          Traefik https-tailnet
-              (ufw: 443 opened last;                      (panels + dashboard:
-               :80 = https-redirect only,                  radarr sonarr prowlarr bazarr
-               :22 = tailnet only)                         infinidysk; tailnet-only, always on)
-                           |                                 |
-                           v                                 |
-       Traefik https  ----> CrowdSec (WAF/blocking) -----------+
-       (PUBLIC_BIND:443)
-                           |
-                           v
-               Docker "internal" network
-               +-----------------------------+
-               | jellyfin     seerr          |   jellyfin + seerr also served on the tailnet
-               | radarr       sonarr         |
-               | prowlarr     bazarr         |   everything else (panels, dashboard):
-               | recyclarr    infinidysk     |   https-tailnet only
-               +-----------------------------+
+           Internet                                                     Tailnet
+               |                                                           |
+         Cloudflare DNS                                                Tailscale
+               |                                                           |
+      VPS public endpoint                                        VPS tailnet endpoint
+               |                                                           |
+               +-----------------------------+-----------------------------+
+                                             |
+                                             v
+                                          Traefik <----> CrowdSec
+                                             |
+                                             v
+                                 Docker "internal" network
+                              +-----------------------------+
+                              | jellyfin   seerr            |
+                              | radarr     sonarr           |
+                              | prowlarr   bazarr           |
+                              | recyclarr  infinidysk       |
+                              +-----------------------------+
 ```
 
 Media flow: Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it fetches
@@ -102,7 +97,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | [VPS Setup](vps-setup) | General provider checklist, [Oracle Cloud](vps-setup/oracle-cloud), and [other providers](vps-setup/other-providers). |
 | [Tailscale](tailscale) | Private administration, tailnet access, and split DNS. |
 | [Cloudflare](cloudflare) | Domain setup, DNS-only service records, and certificate API token. |
-| [Service wiring](services/wiring) | Internal DNS, API keys, media paths, and cross-service integrations. |
+| [Service wiring](services/wiring) | `just wire`, internal app URLs and API keys, and cross-service integrations. |
 | [Services](services) | Stack-specific notes and official references for each service. |
 | [Providers](providers) | Recommended Usenet provider and indexer options. |
 | [User guide](user-guide) | Jellyfin and Seerr instructions for end users. |

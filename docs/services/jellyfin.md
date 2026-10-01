@@ -21,8 +21,8 @@ For each one, choose the matching folder:
 ```
 
 Save each library, then scan. The shared bind is mounted at the same path in Jellyfin and the *arrs,
-so no path mapping is needed ([Service wiring](wiring#root-folders)). Do not add
-`/mnt/usenet/completed-downloads`; that is InfiniDysk's staging area, not library content.
+so no path mapping is needed. Do not add `/mnt/usenet/completed-downloads`; that is InfiniDysk's
+staging area, not library content.
 
 ## CPU-only playback
 
