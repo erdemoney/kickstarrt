@@ -264,7 +264,7 @@ def chunks(items: list[Candidate], size: int) -> list[list[Candidate]]:
 
 
 def hunt() -> None:
-    mode = os.environ.get("HUNT_MODE", "both").strip().lower()
+    mode = os.environ.get("HUNT_MODE", "missing").strip().lower()
     if mode not in {"missing", "upgrades", "both"}:
         raise HuntError("HUNT_MODE must be missing, upgrades, or both")
     state_path = Path(os.environ.get("HUNT_STATE_FILE", "/state/state.json"))
@@ -595,7 +595,7 @@ def main(argv: list[str]) -> int:
     operation = argv[0]
     try:
         if operation == "run":
-            run_container(argv[1] if len(argv) > 1 else "both")
+            run_container(argv[1] if len(argv) > 1 else "missing")
         elif operation == "schedule":
             schedule(argv[1] if len(argv) > 1 else DEFAULT_CALENDAR)
         elif operation == "status":

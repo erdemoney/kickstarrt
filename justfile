@@ -187,7 +187,7 @@ maintenance-unschedule:
 
 # Run one ephemeral, rate-limited Sonarr/Radarr back-catalog hunt.
 [group('Maintenance')]
-hunt-run MODE="both":
+hunt-run MODE="missing":
     HUNT_IMAGE="{{ hunt_image }}" exec python3 -m scripts.hunt run "{{ MODE }}"
 
 # Install the ephemeral hunt systemd timer (default: 03:00 local time).

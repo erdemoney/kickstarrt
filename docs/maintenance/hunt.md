@@ -35,7 +35,7 @@ drop out of the next scan.
 
 ## Controls
 
-Choose the search mode with `just hunt-run [missing|upgrades|both]` (default: `both`). Configure
+Choose the search mode with `just hunt-run [missing|upgrades|both]` (default: `missing`). Configure
 the optional settings below in `.env.hunt`.
 
 | Variable | Default | Purpose |
