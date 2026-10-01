@@ -60,6 +60,13 @@ Homarr is a lightweight dashboard. Add it to the media stack with a persistent
 `data/homarr` directory and a tailnet-only Traefik router. Point its widgets at internal
 URLs such as `http://sonarr:8989`, `http://radarr:7878`, and `http://jellyfin:8096`.
 
+### Maintainerr
+
+[Maintainerr](https://maintainerr.info/) automates media-library cleanup with rules using Jellyfin,
+Seerr, Radarr, and Sonarr. It can hold matched media in a collection for a grace period before
+unmonitoring or deleting it, so review its rules and actions carefully before enabling cleanup.
+See the [Maintainerr documentation](https://docs.maintainerr.info/).
+
 ## Validate the extension
 
 ```bash
