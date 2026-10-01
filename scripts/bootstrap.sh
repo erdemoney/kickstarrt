@@ -3,8 +3,8 @@
 # bootstrap.sh - one-shot bootstrap for a fresh VPS (see docs/quickstart.md).
 #
 # Installs, idempotently: Tailscale, git, just, Docker (with the compose
-# plugin), ufw-docker, and adds the invoking user to the `docker` group. Only
-# needs curl. Cross-distro: Debian/Ubuntu (apt), Fedora/RHEL (dnf/yum),
+# plugin), and adds the invoking user to the `docker` group. Only needs curl.
+# Cross-distro: Debian/Ubuntu (apt), Fedora/RHEL (dnf/yum),
 # openSUSE (zypper), Arch (pacman) and Alpine (apk).
 #
 #     curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/bootstrap.sh | sudo bash
@@ -14,11 +14,9 @@
 # address - your only SSH address. Approval is always yours; if the window
 # passes, it falls back to printing the manual `sudo tailscale up` step.
 #
-# It deliberately does NOT install ufw or touch any firewall rules. The
-# ufw-docker executable is installed for users who choose host-firewall mode,
-# but its `install --system` command is left for that explicit setup. Nothing
-# here can lock a fresh box out or silently dismantle a distro image's shipped
-# firewall.
+# It deliberately does NOT install UFW or ufw-docker, or touch any firewall
+# rules. Nothing here can lock a fresh box out or silently dismantle a distro
+# image's shipped firewall.
 
 set -euo pipefail
 
@@ -160,26 +158,6 @@ install_docker() {
     fi
 }
 
-install_ufw_docker() {
-    # pinned release tag - bump this deliberately via PR when upstream
-    # publishes a newer release (Renovate does not track it)
-    local UFW_DOCKER_REF=251123
-    msg "ufw-docker"
-    if has ufw-docker; then
-        skip "already installed"
-        return
-    fi
-    curl -fsSL "https://github.com/chaifeng/ufw-docker/raw/${UFW_DOCKER_REF}/ufw-docker" \
-        -o /usr/bin/ufw-docker
-    chmod 0755 /usr/bin/ufw-docker
-    if has ufw-docker; then
-        ok "installed (firewall rules unchanged)"
-    else
-        printf 'ufw-docker install failed\n' >&2
-        exit 1
-    fi
-}
-
 ensure_docker_group() {
     msg "docker group"
     if [ "$REAL_USER" = root ]; then
@@ -228,7 +206,6 @@ main() {
     install_git
     install_just
     install_docker
-    install_ufw_docker
     ensure_docker_group
     join_tailnet
     printf '\n'

@@ -68,9 +68,10 @@ Remove the timer with `just maintenance-unschedule`. If a run fails, inspect the
 
 This updates the repository and container images only. Keep the host operating system, Docker
 Engine, Compose plugin, kernel, and other system packages current separately through the host
-distribution's package manager. `ufw-docker` is pinned to release tag `251123` in
-`scripts/bootstrap.sh` and is not managed by Renovate; update it deliberately when
-[upstream](https://github.com/chaifeng/ufw-docker/releases) publishes a newer release.
+distribution's package manager. For hosts using UFW mode, `ufw-docker` is pinned to release tag
+`251123` in the [UFW setup instructions](quickstart#ufw-mode) and is not managed by Renovate;
+update it deliberately when [upstream](https://github.com/chaifeng/ufw-docker/releases) publishes
+a newer release.
 
 ## Troubleshooting
 

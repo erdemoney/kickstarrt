@@ -425,19 +425,17 @@ def infinidysk_arr_settings_change(
 
 
 def sonarr_unknown_quality_change(http: DockerHTTP, key: str) -> Change | None:
-    """Reconcile Sonarr's "Unknown" quality sizes to the TRaSH convention.
+    """Keep Sonarr's "Unknown" quality sizes within this stack's size cap.
 
     TRaSH quality-size resources cover every real quality but omit "Unknown",
     and recyclarr only manages qualities present in the guide (overriding one
     that is absent is a hard config error), so Unknown keeps Sonarr's shipped
-    default max of 199.9 MB/min. Releases whose titles carry no resolvable
-    resolution/source - anime "Hybrid Remux" season packs in particular - parse
-    to Unknown and get sized against the whole-season runtime, so that cap
-    rejects them. Set Unknown to the same sizes the guide applies to the real
-    qualities (min 5 / preferred 995 / max 1000 = Sonarr's displayed
-    "Unlimited"); daily recyclarr sync leaves it alone.
+    default max of 199.9 MB/min. Sonarr checks a season pack against the combined
+    runtime of its episodes. Set Unknown's preferred and maximum sizes to the
+    same 375 MB/min cap configured for the managed qualities; daily Recyclarr
+    sync leaves this unmanaged quality alone.
     """
-    desired = {"minSize": 5.0, "preferredSize": 995.0, "maxSize": 1000.0}
+    desired = {"minSize": 5.0, "preferredSize": 375.0, "maxSize": 375.0}
     endpoint = "http://sonarr:8989/api/v3/qualitydefinition"
     current = http.request("sonarr", "GET", endpoint, key)
     items = current if isinstance(current, list) else []

@@ -48,9 +48,8 @@ ssh <user>@<PUBLIC-IP>
 ```
 
 Then bootstrap the box with this repo's setup script. It is **idempotent** (safe to re-run)
-and cross-distro, and installs everything the rest of this guide needs — `git`, `just`, Docker
-with the compose plugin, `ufw-docker`, and your user in the `docker` group — **and joins the box
-your tailnet**:
+and cross-distro, and installs the prerequisites — `git`, `just`, Docker with the compose plugin,
+and your user in the `docker` group — **and joins the box to your tailnet**:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/bootstrap.sh | sudo bash
@@ -61,8 +60,8 @@ approve the node. (Missed the window? `sudo tailscale up` prints it again.) It e
 printing the box's **tailnet address** — a `100.x.y.z` from Tailscale's CGNAT range. That
 address is your SSH address from now on.
 
-The script installs the `ufw-docker` executable but does not install UFW or change firewall
-rules. Choose the firewall model in [§6](#6-choose-the-firewall-model).
+The script leaves firewall setup untouched: it does not install UFW or `ufw-docker`, or change
+firewall rules. Choose the firewall model in [§6](#6-choose-the-firewall-model).
 
 ### Set the box's time zone
 
@@ -277,20 +276,20 @@ sudo ufw --force enable
 ```
 
 Docker-published ports use the `FORWARD` path, which UFW's normal incoming rules do not inspect.
-Install the already-provided [ufw-docker](https://github.com/chaifeng/ufw-docker) integration,
-then verify it:
+Install the [ufw-docker](https://github.com/chaifeng/ufw-docker) integration, then verify it:
 
 ```bash
+sudo curl -fsSL https://github.com/chaifeng/ufw-docker/raw/251123/ufw-docker -o /usr/bin/ufw-docker
+sudo chmod 0755 /usr/bin/ufw-docker
 sudo ufw-docker install --system
 sudo systemctl restart ufw
 sudo ufw-docker check
 ```
 
-On a provider with a different package manager, install the equivalent UFW package first.
-The bootstrap script in [§2](#2-get-in-join-the-tailnet) already installs the `ufw-docker`
-executable, so this is only needed when you set UFW up by hand. In that case, follow the
-[official ufw-docker install](https://github.com/chaifeng/ufw-docker/tree/master#install)
-before running the commands above.
+The `ufw-docker` executable is pinned to release `251123`; update the version in the download URL
+deliberately when [upstream](https://github.com/chaifeng/ufw-docker/releases) publishes a newer
+release. On a provider with a different package manager, install the equivalent UFW package first;
+the executable download above is the same.
 
 On **Oracle Cloud**, delete the wizard's default `22` ingress rule after tailnet SSH is confirmed
 (VCN → Default Security List → the `TCP 22 / 0.0.0.0/0` rule → Delete). SSH then has exactly one
