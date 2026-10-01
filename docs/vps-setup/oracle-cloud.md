@@ -4,7 +4,7 @@ parent: VPS Setup
 nav_order: 1
 ---
 
-# Appendix: Oracle Cloud free-tier VPS
+# Oracle Cloud free-tier VPS
 
 The provider-specific walkthrough from zero to a running Ubuntu 26.04 box on Oracle Cloud
 **Always Free**. Once the box exists, everything else is the standard
