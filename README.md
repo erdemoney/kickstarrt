@@ -25,18 +25,26 @@ keeps nothing on disk**, automatic TLS, and edge security — as code, on a VPS.
 ## Architecture
 
 ```
-Internet ----------------------------+
-                                     |
-Tailnet -- Tailscale ----------------+----> Traefik <----> CrowdSec
-                                               |
-                                               v
-                                        Internal network
-                                               |
-                                               v
-                                           Services
+           Internet                                                     Tailnet
+               |                                                           |
+         Cloudflare DNS                                                Tailscale
+               |                                                           |
+      VPS public endpoint                                        VPS tailnet endpoint
+               |                                                           |
+               +-----------------------------+-----------------------------+
+                                             |
+                                             v
+                                          Traefik <----> CrowdSec
+                                             |
+                                             v
+                                 Docker "internal" network
+                              +-----------------------------+
+                              | jellyfin   seerr            |
+                              | radarr     sonarr           |
+                              | prowlarr   bazarr           |
+                              | recyclarr  infinidysk       |
+                              +-----------------------------+
 ```
-
-Cloudflare DNS resolves public service names to the VPS.
 
 **The media loop:** Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it
 fetches them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin

@@ -11,18 +11,26 @@ It uses direct Traefik `:443` ingress (Cloudflare is DNS-only) and is designed f
 hosts.
 
 ```text
-Internet ----------------------------+
-                                     |
-Tailnet -- Tailscale ----------------+----> Traefik <----> CrowdSec
-                                               |
-                                               v
-                                        Internal network
-                                               |
-                                               v
-                                           Services
+           Internet                                                     Tailnet
+               |                                                           |
+         Cloudflare DNS                                                Tailscale
+               |                                                           |
+      VPS public endpoint                                        VPS tailnet endpoint
+               |                                                           |
+               +-----------------------------+-----------------------------+
+                                             |
+                                             v
+                                          Traefik <----> CrowdSec
+                                             |
+                                             v
+                                 Docker "internal" network
+                              +-----------------------------+
+                              | jellyfin   seerr            |
+                              | radarr     sonarr           |
+                              | prowlarr   bazarr           |
+                              | recyclarr  infinidysk       |
+                              +-----------------------------+
 ```
-
-Cloudflare DNS resolves public service names to the VPS.
 
 Media flow: Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it fetches
 them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin streams
