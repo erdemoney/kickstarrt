@@ -1,6 +1,7 @@
 ---
 title: Back-catalog hunting
-nav_order: 20
+parent: Maintenance
+nav_order: 2
 ---
 
 # Back-catalog hunting

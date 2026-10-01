@@ -47,14 +47,14 @@ The one fact to hold onto throughout setup, stated once here: when public access
 box answers the public internet from **exactly one serving port — `443` (Traefik)**, plus `80`
 as a pure `http → https` redirect, and both are opened deliberately as the
 [last setup step](quickstart#12-go-public-last). **The DNS resolver and all admin panels are
-tailnet-only**; SSH follows the firewall policy you chose, reached by name via [Tailnet DNS](tailnet).
+tailnet-only**; SSH follows the firewall policy you chose, reached by name via [Tailscale](tailscale).
 The whole setup runs inside that private window — the reasoning behind these choices is
 collected in the [FAQ](faq).
 
 **HTTPS comes out of the box.** Traefik's ACME provider issues a **Let's Encrypt wildcard
 certificate for `*.DOMAIN`** via the Cloudflare DNS-01 challenge (`CLOUDFLARE_DNS_TOKEN`),
 renewed automatically. Every service's UI is available on the tailnet immediately; opt a service
-into public routing with `just public enable <service>`, then add its [A record](ingress) and open
+into public routing with `just public enable <service>`, then add its [A record](services/traefik) and open
 the firewall separately. No per-app TLS configuration is involved.
 
 ## VPS sizing
@@ -96,23 +96,19 @@ justfile                 ops recipes (just up, just update-all, ...)
 
 Read the pages in order for a first deploy; after that they're reference.
 
-| Page                         | What it covers                                                        |
-| ---------------------------- | --------------------------------------------------------------------- |
-| [Quickstart](quickstart)     | the ordered walkthrough: get in via Tailscale, choose the firewall, init, first boot, app setup, go public |
-| [Tailnet DNS](tailnet)       | admin panels by name over the tailnet: CoreDNS + split DNS mechanics |
-| [Services](services)         | service-specific setup and operations for the media stack             |
-| [Service wiring](services/wiring) | internal DNS, API keys, media paths, and cross-service integrations |
-| [Back-catalog hunting](services/hunt) | scheduled missing and quality-upgrade searches |
-| [Indexers](services/indexers) | indexer workflow and provider choices |
-| [User guide](user-guide)     | simple Jellyfin and Seerr instructions for end users                 |
-| [Providers](providers)       | recommended Usenet provider and indexer picks                          |
-| [Adding services](services/extending) | how to extend the stack safely with more containers |
-| [Security](security)         | layered security model: Tailscale, UFW, Docker forwarding, Traefik, and CrowdSec |
-| [Ingress](ingress)           | direct `:443`: the security gate, DNS records, certificates, dashboard |
-| [Updates](updates)           | Renovate PR pipeline + CI checks end to end                           |
-| [Maintenance](maintenance)   | ops recipes, backups, troubleshooting                                 |
-| [FAQ](faq)                   | the design decisions, answered                                        |
-| [Oracle Cloud (free tier)](oci) | appendix: free VPS from zero to a running box                        |
+| Page | What it covers |
+| --- | --- |
+| [Quickstart](quickstart) | Ordered walkthrough: tailnet access, firewall, initialization, first boot, app setup, and public access. |
+| [Tailscale](tailscale) | Private administration, tailnet access, and split DNS. |
+| [Service wiring](services/wiring) | Internal DNS, API keys, media paths, and cross-service integrations. |
+| [Services](services) | Stack-specific notes and official references for each service. |
+| [Providers](providers) | Recommended Usenet provider and indexer options. |
+| [User guide](user-guide) | Jellyfin and Seerr instructions for end users. |
+| [Adding services](services/extending) | How to extend the stack safely with more containers. |
+| [Security](security) | Layered security model: Tailscale, firewall, Traefik, and CrowdSec. |
+| [Maintenance](maintenance) | Day-to-day operations, [backups](maintenance/backups), [back-catalog hunting](maintenance/hunt), and [Updates & CI](maintenance/updates). |
+| [Oracle Cloud (free tier)](oci) | Appendix: free VPS from zero to a running box. |
+| [FAQ](faq) | Design decisions and common questions. |
 
 All app config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s
 and `just prepare` creates each app's runtime subdirectory there. Media streams from your Usenet
@@ -125,3 +121,5 @@ For managing Radarr/Sonarr from your phone, see [Ruddarr](services/wiring#managi
 - InfiniDysk docs: <https://www.infinidysk.com/getting-started/>
 - Servarr wiki (Prowlarr quick start): <https://wiki.servarr.com/prowlarr/quick-start-guide>
 - CrowdSec documentation: <https://docs.crowdsec.net>
+- CoreDNS documentation: <https://coredns.io/manual/toc/>
+- Tailscale documentation: <https://tailscale.com/kb/>

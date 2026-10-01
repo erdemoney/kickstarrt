@@ -68,7 +68,7 @@ rules. Choose the firewall model in [§6](#6-choose-the-firewall-model).
 
 The stack bind-mounts the VPS's `/etc/localtime` into its containers, so schedules and log
 timestamps follow the **host's** zone — the overnight [maintenance](maintenance#scheduled-maintenance)
-timer and the [hunt](services/hunt) runs default to 03:00 local. Do it now, before the first boot:
+timer and [back-catalog hunting](maintenance/hunt) runs default to 03:00 local. Do it now, before the first boot:
 
 ```bash
 sudo timedatectl set-timezone America/Los_Angeles   # your IANA zone, e.g. America/Los_Angeles or UTC
@@ -167,14 +167,14 @@ type `?` for a short explanation, an example, and the relevant documentation ref
   (fallback `1000` if you run as root). If an existing installation uses different IDs, init
   reports the mismatch and keeps them; `just init --force` can explicitly replace them.
 - An optional username/password prompt writes `TRAEFIK_DASHBOARD_CREDENTIALS` for the
-  [Traefik dashboard](ingress#traefik-dashboard).
+  [Traefik dashboard](services/traefik#configuration-and-dashboard).
 - `CLOUDFLARE_DNS_TOKEN` — enter it when ready; `just init` verifies it against Cloudflare.
   Leave it empty to do it later.
 - Your **Usenet account** — InfiniDysk's provider prompts: server hostname, port, TLS, username,
   password, and your plan's connection allowance.
 - **InfiniDysk's** API key is generated for you.
 - Optionally sets up **restic backups to Cloudflare R2** — answer `y` to be prompted, or skip
-  and fill `.env.restic` later ([Maintenance](maintenance)).
+  and fill `.env.restic` later ([Backups](maintenance/backups)).
 
 It's safe to re-run: values that are already set are kept, so a re-run only asks for what's
 missing (e.g. a restic step you deferred) or detects machine values that changed. To re-prompt
@@ -185,7 +185,7 @@ understanding are:
 ### `CLOUDFLARE_DNS_TOKEN` — Cloudflare (wildcard TLS)
 
 This token is the entire Let's Encrypt prerequisite: DNS-01 is how Traefik proves ownership of
-`*.DOMAIN` ([Ingress → Certificates](ingress#certificates)).
+`*.DOMAIN` ([Traefik → Certificates](services/traefik#certificates)).
 
 1. Open [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token** →
    **Create custom token**, with two permissions on `DOMAIN`:
@@ -315,7 +315,7 @@ yourself and keep any deliberate public SSH access.
 One-time step in the Tailscale admin console, done **before** first boot so every app answers
 by name the moment the stack is up. The resolver is the CoreDNS container in the traefik
 stack, answering `*.DOMAIN` with the box's tailnet address — mechanics and assumptions in
-[Tailnet DNS](tailnet).
+[Tailscale](tailscale).
 
 ```bash
 just dns     # prints the nameserver value to paste (your TAILNET_IP)
@@ -372,18 +372,18 @@ InfiniDysk first, because the \*arrs download through it.
    InfiniDysk download clients, Prowlarr sync, Bazarr connections, Recyclarr's API secrets, and
    the Sonarr/Radarr → Jellyfin scan connections (creating the Jellyfin admin account and API
    key on first run, or minting the key from the existing admin credentials). Finish
-   language profiles and indexer choices in the GUI → [Service wiring](services/wiring).
+    language profiles in the GUI → [Service wiring](services/wiring).
 3. **Jellyfin** — a fresh `just wire` already created the admin account and API key, so finish the
    setup: add the libraries under `/mnt/usenet/library/shows` and
    `/mnt/usenet/library/movies` and set the transcode path → [Jellyfin](services/jellyfin).
-4. **Seerr** — connect Jellyfin at `http://jellyfin:8096`, then connect Radarr and Sonarr with
-   their internal URLs and API keys → [Seerr setup](services/seerr).
+4. **Seerr** — `just wire` completes first-run setup and configures its Jellyfin, Radarr, and
+   Sonarr connections. Create Jellyfin libraries first → [Seerr setup](services/seerr).
 5. **Indexers** — add a **Usenet** indexer (Newznab) in Prowlarr; `just wire` has already linked
-   Prowlarr to both \*arrs → [Indexers](services/indexers).
+   Prowlarr to both \*arrs → [Prowlarr](services/prowlarr).
 
 `just wire --dry-run` previews the changes, and `just wire` applies each confirmed checkpoint.
 Minimum before going public: every app has its admin account and auth on — [the security
-gate](ingress#the-security-gate).
+gate](security#public-services).
 
 ## 10. Verify the security services
 
@@ -405,7 +405,7 @@ just backup
 just backup-schedule   # optional daily systemd timer (backup + prune)
 ```
 
-See [Maintenance](maintenance) for R2 credentials, alternate backends, restores, and retention.
+See [Backups](maintenance/backups) for R2 credentials, alternate backends, restores, and retention.
 
 Enable the repository automation once on GitHub. Run this from the cloned repository — each `gh`
 command picks up the repository from the checkout's remote, so no `--repo` flag is needed:
@@ -420,7 +420,7 @@ gh workflow run renovate.yml
 
 If GitHub Pages has not been enabled for the fork, choose **GitHub Actions** under repository
 **Settings → Pages → Build and deployment → Source**. For branch protection, Renovate details,
-run monitoring, and the optional Pages API command, see [Updates & CI](updates). Review Renovate
+run monitoring, and the optional Pages API command, see [Updates & CI](maintenance/updates). Review Renovate
 pull requests normally; after merging one, update the server with `git pull && just update-all`.
 
 ## 12. Go public (last)
@@ -439,7 +439,7 @@ just public enable jellyfin seerr
    records** for each enabled hostname, such as `seerr.<DOMAIN>` and `jellyfin.<DOMAIN>`, pointing
    at the VPS's **public IP**, **Proxy status: DNS only** (grey cloud — never proxied,
    [why](faq#why-cant-i-proxy-media-through-cloudflare)). Detailed steps in
-   [Ingress → Adding a public hostname](ingress#adding-a-public-hostname-dns-record).
+    [Traefik → Public access](services/traefik#public-access).
  2. In **UFW mode**, open the public ports separately:
 
 ```bash
@@ -457,9 +457,9 @@ doors in §6.
 
 That's it — the enabled services are public on their configured hostnames: Cloudflare DNS → VPS `:443` →
 Traefik → CrowdSec → the apps. Admin panels stay off the public DNS and are reached over the
-tailnet by name ([Tailnet DNS](tailnet)). Fully reversible: delete the records and remove the
+tailnet by name ([Tailscale](tailscale)). Fully reversible: delete the records and remove the
 corresponding provider/UFW port rules. To remove a public router, run `just public disable
 <service>`; this does not change the firewall.
 
-From here: [Indexers](services/indexers) and [Services](services) can be set up any time after the
-stack is up; [Updates & CI](updates) and [Maintenance](maintenance) are the ongoing-ops pages.
+From here: [Prowlarr](services/prowlarr) and [Services](services) can be set up any time after the
+stack is up; [Updates & CI](maintenance/updates) and [Maintenance](maintenance) are the ongoing-ops pages.

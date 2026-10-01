@@ -44,26 +44,12 @@ the public ports remain closed until the documented `ufw allow` commands open `8
    [ufw-docker documentation](https://github.com/chaifeng/ufw-docker) for implementation details.
 5. **Traefik** binds public and tailnet entrypoints to separate host addresses, issues the
    wildcard certificate through Cloudflare DNS-01, and exposes only routers configured by labels.
-6. **CrowdSec** reads Traefik access logs and blocks known or detected hostile IPs at the edge.
+6. **CrowdSec** reads Traefik access logs and blocks known or detected hostile IPs at the edge
+   ([CrowdSec](services/crowdsec)).
 7. **Application authentication** protects the services that are reachable after the network
    layers allow them. Configure every first-run admin account before going public.
 8. **Secrets and backups** stay in private ignored files, are never committed, and are covered
    by encrypted Restic backups. CI scans the full Git history for leaked secrets.
-
-## CrowdSec
-
-CrowdSec runs in the `traefik` stack. Traefik's JSON access log feeds the detection engine via
-`data/crowdsec/acquis.yaml`; the `crowdsecurity/traefik` and
-`crowdsecurity/http-cve` collections provide the detection scenarios. The Traefik bouncer plugin
-enforces decisions on both HTTPS entrypoints using `CROWDSEC_BOUNCER_API_KEY`.
-
-CrowdSec is configured fail-open: if its LAPI is unavailable, Traefik continues serving rather
-than taking down the entire edge. The firewall, private entrypoint, and application login layers
-remain in force. The block cache refreshes every 60 seconds.
-
-Tailnet and private-network clients are trusted by the configured `clientTrustedIPs` ranges.
-Direct ingress means Traefik sees the actual socket peer, and forwarded headers from untrusted
-sources are not accepted.
 
 ## Verification
 
@@ -74,8 +60,8 @@ just health
 ```
 
 It checks Tailscale, the selected host-firewall state when UFW is configured, the internal Docker
-network, CoreDNS's generated Corefile, container states, and the CrowdSec bouncer command. It does
+network, the CoreDNS generated Corefile, container states, and the CrowdSec bouncer command. It does
 not deliberately ban an IP; that would be unsafe as a routine health check.
 
-For operational firewall checks, see [Maintenance](maintenance). For DNS behavior, see
-[Tailnet DNS](tailnet).
+For operational firewall checks, see [Maintenance](maintenance). For private network access, see
+[Tailscale](tailscale), [CoreDNS](services/coredns), and [CrowdSec](services/crowdsec).

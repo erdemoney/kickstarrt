@@ -7,7 +7,7 @@ nav_order: 14
 
 Two subscriptions sit behind the stack: a **Usenet provider** (the storage InfiniDysk downloads
 from) and a **Usenet indexer** (where the \*arrs find releases). Wiring runs through
-[Indexers](services/indexers) and [InfiniDysk](services/infinidysk).
+[Prowlarr](services/prowlarr) and [InfiniDysk](services/infinidysk).
 
 ## Usenet provider
 
@@ -40,16 +40,25 @@ show up directly in the `just init` prompts.
 
 ## Usenet indexer
 
-- **Newznab-compatible** is the requirement — Prowlarr adds it under Indexers → **+** → Newznab
-  with the URL and API key from the indexer's profile.
+- **Newznab-compatible** is the requirement. Add the indexer in Prowlarr using its URL and API key;
+  see [Prowlarr](services/prowlarr).
 - **AltHub** is a well-known one-time-payment Newznab indexer — check its current terms before
   buying.
 - **Private Usenet trackers** (nzb-style invite sites) are the other common route; they work the
   same way, one indexer at a time.
 
 Anything torrent-based is not useful here: there is no torrent client in the stack, and results
-from a torrent indexer cannot be fetched over NNTP
-([Indexers](services/indexers)).
+from a torrent indexer cannot be fetched over NNTP.
+
+## Subtitle providers
+
+For Bazarr, **[OpenSubtitles.com](https://www.opensubtitles.com/)** is a sensible primary provider;
+its free tier may have request limits. **[SubDL](https://subdl.com/)** is a useful fallback. Check
+current account requirements and quotas when configuring either provider.
+
+**Whisper** is an optional subtitle-generation route rather than a subtitle indexer. It requires a
+separate ASR service and can generate subtitles when downloaded ones are unavailable. See
+[Bazarr's wiki](https://wiki.bazarr.media/) for supported providers and configuration.
 
 ## Honorable mentions
 

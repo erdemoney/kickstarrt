@@ -84,7 +84,7 @@ streams from the provider. Zero local storage, immediately playable.
 - **Private admin panels** — the \*arrs, InfiniDysk and the Traefik dashboard resolve by name
   *only on your tailnet* (CoreDNS + Tailscale split DNS): `https://radarr.<DOMAIN>` from any
   tailnet device, no public records, no extra login — the tailnet is the gate
-  ([Tailnet DNS](https://erdemoney.github.io/kickstarrt-vps/tailnet))
+  ([Tailscale](https://erdemoney.github.io/kickstarrt-vps/tailscale))
 - **Automated upkeep** — Renovate opens dependency PRs and CI validates every change (compose +
   pre-commit + a full secret-history scan)
 - **One command to deploy** — `just init` fills the secrets, `just up` creates networks and
@@ -106,7 +106,7 @@ just dns              # paste the printed nameserver into Tailscale (one-time; s
 just up               # networks -> config dirs -> the whole stack; panels resolve on your tailnet immediately
 ```
 
-After setup: point Jellyfin/Seerr at your \*arrs ([the docs](https://erdemoney.github.io/kickstarrt-vps/)),
+After setup: configure your libraries and users in Jellyfin and Seerr ([the docs](https://erdemoney.github.io/kickstarrt-vps/)),
 then optionally enable public routers, add DNS records, and open the serving ports in your chosen firewall.
 
 Requires [Docker](https://docs.docker.com/engine/install/) and
@@ -119,9 +119,10 @@ script above, which also adds the invoking user to Docker's group.
 In reading order for a first deploy:
 
 - [**Quickstart**](https://erdemoney.github.io/kickstarrt-vps/quickstart) — the ordered walkthrough: get in via Tailscale, choose the firewall, secrets, first boot, app setup, go public
-- [**Security**](https://erdemoney.github.io/kickstarrt-vps/security) · [**Tailnet DNS**](https://erdemoney.github.io/kickstarrt-vps/tailnet) — the layered security model and its details
-- [**Services**](https://erdemoney.github.io/kickstarrt-vps/services) · [**Providers**](https://erdemoney.github.io/kickstarrt-vps/providers) — the apps and provider recommendations
-- [**Adding services**](https://erdemoney.github.io/kickstarrt-vps/services/extending) · [**Ingress**](https://erdemoney.github.io/kickstarrt-vps/ingress) — extending the stack and the public edge
-- [**Maintenance**](https://erdemoney.github.io/kickstarrt-vps/maintenance) · [**Updates & CI**](https://erdemoney.github.io/kickstarrt-vps/updates) — ongoing ops
-- [**FAQ**](https://erdemoney.github.io/kickstarrt-vps/faq) — the design decisions, answered
+- [**Tailscale**](https://erdemoney.github.io/kickstarrt-vps/tailscale) · [**Service wiring**](https://erdemoney.github.io/kickstarrt-vps/services/wiring) — private access and app integrations
+- [**Services**](https://erdemoney.github.io/kickstarrt-vps/services) · [**Providers**](https://erdemoney.github.io/kickstarrt-vps/providers) — stack-specific app notes and provider recommendations
+- [**Security**](https://erdemoney.github.io/kickstarrt-vps/security) · [**Adding services**](https://erdemoney.github.io/kickstarrt-vps/services/extending) — security model and extending the stack
+- [**Traefik**](https://erdemoney.github.io/kickstarrt-vps/services/traefik) — HTTPS routing and public exposure
+- [**Maintenance**](https://erdemoney.github.io/kickstarrt-vps/maintenance) · [**Updates & CI**](https://erdemoney.github.io/kickstarrt-vps/maintenance/updates) — ongoing ops
 - [**Oracle Cloud (free tier)**](https://erdemoney.github.io/kickstarrt-vps/oci) — appendix: free VPS from zero
+- [**FAQ**](https://erdemoney.github.io/kickstarrt-vps/faq) — the design decisions, answered

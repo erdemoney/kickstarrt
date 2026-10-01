@@ -1,12 +1,13 @@
 ---
 title: Services
-nav_order: 5
+nav_order: 6
 has_children: true
 ---
 
 # Services
 
-Service-specific setup and operations for the eight services in the media Compose stack.
+Stack-specific configuration, integration notes, and troubleshooting for the media apps and edge
+services. For general application usage, each page points to the official documentation.
 
 ## Service map
 
@@ -21,4 +22,13 @@ Service-specific setup and operations for the eight services in the media Compos
 | [Recyclarr](services/recyclarr) | Quality profile synchronization |
 | [Bazarr](services/bazarr) | Subtitle management |
 
-The Usenet provider and indexer subscriptions live in the top-level [Providers](providers) page.
+## Edge services
+
+| Service | Role |
+| --- | --- |
+| [Traefik](services/traefik) | HTTPS routing, certificates, and service exposure |
+| [CrowdSec](services/crowdsec) | Edge detection and blocking |
+| [CoreDNS](services/coredns) | Tailnet split-DNS resolver |
+
+The Usenet provider and recommended indexers are covered in [Providers](providers); add indexers
+through [Prowlarr](services/prowlarr).

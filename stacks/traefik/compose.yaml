@@ -114,7 +114,7 @@ services:
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in the stack .env}
       TAILNET_IP: ${TAILNET_IP:?set TAILNET_IP in the stack .env}
-    # Tailnet DNS resolver (see docs/tailnet.md): answers *.DOMAIN with the VPS's
+    # Tailscale split-DNS resolver (see docs/services/coredns.md): answers *.DOMAIN with the VPS's
     # tailnet IP so admin panels resolve by name on the tailnet. Bound to the
     # tailnet IP only (systemd-resolved holds 127.0.0.53). Published ports ride
     # Docker's FORWARD chain, which UFW's INPUT rules never inspect - the ufw

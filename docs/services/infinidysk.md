@@ -163,7 +163,7 @@ are not reaped. Repair waits for a PAR2 recovery before it gives up on a failing
 
 All of this state — the SQLite database, the session key, and the `repair-segments` patch store —
 lives in `data/infinidysk`, so it is covered by the same restic snapshots as the rest of `data/`
-([Maintenance](../maintenance)). Keep `repair-segments` in the backup: it holds the only remaining
+([Backups](../maintenance/backups)). Keep `repair-segments` in the backup: it holds the only remaining
 copy of any article whose provider copy is gone. NZB backups are a separate, opt-in feature
 (`api.nzb-backup-enabled`, off by default).
 

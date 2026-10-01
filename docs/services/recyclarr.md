@@ -8,7 +8,8 @@ nav_order: 9
 
 Recyclarr synchronizes the tracked quality profiles into Radarr and Sonarr. The container reads
 `data/recyclarr/configs/radarr.yml` and `sonarr.yml`, creates the profiles on the first run, and
-syncs them daily. There is nothing to paste into either Arr UI.
+syncs them daily. There is nothing to paste into either Arr UI. For configuration syntax, see the
+[official Recyclarr documentation](https://recyclarr.dev/wiki/).
 
 ## Why these profiles are custom
 

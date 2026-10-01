@@ -1,6 +1,7 @@
 ---
 title: Updates & CI
-nav_order: 15
+parent: Maintenance
+nav_order: 3
 ---
 
 # Updates & CI
@@ -175,7 +176,7 @@ just maintenance-schedule "*-*-* 04:30:00"
 The job uses `git pull --ff-only`, so local edits or a non-fast-forward branch stop the deployment
 rather than being merged or overwritten. It updates Compose services and verifies Docker plus every
 expected container; see
-[Maintenance](maintenance#scheduled-maintenance) for logs and failure handling.
+[Maintenance](../maintenance#scheduled-maintenance) for logs and failure handling.
 
 Minor/patch PRs are safe to apply whenever (pinned tags, images pulled on demand). Major-bump
 PRs deserve reading the release notes first.

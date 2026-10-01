@@ -1,6 +1,6 @@
 ---
 title: Service wiring
-nav_order: 19
+nav_order: 5
 ---
 
 # Service wiring: networking and app integrations
@@ -153,7 +153,7 @@ for the quality-profile design and synchronization workflow.
 for Radarr and Sonarr — browse the library and calendar, kick off searches, act on the queue
 or history. It's a *client*, not a service: nothing runs on the server. Point it at each
 instance's **Application URL**: with Tailscale on the phone, `https://radarr.<DOMAIN>` /
-`https://sonarr.<DOMAIN>` resolve to the box's tailnet address ([Tailnet DNS](../tailnet)) — no
+`https://sonarr.<DOMAIN>` resolve to the box's tailnet address ([Tailscale](../tailscale)) — no
 public A records, no extra auth (the tailnet is the gate). The app handles HTTPS and
 reverse-proxy headers; the panels' own logins and CrowdSec still apply, so they stay
 admin-only — the app is just another client.

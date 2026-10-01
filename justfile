@@ -232,11 +232,11 @@ wire dry_run="" yes="":
 public dry_run="" action *SERVICES:
     python3 -m scripts.public {{ dry_run }} {{ action }} {{ SERVICES }}
 
-# Show the tailnet DNS resolver setup (CoreDNS in the traefik stack).
+# Show the Tailscale split-DNS resolver setup (CoreDNS in the traefik stack).
 # The matching Tailscale admin setting is one-time: DNS -> Nameservers -> add
-# TAILNET_IP:53, restricted to DNS -> the domain only (see docs/tailnet.md).
+# TAILNET_IP:53, restricted to DNS -> the domain only (see docs/tailscale.md).
 
-# Show the tailnet DNS resolver setup (CoreDNS in the traefik stack).
+# Show the Tailscale split-DNS resolver setup (CoreDNS in the traefik stack).
 [group('Security')]
 dns:
     #!/usr/bin/env bash
@@ -244,7 +244,7 @@ dns:
     T=$(sed -n 's|^TAILNET_IP=\(.*\)|\1|p' stacks/traefik/.env | tail -n1)
     D=$(sed -n 's|^DOMAIN=\(.*\)|\1|p' stacks/traefik/.env | tail -n1)
     echo "resolver : $T:53  (CoreDNS container in the traefik stack)"
-    echo "serves   : *.$D -> $T     (tailnet only; see docs/tailnet.md)"
+    echo "serves   : *.$D -> $T     (tailnet only; see docs/tailscale.md and docs/services/coredns.md)"
     echo "console  : Tailscale DNS -> Nameservers -> custom $T, restricted to $D"
 # Encrypted, deduplicated repo backups with restic, run in a container (nothing to
 # install). Documented backend is Cloudflare R2 (see how-to in the wiki); `.env.restic`

@@ -150,7 +150,7 @@ Notes:
   the instance stops and may come back different on a rebuild — which would strand the DNS
   records. On the instance page → **Attached VNICs** → the public IP → **Convert to Reserved
   IP** (or Networking → IP management → Reserve public IP, then assign it). Reserved public
-  IPs are Always-Free eligible. This *is* the IP your [A records](ingress#adding-a-public-hostname-dns-record)
+  IPs are Always-Free eligible. This *is* the IP your [A records](services/traefik#public-access)
   point at.
 - Oracle **reclaims Always-Free instances it considers idle** (low CPU/network for a while).
   This stack mostly benches idle between streams, so the box can vanish without warning; the

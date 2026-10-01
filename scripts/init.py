@@ -104,25 +104,25 @@ TAILNET_PROMPT = Prompt(
     "Tailscale IPv4 address",
     "The VPS address reachable through Tailscale; admin panels and DNS use this address.",
     "100.64.0.3",
-    "docs/tailnet.md",
+    "docs/tailscale.md",
 )
 PUBLIC_BIND_PROMPT = Prompt(
     "Public bind IPv4 address",
     "The local VPS address that the provider maps to the Internet. On Oracle this may be the private VCN address.",
     "203.0.113.10 or 10.0.0.5",
-    "docs/ingress.md#the-security-gate",
+    "docs/services/traefik.md#public-access",
 )
 DASHBOARD_USER_PROMPT = Prompt(
     "Dashboard username",
     "The username required to open the Traefik dashboard over the tailnet.",
     "admin",
-    "docs/ingress.md#traefik-dashboard",
+    "docs/services/traefik.md#configuration-and-dashboard",
 )
 DASHBOARD_PASSWORD_PROMPT = Prompt(
     "Dashboard password",
     "A strong password for the Traefik dashboard. It is stored only as a hash.",
     "a unique password",
-    "docs/ingress.md#traefik-dashboard",
+    "docs/services/traefik.md#configuration-and-dashboard",
 )
 CLOUDFLARE_PROMPT = Prompt(
     "Cloudflare DNS API token (blank to skip)",
@@ -588,7 +588,7 @@ def main() -> int:
             "kickstArrt setup\n"
             "  Private stack environment files will be created or updated.\n"
             "  Enter ? at any prompt for help.\n"
-            "  Docs: docs/quickstart.md | docs/ingress.md | docs/maintenance.md\n"
+            "  Docs: docs/quickstart.md | docs/services/traefik.md | docs/maintenance.md\n"
         )
         changes = configure_env(args.force)
         print(f"init complete; updated {len(changes)} value(s).")
