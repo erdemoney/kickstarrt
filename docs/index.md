@@ -102,7 +102,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | [VPS Setup](vps-setup) | General provider checklist, [Oracle Cloud](vps-setup/oracle-cloud), and [other providers](vps-setup/other-providers). |
 | [Tailscale](tailscale) | Private administration, tailnet access, and split DNS. |
 | [Cloudflare](cloudflare) | Domain setup, DNS-only service records, and certificate API token. |
-| [Service wiring](services/wiring) | Internal DNS, API keys, media paths, and cross-service integrations. |
+| [Service wiring](services/wiring) | `just wire`, internal app URLs and API keys, and cross-service integrations. |
 | [Services](services) | Stack-specific notes and official references for each service. |
 | [Providers](providers) | Recommended Usenet provider and indexer options. |
 | [User guide](user-guide) | Jellyfin and Seerr instructions for end users. |

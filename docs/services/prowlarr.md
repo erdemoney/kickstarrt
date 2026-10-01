@@ -24,7 +24,7 @@ with the stack's Usenet workflow.
 `just wire` creates the Radarr and Sonarr application connections. Do not recreate those
 application connections manually unless you have intentionally changed them.
 
-See [Service wiring](wiring) for the shared networking model.
+See [Service wiring](wiring#internal-urls-and-api-keys) for internal app addresses and API keys.
 
 ## Further reading
 

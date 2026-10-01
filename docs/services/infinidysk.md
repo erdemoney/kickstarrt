@@ -69,12 +69,13 @@ watchdog fails an item after three cumulative stalls of five minutes without pro
 packs start failing in the queue. `queue.worker-count` stays at 1 by design — extra workers share
 the same connection pool and add no provider capacity.
 
-Two path invariants come out of the table, and both are satisfied by the compose: the
-**completed-downloads directory must exist at the same absolute path inside the \*arrs** (so
-Sonarr/Radarr can move a finished release into the library), and the **media server must be able
-to reach the base URL** (so Jellyfin can open the link). Every service binds `/mnt/usenet` at that
-same path and shares the `internal` network, which is exactly why nothing is published to the
-host and no path mapping is ever needed.
+`just prepare` creates and owns the `/mnt/usenet` tree, including the library and staging
+directories, for `ENV_PUID`/`ENV_PGID`; no manual directory setup is needed. Three path invariants
+matter: the staging directory must be mounted at the same absolute path inside Sonarr and Radarr;
+it and the library roots must share a filesystem so imports can be renamed; and Jellyfin must reach
+the base URL to open each `.strm` link. Compose mounts `/mnt/usenet` at the same path in every media
+service, and they share the `internal` network, satisfying these requirements without path mapping
+or host-published ports.
 
 ## The \*arr side
 
