@@ -18,15 +18,14 @@ import sys
 import tempfile
 import time
 import uuid
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from .common import EnvFile
+    from .common import EnvFile, ScriptError, read_arr_api_key
 except ImportError:  # direct invocation via `python3 scripts/wire.py`
-    from common import EnvFile
+    from common import EnvFile, ScriptError, read_arr_api_key
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -84,17 +83,10 @@ class HTTPWireError(WireError):
 
 
 def api_key(app: str, config_dir: Path) -> str:
-    path = config_dir / app / "config.xml"
     try:
-        root = ET.parse(path).getroot()
-    except FileNotFoundError as exc:
-        raise WireError(f"{path} does not exist; start {app} once first") from exc
-    except ET.ParseError as exc:
-        raise WireError(f"cannot parse {path}: {exc}") from exc
-    key = root.findtext("ApiKey", "").strip()
-    if not key:
-        raise WireError(f"{path} does not contain an API key")
-    return key
+        return read_arr_api_key(app, config_dir)
+    except ScriptError as exc:
+        raise WireError(str(exc)) from exc
 
 
 def bazarr_api_key(config_dir: Path) -> tuple[Path, str]:

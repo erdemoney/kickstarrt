@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 !.env.restic.example
+!.env.hunt.example
 
 # Python administration scripts
 __pycache__/

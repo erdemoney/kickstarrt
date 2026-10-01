@@ -29,6 +29,16 @@ DEFAULT_CALENDAR = "*-*-* 03:00:00"
 SERVICE_NAME = "kickstarrt-hunt"
 SERVICE_UNIT = f"/etc/systemd/system/{SERVICE_NAME}.service"
 TIMER_UNIT = f"/etc/systemd/system/{SERVICE_NAME}.timer"
+HUNT_CONFIG_KEYS = {
+    "HUNT_SONARR",
+    "HUNT_RADARR",
+    "HUNT_MISSING_BATCH_SIZE",
+    "HUNT_UPGRADE_BATCH_SIZE",
+    "HUNT_DELAY_SECONDS",
+    "HUNT_MAX_ITEMS_PER_RUN",
+    "HUNT_MAX_QUEUE_SIZE",
+    "HUNT_COOLDOWN_DAYS",
+}
 
 
 class HuntError(RuntimeError):
@@ -36,7 +46,11 @@ class HuntError(RuntimeError):
 
 
 def boolean(name: str, default: bool = False) -> bool:
-    value = os.environ.get(name, str(default)).strip().lower()
+    return parse_boolean(name, os.environ.get(name, str(default)))
+
+
+def parse_boolean(name: str, raw_value: str) -> bool:
+    value = raw_value.strip().lower()
     if value not in {"true", "false", "1", "0", "yes", "no"}:
         raise HuntError(f"{name} must be true or false")
     return value in {"true", "1", "yes"}
@@ -268,14 +282,14 @@ def hunt() -> None:
     if boolean("HUNT_SONARR", True) and os.environ.get("HUNT_SONARR_API_KEY"):
         api = ArrAPI(
             "Sonarr",
-            os.environ.get("HUNT_SONARR_URL", "http://sonarr:8989/api/v3"),
+            "http://sonarr:8989/api/v3",
             os.environ["HUNT_SONARR_API_KEY"],
         )
         services.append((api, sonarr_candidates(api, mode)))
     if boolean("HUNT_RADARR", True) and os.environ.get("HUNT_RADARR_API_KEY"):
         api = ArrAPI(
             "Radarr",
-            os.environ.get("HUNT_RADARR_URL", "http://radarr:7878/api/v3"),
+            "http://radarr:7878/api/v3",
             os.environ["HUNT_RADARR_API_KEY"],
         )
         services.append((api, radarr_candidates(api, mode)))
@@ -359,19 +373,46 @@ def require_just() -> str:
 
 
 def run_container(mode: str) -> None:
-    from .common import EnvFile, ROOT, ScriptError, run
+    from .common import EnvFile, ROOT, ScriptError, read_arr_api_key, run
 
     if mode not in {"missing", "upgrades", "both"}:
         raise ScriptError("HUNT_MODE must be missing, upgrades, or both")
-    env = ROOT / "stacks" / "media-server" / ".env"
-    if not env.is_file():
+    media_env = ROOT / "stacks" / "media-server" / ".env"
+    if not media_env.is_file():
         raise ScriptError("no stacks/media-server/.env - run 'just init' first")
+    hunt_env_path = ROOT / ".env.hunt"
+    if not hunt_env_path.is_file():
+        raise ScriptError("no .env.hunt - run 'just init' first")
     state = ROOT / "data" / "hunt"
     state.mkdir(parents=True, exist_ok=True)
-    config = EnvFile(env)
+    media_config = EnvFile(media_env)
+    hunt_config = EnvFile(hunt_env_path)
     image = os.environ.get("HUNT_IMAGE", "python:3.13-alpine3.22")
-    puid = config.get("ENV_PUID") or "1000"
-    pgid = config.get("ENV_PGID") or "1000"
+    puid = media_config.get("ENV_PUID") or "1000"
+    pgid = media_config.get("ENV_PGID") or "1000"
+
+    settings: dict[str, str] = {}
+    for line in hunt_config.lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if key not in HUNT_CONFIG_KEYS:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        if value:
+            settings[key] = value
+
+    sonarr_enabled = parse_boolean("HUNT_SONARR", settings.get("HUNT_SONARR", "true"))
+    radarr_enabled = parse_boolean("HUNT_RADARR", settings.get("HUNT_RADARR", "true"))
+    if sonarr_enabled:
+        settings["HUNT_SONARR_API_KEY"] = read_arr_api_key("sonarr", ROOT / "data")
+    if radarr_enabled:
+        settings["HUNT_RADARR_API_KEY"] = read_arr_api_key("radarr", ROOT / "data")
+    settings["HUNT_MODE"] = mode
+
     command = [
         "docker",
         "run",
@@ -393,19 +434,31 @@ def run_container(mode: str) -> None:
         f"{state}:/state",
         "--workdir",
         "/app",
-        "-e",
-        f"HUNT_MODE={mode}",
     ]
-    for line in env.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line.startswith("HUNT_") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        value = value.strip().strip("'\"")
-        if value:
-            command.extend(["-e", f"{key}={value}"])
-    command.extend([image, "python", "/app/hunt.py"])
-    run(command, f"hunt run ({mode})")
+    try:
+        fd, env_path = tempfile.mkstemp(prefix="kickstarrt-hunt-")
+    except OSError as exc:
+        raise ScriptError(
+            f"could not create temporary hunt environment: {exc}"
+        ) from exc
+    try:
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as env_file:
+                for key, value in settings.items():
+                    if "\n" in value or "\r" in value or "\x00" in value:
+                        raise ScriptError(f"invalid newline or NUL in {key}")
+                    env_file.write(f"{key}={value}\n")
+        except OSError as exc:
+            raise ScriptError(
+                f"could not write temporary hunt environment: {exc}"
+            ) from exc
+        command.extend(["--env-file", env_path, image, "python", "/app/hunt.py"])
+        run(command, f"hunt run ({mode})")
+    finally:
+        try:
+            os.unlink(env_path)
+        except FileNotFoundError:
+            pass
 
 
 def write_unit(path: str, content: str) -> None:

@@ -31,6 +31,7 @@ from .common import (
 TRAEFIK_ENV = ROOT / "stacks" / "traefik" / ".env"
 MEDIA_ENV = ROOT / "stacks" / "media-server" / ".env"
 RESTIC_ENV = ROOT / ".env.restic"
+HUNT_ENV = ROOT / ".env.hunt"
 
 
 @dataclass(frozen=True)
@@ -393,6 +394,7 @@ def configure_env(force: bool) -> list[str]:
     create_env(TRAEFIK_ENV.with_name(".env.example"), TRAEFIK_ENV)
     create_env(MEDIA_ENV.with_name(".env.example"), MEDIA_ENV)
     create_env(ROOT / ".env.restic.example", RESTIC_ENV)
+    create_env(ROOT / ".env.hunt.example", HUNT_ENV)
     traefik = EnvFile(TRAEFIK_ENV)
     media = EnvFile(MEDIA_ENV)
     restic = EnvFile(RESTIC_ENV)

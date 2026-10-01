@@ -14,13 +14,10 @@ the container.
 
 ## Setup
 
-Copy the two API keys from **Settings -> General -> Security** in Sonarr and Radarr into
-`stacks/media-server/.env`:
-
-```text
-HUNT_SONARR_API_KEY=...
-HUNT_RADARR_API_KEY=...
-```
+`just init` creates a private `.env.hunt` from `.env.hunt.example`. The launcher reads each enabled
+app's API key from its host-side config (`data/sonarr/config.xml` or `data/radarr/config.xml`) and
+passes the key to the ephemeral hunt container for that run. Start each app once before enabling it
+so its config file exists. Hunt settings belong in `.env.hunt`, not `stacks/media-server/.env`.
 
 The state file is kept at `data/hunt/state.json`. The container itself is removed after every run.
 
@@ -38,9 +35,11 @@ drop out of the next scan.
 
 ## Controls
 
+Choose the search mode with `just hunt-run [missing|upgrades|both]` (default: `both`). Configure
+the optional settings below in `.env.hunt`.
+
 | Variable | Default | Purpose |
 | --- | ---: | --- |
-| `HUNT_MODE` | `both` | `missing`, `upgrades`, or `both` |
 | `HUNT_SONARR` | `true` | Enable Sonarr |
 | `HUNT_RADARR` | `true` | Enable Radarr |
 | `HUNT_MISSING_BATCH_SIZE` | `10` | Items per missing search command |

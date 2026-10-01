@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -17,6 +18,23 @@ ROOT = Path(__file__).resolve().parent.parent
 
 class ScriptError(RuntimeError):
     """An expected, actionable administration-script failure."""
+
+
+def read_arr_api_key(app: str, config_dir: Path) -> str:
+    """Read an Arr API key from its persistent config.xml."""
+    path = config_dir / app / "config.xml"
+    try:
+        root = ET.parse(path).getroot()
+    except FileNotFoundError as exc:
+        raise ScriptError(f"{path} does not exist; start {app} once first") from exc
+    except ET.ParseError as exc:
+        raise ScriptError(f"cannot parse {path}: {exc}") from exc
+    except OSError as exc:
+        raise ScriptError(f"cannot read {path}: {exc}") from exc
+    key = root.findtext("ApiKey", "").strip()
+    if not key:
+        raise ScriptError(f"{path} does not contain an API key")
+    return key
 
 
 class EnvFile:
