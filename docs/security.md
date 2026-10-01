@@ -3,65 +3,38 @@ title: Security
 nav_order: 12
 ---
 
-# Security model
+# Security overview
 
-Security is layered rather than delegated to one container. The deployment keeps administration
-private on the tailnet, limits which host addresses accept traffic, filters forwarded Docker
-traffic, terminates TLS at Traefik, and then lets CrowdSec and each application enforce the next
-layer of access control.
+This deployment keeps routine administration private and makes public access an explicit choice.
+Security comes from several layers working together: network access controls, HTTPS routing,
+CrowdSec at the edge, and authentication in each application.
 
-## Traffic paths
+## Private administration, selective public access
 
-### Administration and private panels
+Tailscale is the private route for SSH, DNS, the Traefik dashboard, and management panels. These
+services are bound to the tailnet address and have no public routers. Application logins still
+matter: a tailnet connection does not replace each service's own authentication.
 
-Tailscale is the administration plane. SSH, CoreDNS, Traefik's dashboard, and the management
-panels use the tailnet address and the `https-tailnet` entrypoint. CoreDNS answers the stack's
-domain only for tailnet clients through split DNS; it does not create public records.
+Jellyfin and Seerr can be published when needed, but their public routers are disabled by default.
+Enabling a router, adding its DNS record, and opening the firewall are separate, deliberate steps.
+Cloudflare provides DNS and certificate validation; public traffic goes directly to the VPS.
 
-The tailnet is not a substitute for application authentication. Keep admin accounts enabled in
-every application, and treat a tailnet device as trusted only as far as its owner and local
-security justify.
+## What protects incoming traffic
 
-### Public services
+- A provider firewall or UFW limits which network traffic can reach the host. In UFW mode,
+  Docker's forwarded traffic is filtered as well.
+- Traefik listens separately on the public and tailnet addresses and routes only configured
+  services. It provides HTTPS using an automatically renewed wildcard certificate.
+- CrowdSec analyzes Traefik access logs and blocks IPs identified as hostile. It is fail-open if
+  unavailable, so it adds protection at the edge but does not replace the firewall or application
+  authentication.
 
-Jellyfin and Seerr are the intended public services, but their routers are tailnet-only by default.
-Run `just public enable <service>` to opt a service into Traefik's public entrypoint. Public DNS
-records are Cloudflare DNS-only A records; Cloudflare does not proxy media traffic. In UFW mode,
-the public ports remain closed until the documented `ufw allow` commands open `80` and `443`.
+## Secrets and checks
 
-## Security layers
+Keep credentials in private, ignored configuration files and out of Git. Back up the repository
+and application state with encrypted Restic backups, and use the read-only `just health` check
+after setup or significant host and stack changes. It reports the status of key network,
+container, and CrowdSec components.
 
-1. **Provider firewall and recovery access** provide the initial SSH path and the break-glass
-   console when the VPS product offers a configurable provider firewall. Verify that feature;
-   some VPS products do not include one. Otherwise, use the host firewall and keep the provider
-   console as the recovery path.
-2. **Tailscale** supplies the private route for SSH, DNS, dashboards, and management panels.
-3. **The chosen firewall** denies public traffic by default and permits only the access the
-   operator has deliberately configured. A provider firewall filters at the provider perimeter;
-   UFW filters on the host. Use UFW when no configurable provider firewall is available.
-4. **In UFW mode, ufw-docker** connects UFW to Docker's `FORWARD` path through `DOCKER-USER`;
-   without it, published container ports could bypass UFW's `INPUT` rules. See the
-   [ufw-docker documentation](https://github.com/chaifeng/ufw-docker) for implementation details.
-5. **Traefik** binds public and tailnet entrypoints to separate host addresses, issues the
-   wildcard certificate through Cloudflare DNS-01, and exposes only routers configured by labels.
-6. **CrowdSec** reads Traefik access logs and blocks known or detected hostile IPs at the edge
-   ([CrowdSec](services/crowdsec)).
-7. **Application authentication** protects the services that are reachable after the network
-   layers allow them. Configure every first-run admin account before going public.
-8. **Secrets and backups** stay in private ignored files, are never committed, and are covered
-   by encrypted Restic backups. CI scans the full Git history for leaked secrets.
-
-## Verification
-
-Run the read-only health panel after setup and whenever the host or stack changes:
-
-```bash
-just health
-```
-
-It checks Tailscale, the selected host-firewall state when UFW is configured, the internal Docker
-network, the CoreDNS generated Corefile, container states, and the CrowdSec bouncer command. It does
-not deliberately ban an IP; that would be unsafe as a routine health check.
-
-For operational firewall checks, see [Maintenance](maintenance). For private network access, see
-[Tailscale](tailscale), [CoreDNS](services/coredns), and [CrowdSec](services/crowdsec).
+For operational details, see [Tailscale](tailscale), [Traefik](services/traefik),
+[CrowdSec](services/crowdsec), [Maintenance](maintenance), and [Backups](maintenance/backups).
