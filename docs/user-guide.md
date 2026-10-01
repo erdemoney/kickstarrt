@@ -42,6 +42,10 @@ Requests can take a few minutes to become available. Once a request is ready, it
 Jellyfin. If a title is already available, Seerr will show that instead of asking you to request
 it again.
 
+On iPhone, you can also use [Pocket for Seerr](https://apps.apple.com/us/app/pocket-for-seerr/id6746105104),
+a third-party app for browsing, requesting, and tracking titles. Connect it to the Seerr address
+and account provided by your administrator. You can always use Seerr in a web browser instead.
+
 ## Watch something
 
 1. Open Jellyfin and choose a library, or search for a title.

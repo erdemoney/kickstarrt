@@ -115,8 +115,6 @@ All app config lives under the repo's own `data/` dir — `just init` writes the
 and `just prepare` creates each app's runtime subdirectory there. Media streams from your Usenet
 provider, so the library on disk is only the `.strm` links under `/mnt/usenet`.
 
-For managing Radarr/Sonarr from your phone, see [Ruddarr](services/wiring#managing-from-your-phone).
-
 ## External references
 
 - InfiniDysk docs: <https://www.infinidysk.com/getting-started/>

@@ -20,3 +20,5 @@ Use **Direct Play** for regular series. For anime, set the series type to **Anim
 `data/recyclarr/configs/sonarr.yml`. See [Recyclarr](recyclarr) for the profile design.
 
 For series management and search settings, see the [Sonarr documentation](https://wiki.servarr.com/sonarr).
+
+For mobile administration of Radarr and Sonarr, see [Ruddarr](radarr#manage-radarr-and-sonarr-from-iphone).

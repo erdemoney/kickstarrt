@@ -21,3 +21,13 @@ and rejects formats likely to force Jellyfin into a video
 transcode. See [Recyclarr](recyclarr) for the scoring rationale and tuning workflow.
 
 For movie management and search settings, see the [Radarr documentation](https://wiki.servarr.com/radarr).
+
+## Manage Radarr and Sonarr from iPhone
+
+[Ruddarr](https://ruddarr.com) is a free, open-source iOS companion app for administering Radarr
+and Sonarr. It lets you browse the library and calendar, start searches, and manage the queue or
+history; it does not run on the server.
+
+Connect your iPhone to the tailnet, then configure each app in Ruddarr with its **Application
+URL**: `https://radarr.<DOMAIN>` and `https://sonarr.<DOMAIN>`. These admin panels are tailnet-only;
+do not publish them just to use Ruddarr. See [Tailscale](../tailscale) for private access.
