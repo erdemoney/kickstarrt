@@ -2,8 +2,8 @@
 """Interactively reconcile the stable, cross-service media wiring.
 
 The script deliberately uses the applications' APIs instead of editing their
-configuration files. HTTP is executed inside an existing container so Docker
-service names (sonarr, radarr, etc.) remain private to the internal network.
+configuration files. HTTP is executed from a temporary container on the internal
+Docker network so private service names (sonarr, radarr, etc.) remain usable.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,8 @@ except ImportError:  # direct invocation via `python3 scripts/wire.py`
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA_ENV = ROOT / "stacks" / "media-server" / ".env"
 MEDIA_COMPOSE = ROOT / "stacks" / "media-server" / "compose.yaml"
+HTTP_IMAGE = "curlimages/curl:8.12.1"
+HTTP_NETWORK = "internal"
 
 SEERR_URL = "http://seerr:5055"
 SEERR_JELLYFIN_HOST = "jellyfin"
@@ -144,7 +147,50 @@ def yaml_section_value(path: Path, section_name: str, key_name: str) -> str:
 
 
 class DockerHTTP:
-    """Run curl in a running container and return decoded JSON responses."""
+    """Run curl in a temporary internal-network container."""
+
+    def __init__(self) -> None:
+        self.container = f"kickstarrt-wire-{uuid.uuid4().hex}"
+
+    def __enter__(self) -> DockerHTTP:
+        run_command(
+            [
+                "docker",
+                "run",
+                "--detach",
+                "--network",
+                HTTP_NETWORK,
+                "--name",
+                self.container,
+                "--entrypoint",
+                "sleep",
+                HTTP_IMAGE,
+                "2147483647",
+            ],
+            "start temporary HTTP helper",
+        )
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> bool:
+        try:
+            result = subprocess.run(
+                ["docker", "rm", "--force", self.container],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError as cleanup_error:
+            detail = f"could not remove temporary HTTP helper: {cleanup_error}"
+        else:
+            if result.returncode == 0:
+                return False
+            detail = result.stderr.strip() or "docker rm failed"
+            detail = f"could not remove temporary HTTP helper: {detail}"
+
+        if exc_type is not None:
+            print(f"warning: {detail}", file=sys.stderr)
+            return False
+        raise WireError(detail)
 
     def request(
         self,
@@ -157,14 +203,10 @@ class DockerHTTP:
         form: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> Any:
-        # Bazarr's and Seerr's images do not include curl. Sonarr is on the
-        # same Docker network and is already used as the stack's internal HTTP
-        # diagnostic container.
-        transport = "sonarr" if source in ("bazarr", "seerr") else source
         command = [
             "docker",
             "exec",
-            transport,
+            self.container,
             "curl",
             "-sS",
             "-X",
@@ -198,7 +240,7 @@ class DockerHTTP:
             raise WireError(f"could not run Docker: {exc}") from exc
         if result.returncode:
             detail = result.stderr.strip() or "curl failed"
-            raise WireError(f"{source} request via {transport} failed: {detail}")
+            raise WireError(f"{source} request failed: {detail}")
         marker = "\n__WIRE_HTTP_STATUS__"
         if marker not in result.stdout:
             raise WireError(f"{source} returned an invalid HTTP response")
@@ -1564,38 +1606,15 @@ def confirm(change: Change) -> bool:
     return answer in {"y", "yes"}
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Interactively wire the media services"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="discover and display changes without applying them",
-    )
-    parser.add_argument(
-        "--yes", action="store_true", help="apply all planned changes without prompting"
-    )
-    args = parser.parse_args()
-    if not args.dry_run and not args.yes and not sys.stdin.isatty():
-        print(
-            "refusing to mutate services without a terminal; use --yes explicitly",
-            file=sys.stderr,
-        )
-        return 2
-
-    config_dir = ROOT / "data"
+def run_wire(
+    args: argparse.Namespace,
+    http: DockerHTTP,
+    config_dir: Path,
+    keys: dict[str, str],
+    media_env: EnvFile,
+    infinidysk_api_key: str,
+) -> int:
     try:
-        keys = {
-            app: api_key(app, config_dir) for app in ("sonarr", "radarr", "prowlarr")
-        }
-        media_env = EnvFile(MEDIA_ENV)
-        infinidysk_api_key = media_env.get("FRONTEND_BACKEND_API_KEY")
-        if not infinidysk_api_key:
-            raise WireError(
-                "FRONTEND_BACKEND_API_KEY is unset; run `just init` before `just wire`"
-            )
-        http = DockerHTTP()
         changes: list[Change] = []
         infinidysk_change = infinidysk_arr_settings_change(media_env, keys)
         if infinidysk_change:
@@ -1698,6 +1717,44 @@ def main() -> int:
         applied += 1
     print(f"Completed {applied}/{len(changes)} checkpoint(s).")
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Interactively wire the media services"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="discover and display changes without applying them",
+    )
+    parser.add_argument(
+        "--yes", action="store_true", help="apply all planned changes without prompting"
+    )
+    args = parser.parse_args()
+    if not args.dry_run and not args.yes and not sys.stdin.isatty():
+        print(
+            "refusing to mutate services without a terminal; use --yes explicitly",
+            file=sys.stderr,
+        )
+        return 2
+
+    config_dir = ROOT / "data"
+    try:
+        keys = {
+            app: api_key(app, config_dir) for app in ("sonarr", "radarr", "prowlarr")
+        }
+        media_env = EnvFile(MEDIA_ENV)
+        infinidysk_api_key = media_env.get("FRONTEND_BACKEND_API_KEY")
+        if not infinidysk_api_key:
+            raise WireError(
+                "FRONTEND_BACKEND_API_KEY is unset; run `just init` before `just wire`"
+            )
+        with DockerHTTP() as http:
+            return run_wire(args, http, config_dir, keys, media_env, infinidysk_api_key)
+    except WireError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

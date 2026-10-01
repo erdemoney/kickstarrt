@@ -212,8 +212,8 @@ health:
 # including Seerr's first-login bootstrap and its Jellyfin/Radarr/Sonarr links.
 # Interactive by default: each service-level change is displayed and requires
 # confirmation. Use `just wire --dry-run` to preview or `just wire --yes` only
-# when the plan has already been reviewed. API calls run from the containers so
-# Docker's private service names remain usable without publishing new ports.
+# when the plan has already been reviewed. API calls run from a temporary
+# container on the internal network, keeping Docker service names private.
 
 # Reconcile the stable cross-service wiring through the applications' REST APIs.
 [arg("yes", long="yes", value="--yes", help="apply all planned changes without prompting")]
