@@ -20,6 +20,8 @@ The decision cache refreshes every 60 seconds. Tailnet and private-network clien
 the configured `clientTrustedIPs` ranges; direct ingress lets Traefik see the socket peer and
 forwarded headers from untrusted sources are not accepted.
 
-See [Traefik](traefik) for routing and [Security](../security) for the layered access model. For
-installation, configuration, and scenario reference, use the
-[CrowdSec documentation](https://docs.crowdsec.net).
+See [Traefik](traefik) for routing and [Security](../security) for the layered access model.
+
+## Further reading
+
+- [CrowdSec documentation](https://docs.crowdsec.net)

@@ -39,8 +39,7 @@ then disable video transcoding for every user: Dashboard → **Users** → edit 
 Repeat for each user; new users inherit the default, which allows video transcoding. With this
 policy, video that needs re-encoding fails instead of consuming CPU, while remux and audio
 transcoding remain available. The shipped **Direct Play** profiles in [Recyclarr](recyclarr) favor
-formats compatible with this policy. See the [Jellyfin playback documentation](https://jellyfin.org/docs/general/clients/codec-support/)
-for other playback settings.
+formats compatible with this policy.
 
 ## Troubleshooting
 
@@ -54,3 +53,7 @@ docker exec jellyfin ls -la /mnt/usenet/library/shows /mnt/usenet/library/movies
 If an imported `.strm` file will not play, inspect its URL and test that URL from inside the
 Jellyfin container (`docker exec jellyfin curl -fsSI <url>`). It must resolve to InfiniDysk; see
 [InfiniDysk troubleshooting](infinidysk#troubleshooting).
+
+## Further reading
+
+- [Jellyfin playback documentation](https://jellyfin.org/docs/general/clients/codec-support/)

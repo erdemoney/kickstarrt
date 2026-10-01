@@ -59,5 +59,3 @@ current account requirements and quotas when configuring either provider.
 **Whisper** is an optional subtitle-generation route rather than a subtitle indexer. It requires a
 separate ASR service and can generate subtitles when downloaded ones are unavailable. See
 [Bazarr's wiki](https://wiki.bazarr.media/) for supported providers and configuration.
-
-> Pricing as of writing — confirm on vendor sites before subscribing.

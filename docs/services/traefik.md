@@ -64,3 +64,7 @@ they are not bound to every host address. CrowdSec's bouncer plugin protects bot
 The dashboard is at `https://traefik.<DOMAIN>`, protected by basic auth and available only over the
 tailnet. It shows active routers, certificate status, and service health. See [Tailscale](../tailscale)
 for private access and [CoreDNS](coredns) for name resolution.
+
+## Further reading
+
+- [Traefik documentation](https://doc.traefik.io/traefik/)

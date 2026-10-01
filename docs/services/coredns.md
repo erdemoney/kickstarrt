@@ -29,4 +29,8 @@ just health
 
 In UFW mode, DNS port `53` must be allowed from the tailnet and Docker-forwarded traffic must pass
 through the configured `ufw-docker` gate. Provider-firewall mode relies on the provider's inbound
-rules. See the [CoreDNS documentation](https://coredns.io/manual/toc/) for Corefile syntax.
+rules.
+
+## Further reading
+
+- [CoreDNS documentation](https://coredns.io/manual/toc/)

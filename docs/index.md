@@ -99,6 +99,7 @@ Read the pages in order for a first deploy; after that they're reference.
 | Page | What it covers |
 | --- | --- |
 | [Quickstart](quickstart) | Ordered walkthrough: tailnet access, firewall, initialization, first boot, app setup, and public access. |
+| [VPS Setup](vps-setup) | General provider checklist, [Oracle Cloud](vps-setup/oracle-cloud), and [other providers](vps-setup/other-providers). |
 | [Tailscale](tailscale) | Private administration, tailnet access, and split DNS. |
 | [Cloudflare](cloudflare) | Domain setup, DNS-only service records, and certificate API token. |
 | [Service wiring](services/wiring) | Internal DNS, API keys, media paths, and cross-service integrations. |
@@ -108,7 +109,6 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Adding services](services/extending) | How to extend the stack safely with more containers. |
 | [Security](security) | Layered security model: Tailscale, firewall, Traefik, and CrowdSec. |
 | [Maintenance](maintenance) | Day-to-day operations, [backups](maintenance/backups), [back-catalog hunting](maintenance/hunt), and [Updates & CI](maintenance/updates). |
-| [VPS Setup](vps-setup) | General provider checklist, [Oracle Cloud](vps-setup/oracle-cloud), and [other providers](vps-setup/other-providers). |
 | [FAQ](faq) | Design decisions and common questions. |
 
 All app config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s

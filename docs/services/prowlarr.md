@@ -24,6 +24,8 @@ with the stack's Usenet workflow.
 `just wire` creates the Radarr and Sonarr application connections. Do not recreate those
 application connections manually unless you have intentionally changed them.
 
-See [Service wiring](wiring) for the shared networking model and the
-[Prowlarr quick-start guide](https://wiki.servarr.com/prowlarr/quick-start-guide) for product
-documentation.
+See [Service wiring](wiring) for the shared networking model.
+
+## Further reading
+
+- [Prowlarr quick-start guide](https://wiki.servarr.com/prowlarr/quick-start-guide)
