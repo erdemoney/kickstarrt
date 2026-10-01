@@ -11,31 +11,18 @@ It uses direct Traefik `:443` ingress (Cloudflare is DNS-only) and is designed f
 hosts.
 
 ```text
-                      Internet                           Tailscale
-                          |                                 |
-                          v                                 v
-          Cloudflare DNS (grey-cloud A records          tailnet IP :443
-          + DNS-01 certs; no video traffic)             (100.x.y.z = TAILNET_IP)
-                          |                                 |
-                          v                                 v
-              VPS public IP :443                          Traefik https-tailnet
-              (ufw: 443 opened last;                      (panels + dashboard:
-               :80 = https-redirect only,                  radarr sonarr prowlarr bazarr
-               :22 = tailnet only)                         infinidysk; tailnet-only, always on)
-                           |                                 |
-                           v                                 |
-       Traefik https  ----> CrowdSec (WAF/blocking) -----------+
-       (PUBLIC_BIND:443)
-                           |
-                           v
-               Docker "internal" network
-               +-----------------------------+
-               | jellyfin     seerr          |   jellyfin + seerr also served on the tailnet
-               | radarr       sonarr         |
-               | prowlarr     bazarr         |   everything else (panels, dashboard):
-               | recyclarr    infinidysk     |   https-tailnet only
-               +-----------------------------+
+Internet ----------------------------+
+                                     |
+Tailnet -- Tailscale ----------------+----> Traefik <----> CrowdSec
+                                               |
+                                               v
+                                        Internal network
+                                               |
+                                               v
+                                           Services
 ```
+
+Cloudflare DNS resolves public service names to the VPS.
 
 Media flow: Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it fetches
 them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin streams

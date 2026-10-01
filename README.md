@@ -25,32 +25,18 @@ keeps nothing on disk**, automatic TLS, and edge security — as code, on a VPS.
 ## Architecture
 
 ```
-              Internet                          Tailscale
-                 │                                │
-                 ▼                                ▼
-  Cloudflare DNS (grey-cloud A records        tailnet IP :443
-  + DNS-01 certs; no video traffic)           (100.x.y.z = TAILNET_IP)
-                 │                                │
-                 ▼                                ▼
-  VPS public IP :443                           Traefik https-tailnet
-  (ufw: 443 opened last;                        (panels + dashboard:
-   :80 = https-redirect only,                   radarr sonarr prowlarr bazarr
-   :22 = tailnet only)                          infinidysk; tailnet-only, always on)
-                 │                                │
-                 ▼                                │
-  Traefik https  ────► CrowdSec (WAF/blocking) ──┘
-  (PUBLIC_BIND:443)
-                 │
-                 ▼
-  Docker "internal" network
-  ┌─────────────────────────────┐
-  │ jellyfin     seerr          │   jellyfin + seerr are tailnet-only by default;
-  │                             │   opt in with `just public enable <service>`
-  │ radarr       sonarr         │
-  │ prowlarr     bazarr         │   everything else (panels, dashboard):
-  │ recyclarr    infinidysk     │   https-tailnet only
-  └─────────────────────────────┘
+Internet ----------------------------+
+                                     |
+Tailnet -- Tailscale ----------------+----> Traefik <----> CrowdSec
+                                               |
+                                               v
+                                        Internal network
+                                               |
+                                               v
+                                           Services
 ```
+
+Cloudflare DNS resolves public service names to the VPS.
 
 **The media loop:** Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it
 fetches them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin
