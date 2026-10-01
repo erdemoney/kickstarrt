@@ -21,8 +21,7 @@ One-time setup:
 
 ```bash
 just init          # answer yes to the R2 restic step, or configure .env.restic by hand
-just backup-init   # create the restic repository (idempotent)
-just backup        # snapshot the repository
+just backup        # initialize the repository on first run, then snapshot the repository
 just backup-schedule   # optional daily systemd timer (backup + prune)
 ```
 

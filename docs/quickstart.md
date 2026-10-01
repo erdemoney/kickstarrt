@@ -386,8 +386,7 @@ Set up encrypted offsite backups before exposing the service publicly:
 
 ```bash
 just init              # answer yes to the Cloudflare R2 backup step
-just backup-init
-just backup
+just backup            # initializes the restic repository on first run, then snapshots
 just backup-schedule   # optional daily systemd timer (backup + prune)
 ```
 

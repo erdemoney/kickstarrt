@@ -69,26 +69,35 @@ def repository_initialized() -> bool:
         "snapshots",
     ]
     try:
-        result = subprocess.run(
-            command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False
-        )
-    except OSError:
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        raise ScriptError(f"could not check restic repository: {exc}") from exc
+    if result.returncode == 0:
+        return True
+    if result.returncode == 10:
         return False
-    return result.returncode == 0
+    detail = result.stderr.strip() or result.stdout.strip() or "command failed"
+    raise ScriptError(f"could not check restic repository: {detail}")
+
+
+def initialize_repository_if_needed() -> bool:
+    if repository_initialized():
+        return False
+    print("initializing restic repository ...")
+    restic("init")
+    return True
 
 
 def backup_init() -> None:
     require_config()
     repository = env_value("RESTIC_REPOSITORY")
-    if repository_initialized():
+    if not initialize_repository_if_needed():
         print(f"repository already initialized at {repository}")
-        return
-    print("initializing restic repository ...")
-    restic("init")
 
 
 def backup() -> None:
     require_config()
+    initialize_repository_if_needed()
     restic("backup", "/repo", repo_mount=str(ROOT), read_only=True)
 
 

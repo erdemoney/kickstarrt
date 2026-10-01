@@ -260,7 +260,7 @@ dns:
 backup-init:
     RESTIC_IMAGE="{{ restic_image }}" exec python3 -m scripts.backup init
 
-# Snapshot the repo working tree with restic.
+# Initialize the repository if needed, then snapshot the repo working tree with restic.
 [group('Backups')]
 backup:
     RESTIC_IMAGE="{{ restic_image }}" exec python3 -m scripts.backup backup
