@@ -419,18 +419,18 @@ def infinidysk_arr_settings_change(
         "QueueRules": INFINIDYSK_QUEUE_RULES,
     }
     serialized = json.dumps(desired, separators=(",", ":"))
-    current_raw = media_env.get("NZBDAV_CONFIG__ARR__INSTANCES")
+    current_raw = media_env.get("INFINIDYSK_ARR_INSTANCES")
     try:
         current = json.loads(current_raw) if current_raw else None
     except json.JSONDecodeError as exc:
         raise WireError(
-            "NZBDAV_CONFIG__ARR__INSTANCES in stacks/media-server/.env is invalid JSON"
+            "INFINIDYSK_ARR_INSTANCES in stacks/media-server/.env is invalid JSON"
         ) from exc
     if current == desired:
         return None
 
     def apply() -> None:
-        media_env.set("NZBDAV_CONFIG__ARR__INSTANCES", serialized)
+        media_env.set("INFINIDYSK_ARR_INSTANCES", serialized)
         media_env.write()
         run_command(
             [
@@ -1737,10 +1737,10 @@ def main() -> int:
             app: api_key(app, config_dir) for app in ("sonarr", "radarr", "prowlarr")
         }
         media_env = EnvFile(MEDIA_ENV)
-        infinidysk_api_key = media_env.get("FRONTEND_BACKEND_API_KEY")
+        infinidysk_api_key = media_env.get("INFINIDYSK_API_KEY")
         if not infinidysk_api_key:
             raise WireError(
-                "FRONTEND_BACKEND_API_KEY is unset; run `just init` before `just wire`"
+                "INFINIDYSK_API_KEY is unset; run `just init` before `just wire`"
             )
         with DockerHTTP() as http:
             return run_wire(args, http, config_dir, keys, media_env, infinidysk_api_key)

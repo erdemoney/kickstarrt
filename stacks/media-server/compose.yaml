@@ -255,11 +255,11 @@ services:
     environment:
       PUID: ${ENV_PUID:-1000}
       PGID: ${ENV_PGID:-1000}
-      FRONTEND_BACKEND_API_KEY: ${FRONTEND_BACKEND_API_KEY:-}
+      FRONTEND_BACKEND_API_KEY: ${INFINIDYSK_API_KEY:-}
       SECURE_COOKIES: "true"
       TRUST_PROXY: "1"
       # InfiniDysk's headless settings overlay is authoritative for these keys.
-      NZBDAV_CONFIG__API__KEY: ${FRONTEND_BACKEND_API_KEY:-}
+      NZBDAV_CONFIG__API__KEY: ${INFINIDYSK_API_KEY:-}
       NZBDAV_CONFIG__API__CATEGORIES: "tv,movies"
       NZBDAV_CONFIG__API__IMPORT_STRATEGY: "strm"
       NZBDAV_CONFIG__API__COMPLETED_DOWNLOADS_DIR: "/mnt/usenet/completed-downloads"
@@ -288,9 +288,9 @@ services:
       # reports stall-failures on large season packs.
       # QUEUE_ITEM_STUCK_MINUTES: "5"
       NZBDAV_CONFIG__USENET__PROVIDERS: >-
-        ${NZBDAV_CONFIG__USENET__PROVIDERS:-}
+        ${INFINIDYSK_PROVIDERS:-}
       NZBDAV_CONFIG__ARR__INSTANCES: >-
-        ${NZBDAV_CONFIG__ARR__INSTANCES:-}
+        ${INFINIDYSK_ARR_INSTANCES:-}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/infinidysk:/config

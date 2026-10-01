@@ -79,7 +79,7 @@ a newer release.
 | --- | --- |
 | Renovate opened no PRs | See [Updates & CI](maintenance/updates#troubleshooting). |
 | New indexer or app link fails | Check the URL and port against [Service wiring](services/wiring); revisit the API key. |
-| InfiniDysk download client test fails | The Arr client and InfiniDysk must share `FRONTEND_BACKEND_API_KEY`; see [InfiniDysk](services/infinidysk#troubleshooting). |
+| InfiniDysk download client test fails | The Arr client and InfiniDysk must share `INFINIDYSK_API_KEY` from `stacks/media-server/.env`; see [InfiniDysk](services/infinidysk#troubleshooting). |
 | Direct Play profile missing | Check `docker logs recyclarr`; if an Arr API key changed, run `just wire`. |
 | CrowdSec bouncer is not blocking | Recreate CrowdSec and Traefik after a key change; inspect `cscli bouncers list`. |
 | Traefik won't start after a repo change | First start downloads plugins; check outbound internet and run `just validate`. |

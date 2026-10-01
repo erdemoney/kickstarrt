@@ -235,7 +235,7 @@ def compose_env_literal(value: str) -> str:
 
 
 def provider_from_env(media: EnvFile) -> dict[str, object] | None:
-    raw = media.get("NZBDAV_CONFIG__USENET__PROVIDERS")
+    raw = media.get("INFINIDYSK_PROVIDERS")
     if not raw:
         return None
     # EnvFile removes the outer quote pair. Compose treats `\\'` as an escaped
@@ -245,7 +245,7 @@ def provider_from_env(media: EnvFile) -> dict[str, object] | None:
         value = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise ScriptError(
-            "NZBDAV_CONFIG__USENET__PROVIDERS is not valid JSON; run `just init --force` to replace it"
+            "INFINIDYSK_PROVIDERS is not valid JSON; run `just init --force` to replace it"
         ) from exc
     providers = value.get("Providers") if isinstance(value, dict) else None
     if (
@@ -253,9 +253,7 @@ def provider_from_env(media: EnvFile) -> dict[str, object] | None:
         or len(providers) != 1
         or not isinstance(providers[0], dict)
     ):
-        raise ScriptError(
-            "NZBDAV_CONFIG__USENET__PROVIDERS must contain exactly one provider"
-        )
+        raise ScriptError("INFINIDYSK_PROVIDERS must contain exactly one provider")
     return providers[0]
 
 
@@ -310,14 +308,12 @@ def configure_infinidysk(media: EnvFile, force: bool, changes: list[str]) -> Non
             "Nickname": "primary",
         }
         serialized = json.dumps({"Providers": [provider]}, separators=(",", ":"))
-        if media.set(
-            "NZBDAV_CONFIG__USENET__PROVIDERS", compose_env_literal(serialized)
-        ):
+        if media.set("INFINIDYSK_PROVIDERS", compose_env_literal(serialized)):
             changes.append("InfiniDysk Usenet provider")
 
-    if not media.get("FRONTEND_BACKEND_API_KEY"):
+    if not media.get("INFINIDYSK_API_KEY"):
         key = secrets.token_urlsafe(32)
-        media.set("FRONTEND_BACKEND_API_KEY", key)
+        media.set("INFINIDYSK_API_KEY", key)
         changes.append("InfiniDysk API key")
 
 

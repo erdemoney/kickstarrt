@@ -42,7 +42,7 @@ it) and restart the container rather than trying to save them in the UI.
 | `usenet.providers` | your NNTP account | written by `just init` |
 | `arr.instances` | Radarr + Sonarr, with API keys and queue rules | written by `just wire` |
 | `api.ensure-article-existence-categories` + `api.article-existence-check-mode` | `tv,movies` + `full` | verify a release is complete *before* the Arr is told it downloaded |
-| `api.key` | mirrors `FRONTEND_BACKEND_API_KEY` | one key for frontend↔backend auth and for the Arr download clients |
+| `api.key` | mirrors `.env`'s `INFINIDYSK_API_KEY` | Compose also supplies the key as `FRONTEND_BACKEND_API_KEY`; one key for frontend↔backend auth and for the Arr download clients |
 
 The article-existence check is the one setting worth understanding. With it on, InfiniDysk
 statistics every article of a release before reporting success, so a truncated or partially
@@ -80,15 +80,16 @@ host and no path mapping is ever needed.
 
 The download clients themselves are in Sonarr/Radarr; `just wire` creates one named
 `InfiniDysk (Usenet)` pointing at `infinidysk:3000`. Its API key is the generated
-`FRONTEND_BACKEND_API_KEY` from the private `.env` — there is nothing to copy out of the UI. That
+`INFINIDYSK_API_KEY` from the private `.env` — there is nothing to copy out of the UI. That
 is the one credential the Arr download-client form and InfiniDysk must agree on, so if you ever
 change it, update the `.env` and re-run `just wire`.
 
 Enable **automatic redownload of failed downloads** in each Arr's download-client settings: when
 InfiniDysk rejects a release, that failure is the signal the Arr uses to search for a better one.
-Registering Radarr and Sonarr in InfiniDysk (which `just wire` does with
-`NZBDAV_CONFIG__ARR__INSTANCES`) additionally lights up the Overview **Arr health** widget and lets
-the queue rules act on stuck imports.
+`just wire` also registers Radarr and Sonarr in InfiniDysk using the `.env` value
+`INFINIDYSK_ARR_INSTANCES`, which Compose passes into the container as
+`NZBDAV_CONFIG__ARR__INSTANCES`. This lights up the Overview **Arr health** widget and lets the
+queue rules act on stuck imports.
 
 ### Automatic queue management
 

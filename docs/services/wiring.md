@@ -71,7 +71,7 @@ break CORS, and add latency; they are for browsers only).
 | prowlarr  | `http://prowlarr:9696`  | 9696 | Settings → General → API Key                    |
 | recyclarr | —                      | —    | automatic — nothing to paste (see below)        |
 | bazarr    | `http://bazarr:6767`    | 6767 | (outbound only)                                 |
-| infinidysk | `http://infinidysk:3000` | 3000 | generated `FRONTEND_BACKEND_API_KEY` in `stacks/media-server/.env` |
+| infinidysk | `http://infinidysk:3000` | 3000 | generated `INFINIDYSK_API_KEY` in `stacks/media-server/.env` |
 
 Rule of thumb: when any UI asks for another app's **URL + API key**, use the
 `http://<service>:<port>` from the table and the key from the target app. Sanity-check any
