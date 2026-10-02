@@ -15,6 +15,7 @@ services. For general application usage, each page points to the official docume
 | --- | --- |
 | [Jellyfin](services/jellyfin) | Playback and library management |
 | [Seerr](services/seerr) | User requests |
+| [Maintainerr](services/maintainerr) | Rule-based library cleanup |
 | [InfiniDysk](services/infinidysk) | Usenet download gateway and `.strm` streaming |
 | [Radarr](services/radarr) | Movie management |
 | [Sonarr](services/sonarr) | Series management |

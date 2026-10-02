@@ -483,6 +483,7 @@ def configure_env(force: bool) -> list[str]:
     for app in (
         "jellyfin",
         "seerr",
+        "maintainerr",
         "radarr",
         "sonarr",
         "prowlarr",

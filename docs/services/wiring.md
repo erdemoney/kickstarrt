@@ -16,8 +16,9 @@ changes, then `just wire` to review and confirm them. App-specific setup choices
 `just wire` reconciles repeatable integrations through the apps' APIs. It configures Arr root
 folders and InfiniDysk download clients/registrations, links Prowlarr and Bazarr to the Arrs,
 provisions Recyclarr secrets and its initial sync, and sets up import scans from Sonarr/Radarr to
-Jellyfin. It also bootstraps a fresh Jellyfin and Seerr and configures Seerr's Jellyfin and Arr
-connections.
+Jellyfin. It also bootstraps a fresh Jellyfin and Seerr, configures Seerr's Jellyfin and Arr
+connections, and adds Maintainerr's Jellyfin, Seerr, Radarr, and Sonarr connections. Cleanup rules
+and retention actions remain operator-configured in Maintainerr.
 
 The default mode is interactive: planned changes are displayed with secrets redacted and confirmed
 one checkpoint at a time. The command stops after a declined or failed checkpoint. Use `--yes` for
@@ -29,10 +30,13 @@ just wire             # review and confirm changes
 just wire --yes       # non-interactive after reviewing the dry run
 ```
 
-It reads app configuration only to bootstrap API credentials, writes Recyclarr's managed
-`secrets.yml`, and makes API requests from a temporary helper container on `internal`. The InfiniDysk
-admin account, indexer choices, subtitle providers, and language profiles remain GUI steps; see
-[InfiniDysk](infinidysk), [Prowlarr](prowlarr), and [Bazarr](bazarr).
+It reads app configuration to obtain the existing API credentials, writes Recyclarr's managed
+`secrets.yml`, and makes API requests from a temporary helper container on `internal`. Maintainerr
+stores connected-service keys in its SQLite database under `data/maintainerr`; its API has no
+authentication, so these requests stay on the internal network. The InfiniDysk admin account,
+indexer choices, subtitle providers, language profiles, and Maintainerr cleanup rules remain GUI
+steps; see [InfiniDysk](infinidysk), [Prowlarr](prowlarr), [Bazarr](bazarr), and
+[Maintainerr](maintainerr).
 
 If Jellyfin's first-run wizard is already complete but there is no valid API key, `just wire` prompts
 for the existing admin credentials to create one. `--yes` cannot prompt; create a key in Dashboard →
@@ -48,6 +52,7 @@ Public hostnames are for browsers.
 | --- | --- | --- | --- |
 | Jellyfin | `http://jellyfin:8096` | 8096 | Dashboard → API Keys; created/reused by `just wire` |
 | Seerr | `http://seerr:5055` | 5055 | Auto-generated `main.apiKey` in `data/seerr/config/settings.json` |
+| Maintainerr | `http://maintainerr:6246` | 6246 | Connected-service API keys are stored in Maintainerr's SQLite database under `data/maintainerr` |
 | Radarr | `http://radarr:7878` | 7878 | Settings → General → API Key |
 | Sonarr | `http://sonarr:8989` | 8989 | Settings → General → API Key |
 | Prowlarr | `http://prowlarr:9696` | 9696 | Settings → General → API Key |

@@ -8,7 +8,8 @@ nav_order: 1
 
 This is a streaming stack: the host holds configuration and application state, not media. The
 repo's `data/` directory contains Traefik configuration and application state, including the
-*arr databases and InfiniDysk's SQLite database. The media itself remains on the Usenet provider;
+*arr databases, InfiniDysk's SQLite database, and Maintainerr's rules and settings. The media itself
+remains on the Usenet provider;
 the library can be rebuilt by searching and importing it again.
 
 ## Offsite restic backups

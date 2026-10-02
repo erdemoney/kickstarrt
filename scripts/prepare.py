@@ -147,6 +147,7 @@ def main() -> int:
         directories = (
             "jellyfin/config",
             "seerr/config",
+            "maintainerr",
             "radarr",
             "sonarr",
             "prowlarr",

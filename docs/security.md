@@ -13,7 +13,8 @@ CrowdSec at the edge, and authentication in each application.
 
 Tailscale is the private route for SSH, DNS, the Traefik dashboard, and management panels. These
 services are bound to the tailnet address and have no public routers. Application logins still
-matter: a tailnet connection does not replace each service's own authentication.
+matter: a tailnet connection does not replace each service's own authentication. Maintainerr has no
+built-in login, so it is restricted to tailnet access and must not be published directly.
 
 Jellyfin and Seerr can be published when needed, but their public routers are disabled by default.
 Enabling a router, adding its DNS record, and opening the firewall are separate, deliberate steps.

@@ -366,10 +366,14 @@ InfiniDysk first, because the \*arrs download through it.
    Sonarr connections. Create Jellyfin libraries first → [Seerr setup](services/seerr).
 5. **Indexers** — add a **Usenet** indexer (Newznab) in Prowlarr; `just wire` has already linked
    Prowlarr to both \*arrs → [Prowlarr](services/prowlarr).
+6. **Maintainerr** — `just wire` configures its Jellyfin, Seerr, Radarr, and Sonarr connections.
+   Define and test your own cleanup rules → [Maintainerr setup](services/maintainerr). Its UI has
+   no built-in login; keep it reachable only over the tailnet.
 
 `just wire --dry-run` previews the changes, and `just wire` applies each confirmed checkpoint.
-Minimum before going public: every app has its admin account and auth on — [the security
-gate](security#public-services).
+Minimum before going public: each service you choose to publish has its admin account and
+authentication configured — [the security gate](security#public-services). Maintainerr remains
+tailnet-only because it has no built-in login.
 
 ## 10. Verify the security services
 
