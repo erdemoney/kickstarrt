@@ -38,12 +38,13 @@ keeps nothing on disk**, automatic TLS, and edge security — as code, on a VPS.
                                              |
                                              v
                                  Docker "internal" network
-                              +-----------------------------+
-                              | jellyfin   seerr            |
-                              | radarr     sonarr           |
-                              | prowlarr   bazarr           |
-                              | recyclarr  infinidysk       |
-                              +-----------------------------+
+                               +-----------------------------+
+                               | jellyfin                    |
+                               | seerr      maintainerr      |
+                               | radarr     sonarr           |
+                               | prowlarr   bazarr           |
+                               | recyclarr  infinidysk       |
+                               +-----------------------------+
 ```
 
 **The media loop:** Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it
@@ -59,6 +60,7 @@ streams from the provider. Zero local storage, immediately playable.
 | `coredns`   | tailnet DNS — resolves `*.DOMAIN` to the box's tailnet address so admin panels work by name on the tailnet |
 | `jellyfin`  | Media server & streaming to web, TV, and mobile clients |
 | `seerr`     | User request manager — "want this movie" in one click |
+| `maintainerr` | Rule-based library cleanup (admin UI; tailnet-only) |
 | `radarr` / `sonarr` | Movies and TV automation — grabbing, renaming, library sync |
 | `prowlarr`  | Indexer manager, synced to the \*arrs |
 | `bazarr`    | Subtitle search & management |
@@ -70,13 +72,14 @@ streams from the provider. Zero local storage, immediately playable.
 - **Nothing stored locally** — the library is made of tiny `.strm` links; media streams from your
   Usenet provider on demand
 - **Automatic TLS** — Traefik issues a `*.DOMAIN` Let's Encrypt wildcard via Cloudflare
-  DNS-01; services can be opted into public HTTPS with `just public enable <service>`
+  DNS-01; supported user-facing services can be opted into public HTTPS with
+  `just public enable <service>`
 - **Layered security** — Tailscale private administration, provider-firewall controls where
   available or host-firewall controls otherwise,
   Traefik TLS and entrypoint isolation, CrowdSec WAF, and application logins; `just health`
   checks the deployment without changing it
-- **Private admin panels** — the \*arrs, InfiniDysk and the Traefik dashboard resolve by name
-  *only on your tailnet* (CoreDNS + Tailscale split DNS): `https://radarr.<DOMAIN>` from any
+- **Private admin panels** — Maintainerr, the \*arrs, InfiniDysk and the Traefik dashboard resolve by
+  name *only on your tailnet* (CoreDNS + Tailscale split DNS): `https://radarr.<DOMAIN>` from any
   tailnet device, no public records, no extra login — the tailnet is the gate
   ([Tailscale](https://erdemoney.github.io/kickstarrt-vps/tailscale))
 - **Automated upkeep** — Renovate opens dependency PRs and CI validates every change (compose +

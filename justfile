@@ -209,13 +209,14 @@ health:
     python3 -m scripts.health
 
 # Reconcile the stable cross-service wiring through the applications' REST APIs,
-# including Seerr's first-login bootstrap and its Jellyfin/Radarr/Sonarr links.
+# including first-run setup, Seerr's Jellyfin/Radarr/Sonarr links, and Maintainerr's
+# media/request-manager connections (cleanup rules remain operator-configured).
 # Interactive by default: each service-level change is displayed and requires
 # confirmation. Use `just wire --dry-run` to preview or `just wire --yes` only
 # when the plan has already been reviewed. API calls run from a temporary
 # container on the internal network, keeping Docker service names private.
 
-# Reconcile the stable cross-service wiring through the applications' REST APIs.
+# Reconcile app integrations, including Maintainerr's Jellyfin, Seerr and *arr connections.
 [arg("yes", long="yes", value="--yes", help="apply all planned changes without prompting")]
 [arg("dry_run", long="dry-run", value="--dry-run", help="discover and display changes without applying them")]
 [group('Integrations')]

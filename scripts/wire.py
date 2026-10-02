@@ -38,6 +38,7 @@ SEERR_URL = "http://seerr:5055"
 SEERR_JELLYFIN_HOST = "jellyfin"
 SEERR_JELLYFIN_PORT = 8096
 SEERR_JELLYFIN_SERVER_TYPE = 2  # MediaServerType.JELLYFIN
+MAINTAINERR_URL = "http://maintainerr:6246"
 
 # InfiniDysk Automatic queue management, as ArrConfig.QueueRule in the upstream
 # backend. Rules match a completed/import-pending queue record's status messages
@@ -968,7 +969,8 @@ def jellyfin_authenticate(
         "POST",
         f"{base}/Users/AuthenticateByName",
         body={"Username": username, "Pw": password},
-        headers={"X-Emby-Authorization": device},
+        # Jellyfin 12 disables the legacy X-Emby-Authorization header by default.
+        headers={"Authorization": device},
     )
     token = auth.get("AccessToken") if isinstance(auth, dict) else None
     if not token:
@@ -1590,6 +1592,288 @@ def seerr_arr_change(
     return Change("seerr", f"create Seerr {display} server", details, apply)
 
 
+def maintainerr_result(
+    response: Any,
+    operation: str,
+    *,
+    require_ok: bool = False,
+    secrets: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    """Check Maintainerr's in-band response status and redact any echoed secrets."""
+    if not isinstance(response, dict):
+        raise WireError(f"Maintainerr {operation} returned an unexpected response")
+    status = response.get("status")
+    code = response.get("code")
+    if status == "NOK" or code == 0 or (require_ok and status != "OK"):
+        detail = str(response.get("message") or "request failed")
+        for secret in secrets:
+            if secret:
+                detail = detail.replace(secret, "<redacted>")
+        raise WireError(f"Maintainerr {operation} failed: {detail}")
+    return response
+
+
+def maintainerr_read(http: DockerHTTP, endpoint: str, operation: str) -> dict[str, Any]:
+    response = http.request("maintainerr", "GET", f"{MAINTAINERR_URL}{endpoint}")
+    return maintainerr_result(response, operation)
+
+
+def maintainerr_jellyfin_change(
+    http: DockerHTTP,
+    jellyfin_key: Callable[[], str | None],
+    *,
+    dry_run: bool,
+) -> Change | None:
+    """Configure Maintainerr's Jellyfin connection without switching other servers."""
+    current = maintainerr_read(http, "/api/settings/jellyfin", "read Jellyfin settings")
+    setup_complete = http.request(
+        "maintainerr", "GET", f"{MAINTAINERR_URL}/api/settings/test/setup"
+    )
+    if not isinstance(setup_complete, bool):
+        raise WireError("Maintainerr returned an invalid media-server setup status")
+    active_type = ""
+    if setup_complete:
+        server_type = http.request(
+            "maintainerr", "GET", f"{MAINTAINERR_URL}/api/media-server/type"
+        )
+        active_type = (
+            str(server_type.get("type") or "").strip().lower()
+            if isinstance(server_type, dict)
+            else ""
+        )
+        if not active_type:
+            raise WireError(
+                "Maintainerr could not identify its configured media server"
+            )
+    if active_type and active_type != "jellyfin":
+        print(
+            "warning: Maintainerr is configured for a different media server; "
+            "skipping its Jellyfin connection (switch it in Maintainerr first)",
+            file=sys.stderr,
+        )
+        return None
+
+    desired_url = "http://jellyfin:8096"
+    stored_key = current.get("jellyfin_api_key")
+    stored_key = stored_key if isinstance(stored_key, str) else ""
+    valid_stored_key = bool(stored_key) and jellyfin_key_valid(http, stored_key)
+    token = stored_key if valid_stored_key else jellyfin_key()
+    if token is None and not dry_run:
+        print(
+            "warning: no Jellyfin API key is available; skipping Maintainerr's "
+            "Jellyfin connection (run `just wire` in a terminal after Jellyfin setup)",
+            file=sys.stderr,
+        )
+        return None
+
+    old_url = current.get("jellyfin_url") or ""
+    desired_user_id = current.get("jellyfin_user_id") or ""
+    if old_url != desired_url:
+        desired_user_id = ""
+    changed = []
+    if active_type != "jellyfin":
+        changed.append(f"media server: {active_type or '<unset>'} -> jellyfin")
+    if old_url != desired_url:
+        changed.append(f"jellyfin_url: set to {desired_url}")
+    if not valid_stored_key:
+        changed.append("jellyfin_api_key: update (secret redacted)")
+    if (current.get("jellyfin_user_id") or "") != desired_user_id:
+        changed.append("jellyfin_user_id: update (admin user auto-detected)")
+    if not changed:
+        return None
+
+    def apply() -> None:
+        api_key = token or jellyfin_key()
+        if not api_key:
+            raise WireError("could not obtain a Jellyfin API key for Maintainerr")
+        payload = {
+            "jellyfin_url": desired_url,
+            "jellyfin_api_key": api_key,
+            "jellyfin_user_id": desired_user_id,
+        }
+        result = http.request(
+            "maintainerr",
+            "POST",
+            f"{MAINTAINERR_URL}/api/settings/jellyfin",
+            body=payload,
+        )
+        maintainerr_result(
+            result,
+            "save Jellyfin connection",
+            require_ok=True,
+            secrets=(api_key,),
+        )
+
+    return Change(
+        "maintainerr",
+        "configure Jellyfin connection",
+        changed,
+        apply,
+    )
+
+
+def maintainerr_seerr_change(http: DockerHTTP, api_key: str) -> Change | None:
+    """Configure Maintainerr's Seerr connection and verify it before saving."""
+    current = maintainerr_read(http, "/api/settings/seerr", "read Seerr settings")
+    url = f"{SEERR_URL}"
+    if current.get("url") == url and current.get("api_key") == api_key:
+        return None
+    details = [
+        f"url: set to {url}",
+        f"api_key: {redacted(current.get('api_key'), 'api_key')} -> <unchanged secret>",
+    ]
+
+    def apply() -> None:
+        payload = {"url": url, "api_key": api_key}
+        tested = http.request(
+            "maintainerr",
+            "POST",
+            f"{MAINTAINERR_URL}/api/settings/test/seerr",
+            body=payload,
+        )
+        maintainerr_result(
+            tested,
+            "test Seerr connection",
+            require_ok=True,
+            secrets=(api_key,),
+        )
+        saved = http.request(
+            "maintainerr",
+            "POST",
+            f"{MAINTAINERR_URL}/api/settings/seerr",
+            body=payload,
+        )
+        maintainerr_result(
+            saved,
+            "save Seerr connection",
+            require_ok=True,
+            secrets=(api_key,),
+        )
+
+    return Change("maintainerr", "configure Seerr connection", details, apply)
+
+
+def maintainerr_arr_change(http: DockerHTTP, app: str, api_key: str) -> Change | None:
+    """Reconcile a Maintainerr Radarr or Sonarr instance, preserving other entries."""
+    display = app.capitalize()
+    port = 8989 if app == "sonarr" else 7878
+    endpoint = f"/api/settings/{app}"
+    current = http.request("maintainerr", "GET", f"{MAINTAINERR_URL}{endpoint}")
+    if not isinstance(current, list):
+        maintainerr_result(current, f"read {display} settings")
+        raise WireError(f"Maintainerr returned an invalid {display} settings list")
+
+    url = f"http://{app}:{port}"
+    managed_name = f"Kickstarrt {display}"
+    existing = next(
+        (item for item in current if item.get("serverName") == managed_name), None
+    )
+    if existing is None:
+        matching_url = [
+            item
+            for item in current
+            if str(item.get("url") or "").rstrip("/").lower() == url
+        ]
+        if len(matching_url) > 1:
+            raise WireError(
+                f"Maintainerr has multiple {display} entries for {url}; "
+                "remove the duplicate entries and re-run `just wire`"
+            )
+        existing = matching_url[0] if matching_url else None
+
+    server_name = (
+        existing.get("serverName")
+        if existing and str(existing.get("url") or "").rstrip("/").lower() == url
+        else managed_name
+    )
+    desired = {"serverName": server_name, "url": url, "apiKey": api_key}
+    changed = []
+    if existing:
+        for field, value in desired.items():
+            old = existing.get(field)
+            if old != value:
+                if field == "url":
+                    changed.append(f"url: set to {url}")
+                else:
+                    changed.append(
+                        f"{field}: {redacted(old, field)} -> {redacted(value, field)}"
+                    )
+        if not changed:
+            return None
+        instance_id = existing.get("id")
+        if not isinstance(instance_id, int) or isinstance(instance_id, bool):
+            raise WireError(
+                f"Maintainerr's {display} entry has no valid id; "
+                "repair it in Maintainerr and re-run `just wire`"
+            )
+        method = "PUT"
+        save_url = f"{MAINTAINERR_URL}{endpoint}/{instance_id}"
+        description = f"update {display} connection"
+    else:
+        desired["serverName"] = managed_name
+        changed = [
+            f"{field}: {redacted(value, field)}" for field, value in desired.items()
+        ]
+        method = "POST"
+        save_url = f"{MAINTAINERR_URL}{endpoint}"
+        description = f"create {display} connection"
+
+    def apply() -> None:
+        tested = http.request(
+            "maintainerr",
+            "POST",
+            f"{MAINTAINERR_URL}/api/settings/test/{app}",
+            body=desired,
+        )
+        maintainerr_result(
+            tested,
+            f"test {display} connection",
+            require_ok=True,
+            secrets=(api_key,),
+        )
+        saved = http.request("maintainerr", method, save_url, body=desired)
+        maintainerr_result(
+            saved,
+            f"save {display} connection",
+            secrets=(api_key,),
+        )
+
+    return Change("maintainerr", description, changed, apply)
+
+
+def maintainerr_changes(
+    http: DockerHTTP,
+    keys: dict[str, str],
+    seerr_key: str,
+    jellyfin_key: Callable[[], str | None],
+    *,
+    dry_run: bool,
+) -> list[Change]:
+    """Build safe, idempotent connection changes; cleanup rules remain user-owned."""
+    try:
+        http.request("maintainerr", "GET", f"{MAINTAINERR_URL}/api/health/ready")
+    except WireError as exc:
+        print(
+            "warning: Maintainerr is not ready; start its service and re-run "
+            f"`just wire` (Maintainerr wiring skipped: {exc})",
+            file=sys.stderr,
+        )
+        return []
+
+    changes = []
+    jellyfin = maintainerr_jellyfin_change(http, jellyfin_key, dry_run=dry_run)
+    if jellyfin:
+        changes.append(jellyfin)
+    seerr = maintainerr_seerr_change(http, seerr_key)
+    if seerr:
+        changes.append(seerr)
+    for app in ("radarr", "sonarr"):
+        change = maintainerr_arr_change(http, app, keys[app])
+        if change:
+            changes.append(change)
+    return changes
+
+
 def confirm(change: Change) -> bool:
     print(f"\n{change.service}: {change.description}")
     for detail in change.details:
@@ -1673,6 +1957,15 @@ def run_wire(
             ):
                 if change:
                     changes.append(change)
+        changes.extend(
+            maintainerr_changes(
+                http,
+                keys,
+                seerr_key,
+                resolve_jellyfin_key,
+                dry_run=args.dry_run,
+            )
+        )
     except WireError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

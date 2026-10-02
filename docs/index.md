@@ -24,17 +24,19 @@ hosts.
                                              |
                                              v
                                  Docker "internal" network
-                              +-----------------------------+
-                              | jellyfin   seerr            |
-                              | radarr     sonarr           |
-                              | prowlarr   bazarr           |
-                              | recyclarr  infinidysk       |
-                              +-----------------------------+
+                               +-----------------------------+
+                               | jellyfin                    |
+                               | seerr      maintainerr      |
+                               | radarr     sonarr           |
+                               | prowlarr   bazarr           |
+                               | recyclarr  infinidysk       |
+                               +-----------------------------+
 ```
 
 Media flow: Prowlarr finds Usenet releases → Sonarr/Radarr send them to InfiniDysk → it fetches
 them from your Usenet provider and writes a tiny `.strm` link into the library → Jellyfin streams
-from the provider; Seerr handles user requests.
+from the provider; Seerr handles user requests and Maintainerr can apply operator-defined cleanup
+rules.
 
 ## The access model
 
@@ -48,9 +50,10 @@ collected in the [FAQ](faq).
 
 **HTTPS comes out of the box.** Traefik's ACME provider issues a **Let's Encrypt wildcard
 certificate for `*.DOMAIN`** via the Cloudflare DNS-01 challenge (`CLOUDFLARE_DNS_TOKEN`),
-renewed automatically. Every service's UI is available on the tailnet immediately; opt a service
-into public routing with `just public enable <service>`, then add its [A record](cloudflare) and open
-the firewall separately. No per-app TLS configuration is involved.
+renewed automatically. Every service's UI is available on the tailnet immediately; supported
+user-facing services can be opted into public routing with `just public enable <service>`, then add
+its [A record](cloudflare) and open the firewall separately. Admin panels, including Maintainerr,
+remain tailnet-only. No per-app TLS configuration is involved.
 
 ## VPS sizing
 
@@ -75,7 +78,7 @@ doesn't, so use **Ubuntu 26.04 Minimal** there instead. The full Oracle walkthro
 ```text
 stacks/                  compose files (one folder per stack) + .env per stack
   traefik/               edge router on :443, CrowdSec container, CoreDNS, plugin + ACME
-  media-server/          jellyfin, seerr, radarr, sonarr, prowlarr,
+  media-server/          jellyfin, seerr, maintainerr, radarr, sonarr, prowlarr,
                          recyclarr, bazarr, infinidysk
 data/                    runtime config that lives in code
   traefik/               traefik.yml, dynamic.yml

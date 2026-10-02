@@ -39,8 +39,8 @@ containers during its scheduled maintenance window.
   `workflow_dispatch`).
 - `.github/renovate.json` is the config. The name is Renovate's auto-discovered repo-config
   location, which is what keeps the repository **onboarded**. The workflow also supplies the
-  current repository through `RENOVATE_REPOSITORIES`, so the same configuration works in the
-  upstream repository and in private forks. It enables the `docker-compose`, `github-actions`,
+  current repository through `RENOVATE_REPOSITORIES`, so the same configuration works in this
+  repository and in private forks of it. It enables the `docker-compose`, `github-actions`,
   and `pre-commit` managers, plus a custom manager for the Restic and hunt images in `justfile`.
 - Do **not** rename that file. Renovate treats an auto-discovered config as proof the repository is
   onboarded; with no config at a default path and no onboarding PR, it skips the repository as
