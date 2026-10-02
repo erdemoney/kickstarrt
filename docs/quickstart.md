@@ -52,7 +52,7 @@ and cross-distro, and installs the prerequisites — `git`, `just`, Docker with 
 and your user in the `docker` group — **and joins the box to your tailnet**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt/main/scripts/bootstrap.sh | sudo bash
 ```
 
 The script prints an **auth URL** and waits up to two minutes — open it in a browser and
@@ -131,9 +131,9 @@ directory:
 
 ```bash
 mkdir -p ~/docker
-gh repo fork erdemoney/kickstarrt-vps
-gh repo clone <you>/kickstarrt-vps ~/docker/kickstarrt-vps
-gh repo edit <you>/kickstarrt-vps --visibility private     # public forks leak any secret you commit
+gh repo fork erdemoney/kickstarrt
+gh repo clone <you>/kickstarrt ~/docker/kickstarrt
+gh repo edit <you>/kickstarrt --visibility private     # public forks leak any secret you commit
 # --- or fork it in the browser ---
 ```
 
@@ -141,8 +141,8 @@ If you fork in the browser instead, make the fork **private** (Settings → chan
 secret committed to a public fork leaks it to the world), then clone it on the box:
 
 ```bash
-git clone git@github.com:<you>/kickstarrt-vps.git ~/docker/kickstarrt-vps
-cd ~/docker/kickstarrt-vps
+git clone git@github.com:<you>/kickstarrt.git ~/docker/kickstarrt
+cd ~/docker/kickstarrt
 ```
 
 One housekeeping item first: the `docker` group the bootstrap script put you in only takes
