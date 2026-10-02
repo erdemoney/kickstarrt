@@ -7,7 +7,7 @@
 # Cross-distro: Debian/Ubuntu (apt), Fedora/RHEL (dnf/yum),
 # openSUSE (zypper), Arch (pacman) and Alpine (apk).
 #
-#     curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt-vps/main/scripts/bootstrap.sh | sudo bash
+#     curl -fsSL https://raw.githubusercontent.com/erdemoney/kickstarrt/main/scripts/bootstrap.sh | sudo bash
 #
 # At the end the script joins the box to your tailnet: it prints the auth URL
 # and waits up to 120s for you to approve it, then prints the box's tailnet

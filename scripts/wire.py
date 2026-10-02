@@ -962,7 +962,7 @@ def jellyfin_authenticate(
 ) -> str:
     device = (
         'MediaBrowser Client="kickstarrt", Device="just wire", '
-        'DeviceId="kickstarrt-vps-wire", Version="1.0"'
+        'DeviceId="kickstarrt-wire", Version="1.0"'
     )
     auth = http.request(
         "jellyfin",
