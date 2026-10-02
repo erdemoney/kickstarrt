@@ -969,7 +969,8 @@ def jellyfin_authenticate(
         "POST",
         f"{base}/Users/AuthenticateByName",
         body={"Username": username, "Pw": password},
-        headers={"X-Emby-Authorization": device},
+        # Jellyfin 12 disables the legacy X-Emby-Authorization header by default.
+        headers={"Authorization": device},
     )
     token = auth.get("AccessToken") if isinstance(auth, dict) else None
     if not token:
