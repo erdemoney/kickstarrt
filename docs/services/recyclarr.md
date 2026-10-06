@@ -53,7 +53,8 @@ same playback policy:
 - Blu-ray remux and Blu-ray 1080p are one quality tier and form the ceiling.
 - Anime WEB releases that identify as HDTV are folded into the WEB tiers.
 - SeaDex anime BD/Web release-group tiers determine preference.
-- x265 is not penalized because anime BD encodes are commonly 10-bit HEVC.
+- x265/HEVC encodes receive a +500 preference to reduce H.264 High 10 transcodes; H.264 releases
+  remain eligible.
 - Raw, low-quality, dubs-only, and French-only releases are rejected for this household.
 
 Set the Sonarr series type to **Anime** and choose this profile for anime. Regular series should
