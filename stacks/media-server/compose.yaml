@@ -30,7 +30,7 @@ x-unprivileged: &unprivileged
 
 services:
   jellyfin:
-    image: lscr.io/linuxserver/jellyfin:12.1ubu2604-ls51
+    image: lscr.io/linuxserver/jellyfin:12.2ubu2604-ls53
     container_name: jellyfin
     <<: *lsio-init
     environment:
@@ -204,7 +204,7 @@ services:
     # Syncs the shipped TRaSH-tuned "Direct Play" quality profiles to
     # radarr/sonarr (data/recyclarr/configs/*.yml, applied by `just wire`).
     # No web UI, so no traefik labels. Rootless image: user replaces PUID/PGID.
-    image: ghcr.io/recyclarr/recyclarr:8.7.2
+    image: ghcr.io/recyclarr/recyclarr:8.7.3
     container_name: recyclarr
     <<: *unprivileged
     user: ${ENV_PUID:-1000}:${ENV_PGID:-1000}
