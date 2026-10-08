@@ -44,15 +44,15 @@ entryPoints:
   # so it is reachable only by traffic that came through the tailnet - no IP
   # allow-list to attach or forget on each panel router. Panels
   # (radarr/sonarr/prowlarr/bazarr/infinidysk + the traefik dashboard) use this
-  # one. Same middleware chain as https so panels behave identically, just
-  # unreachable from the public path.
+  # one. Keep CrowdSec and security headers, but omit the generic request-rate
+  # limit; tailnet access is already restricted and the limit can reject normal
+  # bursts of UI asset requests.
   https-tailnet:
     address: ":443"
     http:
       middlewares:
         - crowdsec@file
         - secHeaders@file
-        - rateLimit@file
 
 providers:
   docker:

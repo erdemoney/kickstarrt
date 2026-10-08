@@ -58,8 +58,9 @@ just down && rm -f data/traefik/acme.json && just up
 
 Edit tracked `data/traefik/traefik.yml` for static configuration and `data/traefik/dynamic.yml` for
 dynamic configuration. Compose publishes the HTTPS entrypoints on `PUBLIC_BIND` and `TAILNET_IP`;
-they are not bound to every host address. CrowdSec's bouncer plugin protects both entrypoints
-([CrowdSec](crowdsec)).
+they are not bound to every host address. CrowdSec's bouncer and security headers apply to both
+entrypoints ([CrowdSec](crowdsec)); the generic request-rate limit applies only to public HTTPS.
+Tailnet traffic relies on tailnet access controls rather than that rate limit.
 
 The dashboard is at `https://traefik.<DOMAIN>`, protected by basic auth and available only over the
 tailnet. It shows active routers, certificate status, and service health. See [Tailscale](../tailscale)
