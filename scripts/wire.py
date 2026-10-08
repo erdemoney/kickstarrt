@@ -493,6 +493,47 @@ def sonarr_propers_repacks_change(http: DockerHTTP, key: str) -> Change | None:
     )
 
 
+def arr_skip_free_space_check_change(
+    http: DockerHTTP, app: str, key: str
+) -> Change | None:
+    """Skip payload-size free-space checks for InfiniDysk link imports.
+
+    InfiniDysk imports small .strm links instead of storing the release payload
+    on the Arr volume, so comparing a release's full size to local free space
+    incorrectly rejects large releases. This setting is global to each Arr.
+    """
+    port = 8989 if app == "sonarr" else 7878
+    endpoint = f"http://{app}:{port}/api/v3/config/mediamanagement"
+    current = http.request(app, "GET", endpoint, key)
+    if not isinstance(current, dict):
+        raise WireError(
+            f"{app.capitalize()} returned invalid media management settings"
+        )
+
+    current_value = current.get("skipFreeSpaceCheckWhenImporting")
+    if current_value is True:
+        return None
+    if not current.get("id"):
+        raise WireError(
+            f"{app.capitalize()} media management settings are missing their ID"
+        )
+
+    payload = json.loads(json.dumps(current))
+    payload["skipFreeSpaceCheckWhenImporting"] = True
+    return Change(
+        app,
+        "skip release-size free-space checks for InfiniDysk links",
+        [f"Skip Free Space Check: {current_value} -> true"],
+        lambda: http.request(
+            app,
+            "PUT",
+            f"{endpoint}/{current['id']}",
+            key,
+            payload,
+        ),
+    )
+
+
 def sonarr_unknown_quality_change(http: DockerHTTP, key: str) -> Change | None:
     """Keep Sonarr's "Unknown" quality sizes within this stack's size cap.
 
@@ -1970,6 +2011,10 @@ def run_wire(
         propers_repacks = sonarr_propers_repacks_change(http, keys["sonarr"])
         if propers_repacks:
             changes.append(propers_repacks)
+        for app in ("sonarr", "radarr"):
+            skip_free_space = arr_skip_free_space_check_change(http, app, keys[app])
+            if skip_free_space:
+                changes.append(skip_free_space)
         unknown_quality = sonarr_unknown_quality_change(http, keys["sonarr"])
         if unknown_quality:
             changes.append(unknown_quality)

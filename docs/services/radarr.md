@@ -19,6 +19,10 @@ Select the shipped **Direct Play** profile. Recyclarr creates and maintains it a
 and rejects formats likely to force Jellyfin into a video
 transcode. See [Recyclarr](recyclarr) for the scoring rationale and tuning workflow.
 
+`just wire` enables **Settings → Media Management → File Management → Skip Free Space Check**.
+InfiniDysk imports `.strm` links instead of storing each release's full payload on the library
+volume, so comparing the release's advertised size to local free space would reject large releases.
+
 ## Manage Radarr and Sonarr from iPhone
 
 [Ruddarr](https://ruddarr.com) is a free, open-source iOS companion app for administering Radarr
