@@ -18,11 +18,12 @@ Use **Direct Play** for regular series. For anime, set the series type to **Anim
 **Direct Play (Anime)**. Recyclarr creates and maintains both profiles from
 `data/recyclarr/configs/sonarr.yml`. See [Recyclarr](recyclarr) for the profile design.
 
-Set **Settings → Media Management → File Management → Download Propers and Repacks** to **Do Not
-Prefer**. Sonarr's **Prefer and Upgrade** ranks parsed revisions such as `v2`, `v3`, Propers, and
-Repacks ahead of custom-format scores. The shipped profiles use custom formats to express those
+`just wire` sets **Settings → Media Management → File Management → Download Propers and Repacks** to
+**Do Not Prefer**. Sonarr's **Prefer and Upgrade** ranks parsed revisions such as `v2`, `v3`, Propers,
+and Repacks ahead of custom-format scores. The shipped profiles use custom formats to express those
 preferences, so **Do Not Prefer** lets their scores decide between otherwise equal quality tiers.
-This is a global Sonarr setting and applies to both regular series and anime.
+This is a global Sonarr setting and applies to both regular series and anime; rerunning `just wire`
+restores it if changed manually.
 
 For mobile administration of Radarr and Sonarr, see [Ruddarr](radarr#manage-radarr-and-sonarr-from-iphone).
 
