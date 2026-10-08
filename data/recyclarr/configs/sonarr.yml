@@ -215,10 +215,12 @@ sonarr:
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
       - trash_ids: [b2550eb333d27b75833e25b8c2557b38] # 10bit (0 = tie-break only)
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
-      # Big enough to outrank every anime release-group tier (max 1400), so a
-      # dual-audio release always beats an otherwise-better sub-only one.
-      - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio (prefer over subs-only)
-        assign_scores_to: [{ name: Direct Play (Anime), score: 2000 }]
+      # Title-match only ("Dual" in the release name) and Sonarr's language
+      # detection is unreliable for anime (a true dual-audio release can show
+      # only "Japanese"), so treat this as a weak signal: a small preference
+      # that breaks ties but never overrides release-group tiers (max 1400).
+      - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio (tie-breaker only)
+        assign_scores_to: [{ name: Direct Play (Anime), score: 25 }]
 
       # --- HDR: direct-plays on HDR clients (SDR-only household? zero these) ---
       - trash_ids: [505d871304820ba7106b693be6fe4a9e] # HDR
