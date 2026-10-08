@@ -459,6 +459,40 @@ def infinidysk_arr_settings_change(
     )
 
 
+def sonarr_propers_repacks_change(http: DockerHTTP, key: str) -> Change | None:
+    """Let Sonarr custom-format scores rank Propers and Repacks.
+
+    Sonarr's built-in revision preference sorts parsed vN/Proper/Repack revisions
+    ahead of custom-format scores. The shipped profiles manage these preferences
+    with custom formats, so keep the instance-wide setting at Do Not Prefer.
+    """
+    endpoint = "http://sonarr:8989/api/v3/config/mediamanagement"
+    current = http.request("sonarr", "GET", endpoint, key)
+    if not isinstance(current, dict):
+        raise WireError("Sonarr returned invalid media management settings")
+
+    current_value = current.get("downloadPropersAndRepacks")
+    if current_value == "doNotPrefer":
+        return None
+    if not current.get("id"):
+        raise WireError("Sonarr media management settings are missing their ID")
+
+    payload = json.loads(json.dumps(current))
+    payload["downloadPropersAndRepacks"] = "doNotPrefer"
+    return Change(
+        "sonarr",
+        "use custom-format scores for Propers and Repacks",
+        [f"Download Propers and Repacks: {current_value} -> doNotPrefer"],
+        lambda: http.request(
+            "sonarr",
+            "PUT",
+            f"{endpoint}/{current['id']}",
+            key,
+            payload,
+        ),
+    )
+
+
 def sonarr_unknown_quality_change(http: DockerHTTP, key: str) -> Change | None:
     """Keep Sonarr's "Unknown" quality sizes within this stack's size cap.
 
@@ -1933,6 +1967,9 @@ def run_wire(
             )
             if change:
                 changes.append(change)
+        propers_repacks = sonarr_propers_repacks_change(http, keys["sonarr"])
+        if propers_repacks:
+            changes.append(propers_repacks)
         unknown_quality = sonarr_unknown_quality_change(http, keys["sonarr"])
         if unknown_quality:
             changes.append(unknown_quality)
