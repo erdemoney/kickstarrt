@@ -15,9 +15,10 @@ changes, then `just wire` to review and confirm them. App-specific setup choices
 
 `just wire` reconciles repeatable integrations through the apps' APIs. It configures Arr root
 folders and InfiniDysk download clients/registrations, sets Sonarr's Propers and Repacks preference
-to **Do Not Prefer** for custom-format-based ranking, links Prowlarr and Bazarr to the Arrs, provisions
-Recyclarr secrets and its initial sync, and sets up import scans from Sonarr/Radarr to Jellyfin. It
-also bootstraps a fresh Jellyfin and Seerr, configures Seerr's Jellyfin and Arr connections, and adds
+to **Do Not Prefer** for custom-format-based ranking, enables **Skip Free Space Check** in Sonarr and
+Radarr for InfiniDysk link imports, links Prowlarr and Bazarr to the Arrs, provisions Recyclarr
+secrets and its initial sync, and sets up import scans from Sonarr/Radarr to Jellyfin. It also
+bootstraps a fresh Jellyfin and Seerr, configures Seerr's Jellyfin and Arr connections, and adds
 Maintainerr's Jellyfin, Seerr, Radarr, and Sonarr connections. Cleanup rules and retention actions
 remain operator-configured in Maintainerr.
 
