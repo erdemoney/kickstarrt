@@ -16,8 +16,13 @@ connections. If you regenerate the API key, run `just wire` again.
 
 Select the shipped **Direct Play** profile. Recyclarr creates and maintains it automatically from
 `data/recyclarr/configs/radarr.yml`. The profile favors Remux and WEB releases, allows HEVC 4K,
-and rejects formats likely to force Jellyfin into a video
-transcode. See [Recyclarr](recyclarr) for the scoring rationale and tuning workflow.
+rejects HD x265 and formats likely to force Jellyfin into a video transcode, and caps releases at
+375 MB/min to accommodate slower streaming connections. Recyclarr also applies the TRaSH movie
+naming format with Jellyfin-compatible TMDb IDs. `just wire` sets the profile language to **Original**
+as recommended by [TRaSH](https://trash-guides.info/Radarr/radarr-setup-quality-profiles/).
+Recyclarr sets **Download Propers and Repacks** to **Do Not Prefer**, allowing the profile's
+Repack/Proper custom-format scores to decide. See [Recyclarr](recyclarr) for the scoring rationale
+and tuning workflow.
 
 `just wire` enables **Settings → Media Management → File Management → Skip Free Space Check**.
 InfiniDysk imports `.strm` links instead of storing each release's full payload on the library

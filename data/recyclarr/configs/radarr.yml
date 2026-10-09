@@ -7,19 +7,23 @@
 #
 # Based on the TRaSH Guides, tailored for this stack: a CPU-only VPS. The ladder
 # is Remux + WEB + Bluray across 2160p and 1080p; audio is left unpenalized
-# because audio transcodes are cheap. HEVC is NOT penalized - all 4K UHD content
-# is HEVC - so 4K remuxes/encodes are grabbable. Anything that would break
-# playback scores -10000 (below the profile's minimum score of 0 = never
-# grabbed): exotic codecs (AV1/VP9/VC-1/MPEG2), Dolby Vision without an HDR10
-# fallback, Blu-ray disk images, and low-quality/obfuscated release groups.
+# because audio transcodes are cheap. 4K HEVC remains eligible because UHD
+# releases commonly use it; 720p/1080p x265, 3D, upscaled,
+# extras, generated-HDR and sing-along releases, plus formats likely to break
+# playback score -10000 (below the profile's minimum score of 0 = never grabbed).
 radarr:
   movies:
     base_url: http://radarr:7878
     api_key: !secret radarr_api_key
 
+    # TRaSH recommends scoring Propers/Repacks with custom formats instead.
+    media_management:
+      propers_and_repacks: do_not_prefer
+
     # Keep the TRaSH minimum sizes, but cap releases at about 50 Mbps average
-    # (375 MB/min). Recyclarr quality definitions are instance-wide; preferred
-    # stays just under the cap so larger eligible releases remain favored.
+    # (375 MB/min) so they remain streamable on slower connections. Recyclarr
+    # quality definitions are instance-wide; preferred stays just under the cap
+    # so larger eligible releases remain favored.
     quality_definition:
       type: movie
       preferred_ratio: 0.99
@@ -39,11 +43,22 @@ radarr:
         - { name: Bluray-2160p, max: 375, preferred: 375 }
         - { name: Remux-2160p, max: 375, preferred: 375 }
 
+    # TRaSH naming retains quality and release metadata to aid re-imports and
+    # avoid duplicate grabs. Use Jellyfin-compatible TMDb IDs in movie folders
+    # and filenames, including source, custom formats, audio/video details, and
+    # release group when available.
+    media_naming:
+      folder: jellyfin-tmdb
+      movie:
+        rename: true
+        standard: jellyfin-tmdb
+
     quality_profiles:
       - name: Direct Play
         upgrade:
           allowed: true
           until_quality: Remux-2160p
+          until_score: 10000
         min_format_score: 0 # anything scoring below 0 (the -10000 rejects) is never grabbed
         min_upgrade_format_score: 1
         reset_unmatched_scores:
@@ -91,6 +106,18 @@ radarr:
         assign_scores_to: [{ name: Direct Play, score: 1900 }]
       - trash_ids: [8baaf0b3142bf4d94c42a724f034e27a] # Remux Tier 03
         assign_scores_to: [{ name: Direct Play, score: 1850 }]
+      - trash_ids: [4d74ac4c4db0b64bff6ce0cffef99bf0] # UHD Bluray Tier 01
+        assign_scores_to: [{ name: Direct Play, score: 1800 }]
+      - trash_ids: [a58f517a70193f8e578056642178419d] # UHD Bluray Tier 02
+        assign_scores_to: [{ name: Direct Play, score: 1750 }]
+      - trash_ids: [e71939fae578037e7aed3ee219bbe7c1] # UHD Bluray Tier 03
+        assign_scores_to: [{ name: Direct Play, score: 1700 }]
+      - trash_ids: [ed27ebfef2f323e964fb1f61391bcb35] # HD Bluray Tier 01
+        assign_scores_to: [{ name: Direct Play, score: 1800 }]
+      - trash_ids: [c20c8647f2746a1f4c4262b0fbbeeeae] # HD Bluray Tier 02
+        assign_scores_to: [{ name: Direct Play, score: 1750 }]
+      - trash_ids: [5608c71bcebba0a5e666223bae8c9227] # HD Bluray Tier 03
+        assign_scores_to: [{ name: Direct Play, score: 1700 }]
       - trash_ids: [c20f169ef63c5f40c2def54abaf4438e] # WEB Tier 01
         assign_scores_to: [{ name: Direct Play, score: 1700 }]
       - trash_ids: [403816d65392c79236dcb6dd591aeda4] # WEB Tier 02
@@ -107,11 +134,19 @@ radarr:
       # --- prefer repacks over propers (TRaSH Guide scores) ---
       - trash_ids: [e7718d7a3ce595f289bfee26adc178f5] # Repack/Proper
         assign_scores_to: [{ name: Direct Play, score: 5 }]
+      - trash_ids: [ae43b294509409a6a13919dedd4764c4] # Repack2
+        assign_scores_to: [{ name: Direct Play, score: 6 }]
+      - trash_ids: [5caaaa1c08c1742aa4342d8c4cc463f2] # Repack3
+        assign_scores_to: [{ name: Direct Play, score: 7 }]
 
       # --- never grab: codec and disk-image rejects ---
       - trash_ids: [ed38b889b31be83fda192888e2286d83] # BR-DISK (disk image; also disabled as a quality)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [e6886871085226c3da1830830146846c] # Generated Dynamic HDR
+        assign_scores_to: [{ name: Direct Play, score: -10000 }]
       - trash_ids: [923b6abef9b17f937fab56cfcf89e1f1] # DV (no HDR10 fallback): pink/green or transcode on non-DV clients
+        assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [dc98083864ea246d05a42df0d05f81cc] # x265 (HD; 720p/1080p only)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
       - trash_ids: [cae4ca30163749b891686f95532519bd] # AV1: clients without AV1 decode make Jellyfin transcode (0 if every client decodes it)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
@@ -120,6 +155,14 @@ radarr:
       - trash_ids: [11cd1db7165d6a7ad9a83bc97b8b1060] # VC-1 (pre-H.264 Blu-ray codec)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
       - trash_ids: [ff86c4326018682f817830ced463332b] # MPEG2 (broadcast caps)
+        assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [b8cd450cbfa689c0259a01d9e29ba3d6] # 3D
+        assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [bfd8eb01832d646a0a89c4deb46f8564] # Upscaled
+        assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [0a3f082873eb454bde444150b70253cc] # Extras
+        assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [712d74cd88bceb883ee32f773656b1f5] # Sing-Along Versions
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
 
       # --- never grab: junk groups (TRaSH Guide scores) ---

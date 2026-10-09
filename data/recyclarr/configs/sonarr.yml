@@ -17,15 +17,20 @@
 # "Direct Play (Anime)" (companion, assign to anime series) - TRaSH's [Anime]
 # Remux-1080p recipe:
 # Bluray-1080p Remux and Bluray-1080p are merged into one tier, HDTV is folded into
-# the WEB tiers (anime WEB/HDRips often tag themselves HDTV). x265 receives a
-# strong preference because H.264 High 10 has uneven client support; x264 releases
-# remain eligible. The same -10000 codec/disk-image never-grab rules apply.
+# the WEB tiers (anime WEB/HDRips often tag themselves HDTV). The Hi10 release-title
+# tag is rejected because H.264 High 10 has uneven client support; ordinary H.264
+# and HEVC releases remain eligible. The same -10000 codec/disk-image never-grab
+# rules apply.
 # Dubs-only, raw and LQ anime groups are rejected. Streaming-service tie-breakers
 # (CR/NF/DSNP/...) are left out to keep the profile lean like Direct Play.
 sonarr:
   tv:
     base_url: http://sonarr:8989
     api_key: !secret sonarr_api_key
+
+    # TRaSH recommends scoring Propers/Repacks with custom formats instead.
+    media_management:
+      propers_and_repacks: do_not_prefer
 
     # Use the anime table's relaxed minimums so low-bitrate/older anime encodes
     # aren't rejected on size before scoring. Quality definitions are
@@ -56,6 +61,19 @@ sonarr:
         - { name: WEBDL-2160p, max: 375, preferred: 375 }
         - { name: Bluray-2160p, max: 375, preferred: 375 }
         - { name: Bluray-2160p Remux, max: 375, preferred: 375 }
+
+    # TRaSH naming keeps quality and release metadata in episode filenames to
+    # aid re-imports and avoid duplicate grabs. Use the Jellyfin TVDb series
+    # folder format; all episode formats include the release group and parsed
+    # quality/custom-format details when available.
+    media_naming:
+      series: jellyfin-tvdb
+      season: default
+      episodes:
+        rename: true
+        standard: default
+        daily: default
+        anime: default
 
     quality_profiles:
       - name: Direct Play
@@ -204,17 +222,15 @@ sonarr:
       - trash_ids: [4fc15eeb8f2f9a749f918217d4234ad8] # v4
         assign_scores_to: [{ name: Direct Play (Anime), score: 4 }]
 
-      # --- strong codec preference: favor HEVC encodes for broader client support ---
-      # This is a release-title match, not a guarantee of direct play. Keep H.264
-      # eligible and the generic 10-bit format unscored; it also matches H.264 High 10.
-      - trash_ids: [c9eafd50846d299b862ca9bb6ea91950] # x265
-        assign_scores_to: [{ name: Direct Play (Anime), score: 500 }]
-
       # --- anime optional: score up if the household prefers these ---
       - trash_ids: [026d5aadd1a6b4e550b134cb6c72b3ca] # Uncensored (0 = tie-break only)
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
       - trash_ids: [b2550eb333d27b75833e25b8c2557b38] # 10bit (0 = tie-break only)
         assign_scores_to: [{ name: Direct Play (Anime), score: 0 }]
+      # The local custom format matches the Hi10/Hi10P release-title tag only;
+      # don't reject generic 10-bit releases, which include HEVC.
+      - trash_ids: [kickstarrt-sonarr-hi10]
+        assign_scores_to: [{ name: Direct Play (Anime), score: -10000 }]
       # Title-match only ("Dual" in the release name) and Sonarr's language
       # detection is unreliable for anime (a true dual-audio release can show
       # only "Japanese"), so treat this as a weak signal: a small preference
@@ -250,6 +266,10 @@ sonarr:
       - trash_ids: [7470a681e6205243983c4410ee4c920f] # VC-1 (pre-H.264 Blu-ray codec)
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
       - trash_ids: [4aee45b0868229c4fbd8bad3e315f1d0] # MPEG2 (broadcast caps)
+        assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
+      - trash_ids: [fbcb31d8dabd2a319072b84fc0b7249c] # Extras
+        assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
+      - trash_ids: [23297a736ca77c0fc8e70f8edd7ee56c] # Upscaled
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
 
       # --- never grab: junk groups (TRaSH Guide scores) ---

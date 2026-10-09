@@ -13,7 +13,7 @@ __pycache__/
 # config-as-code files are tracked. The static configs are mounted directly;
 # runtime state remains ignored.
 # Recyclarr's runtime state (secrets.yml, cache, logs) stays ignored; only the
-# shipped configs and the bootstrap script are tracked.
+# shipped configs, settings, custom formats, and bootstrap script are tracked.
 data/*
 !data/hunt/
 data/hunt/*
@@ -31,9 +31,15 @@ data/coredns/*
 !data/recyclarr/
 data/recyclarr/*
 !data/recyclarr/bootstrap.sh
+!data/recyclarr/settings.yml
 !data/recyclarr/configs/
 data/recyclarr/configs/*
 !data/recyclarr/configs/radarr.yml
 !data/recyclarr/configs/sonarr.yml
+!data/recyclarr/custom-formats/
+data/recyclarr/custom-formats/*
+!data/recyclarr/custom-formats/sonarr/
+data/recyclarr/custom-formats/sonarr/*
+!data/recyclarr/custom-formats/sonarr/hi10.json
 # Prowlarr's runtime state (config.xml, DB, logs, downloaded indexer
 # definitions) stays ignored.
