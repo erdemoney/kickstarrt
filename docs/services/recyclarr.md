@@ -31,15 +31,16 @@ optimizes for files clients can play without video re-encoding:
   Usenet provider at grab time, and repairs it in the background afterwards
   ([InfiniDysk](infinidysk)).
 - Disk images, Dolby Vision without an HDR10 fallback, generated dynamic HDR, 3D, upscaled releases,
-  extras, sing-along versions, AV1, VP9, VC-1, MPEG-2, HD x265, low-quality, and obfuscated releases
-  receive `-10000` and are never grabbed.
+  extras, sing-along versions, AV1, VP9, VC-1, MPEG-2, HD x265, and obfuscated/bad-title releases
+  receive `-10000` and are never grabbed. Generic TRaSH LQ groups remain hard-rejected for regular
+  TV, but score `-10` for anime so other release preferences can still make them eligible.
 - Both Recyclarr configs set **Do Not Prefer** for Propers and Repacks; the Repack/Proper custom
   formats (+5/+6/+7) supply those preferences. `just wire` sets Radarr's language to **Original**
   per [TRaSH's Radarr guide](https://trash-guides.info/Radarr/radarr-setup-quality-profiles/), since
   Recyclarr does not manage language on this manual profile.
 
-The `0` minimum format score means normal releases remain eligible; the `-10000` scores are the
-hard exclusions.
+The regular-TV minimum format score is `0`; the anime minimum is `-10` to allow generic LQ-group
+releases at a lower rank. `-10000` scores remain hard exclusions.
 
 ### Completion first, then 4K
 
@@ -62,9 +63,12 @@ same playback policy:
 - Blu-ray remux and Blu-ray 1080p are one quality tier and form the ceiling.
 - Anime WEB releases that identify as HDTV are folded into the WEB tiers.
 - SeaDex anime BD/Web release-group tiers determine preference.
+- Explicit `Dual Audio` title tags and Sonarr-detected English + Japanese languages each add `+50`;
+  releases matching both receive `+100`.
 - Anime releases tagged `Hi10`/`Hi10P` are rejected to avoid H.264 High 10 transcodes. The rule
   matches those release-title tags; ordinary H.264 and HEVC (including 10-bit HEVC) remain eligible.
-- Raw, low-quality, dubs-only, and French-only releases are rejected for this household.
+- Raw, anime-specific LQ-group, dubs-only, and French-only releases are rejected for this household.
+  Generic LQ-group matches receive the small penalty above, not a hard rejection.
 
 Set the Sonarr series type to **Anime** and choose this profile for anime. Regular series should
 use **Direct Play**.

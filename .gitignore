@@ -41,5 +41,6 @@ data/recyclarr/custom-formats/*
 !data/recyclarr/custom-formats/sonarr/
 data/recyclarr/custom-formats/sonarr/*
 !data/recyclarr/custom-formats/sonarr/hi10.json
+!data/recyclarr/custom-formats/sonarr/anime-dual-audio-languages.json
 # Prowlarr's runtime state (config.xml, DB, logs, downloaded indexer
 # definitions) stays ignored.
