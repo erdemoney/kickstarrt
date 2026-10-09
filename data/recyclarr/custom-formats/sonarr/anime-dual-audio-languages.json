@@ -1,0 +1,25 @@
+{
+  "includeCustomFormatWhenRenaming": false,
+  "name": "Anime Dual Audio (English + Japanese)",
+  "specifications": [
+    {
+      "fields": {
+        "value": 1
+      },
+      "implementation": "LanguageSpecification",
+      "name": "English language detected",
+      "negate": false,
+      "required": true
+    },
+    {
+      "fields": {
+        "value": 8
+      },
+      "implementation": "LanguageSpecification",
+      "name": "Japanese language detected",
+      "negate": false,
+      "required": true
+    }
+  ],
+  "trash_id": "kickstarrt-sonarr-anime-dual-audio-languages"
+}

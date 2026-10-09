@@ -9,10 +9,11 @@
 # VPS. "Direct Play" (regular TV) - ladder is Remux + WEB + Bluray across 2160p
 # and 1080p; audio is left unpenalized because audio transcodes are cheap. HEVC
 # is NOT penalized - all 4K UHD content is HEVC - so 4K remuxes/encodes are
-# grabbable. Anything that would break playback scores -10000 (below the
-# profile's minimum score of 0 = never grabbed): exotic codecs (AV1/VP9/VC-1/
-# MPEG2), Dolby Vision without an HDR10 fallback, Blu-ray disk images, and
-# low-quality/obfuscated release groups.
+# grabbable. Playback-breaking formats score -10000 (below either profile's
+# minimum): exotic codecs (AV1/VP9/VC-1/MPEG2), Dolby Vision without an HDR10
+# fallback, Blu-ray disk images, and obfuscated/bad-title releases. Generic
+# TRaSH LQ groups are hard-rejected for regular TV, but receive only a -10
+# penalty for anime; anime-specific LQ and raw-release rejects remain hard.
 #
 # "Direct Play (Anime)" (companion, assign to anime series) - TRaSH's [Anime]
 # Remux-1080p recipe:
@@ -126,7 +127,7 @@ sonarr:
           # merged group (Bluray-1080p Remux + Bluray-1080p) = the profile's
           # ceiling, so a good BD encode is never "downgraded" off a remux.
           until_quality: Bluray-1080p Remux
-        min_format_score: 0 # v0, raws, LQ groups and codec rejects all score below 0
+        min_format_score: -10 # generic LQ groups are a small penalty, not a hard reject
         min_upgrade_format_score: 1 # quality upgrades are gated only by until_quality
         reset_unmatched_scores:
           enabled: true # this file owns the profile: unmanaged CF scores reset to 0
@@ -231,12 +232,13 @@ sonarr:
       # don't reject generic 10-bit releases, which include HEVC.
       - trash_ids: [kickstarrt-sonarr-hi10]
         assign_scores_to: [{ name: Direct Play (Anime), score: -10000 }]
-      # Title-match only ("Dual" in the release name) and Sonarr's language
-      # detection is unreliable for anime (a true dual-audio release can show
-      # only "Japanese"), so treat this as a weak signal: a small preference
-      # that breaks ties but never overrides release-group tiers (max 1400).
+      # The TRaSH format catches explicit "Dual Audio" title tags. A local
+      # language format below separately catches releases Sonarr identifies as
+      # both English and Japanese. Each is +50; if both match they add together.
       - trash_ids: [418f50b10f1907201b6cfdf881f467b7] # Anime Dual Audio (tie-breaker only)
-        assign_scores_to: [{ name: Direct Play (Anime), score: 25 }]
+        assign_scores_to: [{ name: Direct Play (Anime), score: 50 }]
+      - trash_ids: [kickstarrt-sonarr-anime-dual-audio-languages]
+        assign_scores_to: [{ name: Direct Play (Anime), score: 50 }]
 
       # --- HDR: direct-plays on HDR clients (SDR-only household? zero these) ---
       - trash_ids: [505d871304820ba7106b693be6fe4a9e] # HDR
@@ -272,9 +274,9 @@ sonarr:
       - trash_ids: [23297a736ca77c0fc8e70f8edd7ee56c] # Upscaled
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
 
-      # --- never grab: junk groups (TRaSH Guide scores) ---
-      - trash_ids: [9c11cd3f07101cdba90a2d81cf0e56b4] # LQ (Low Quality Releases)
-        assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
+      # --- generic LQ / obfuscation policy ---
+      - trash_ids: [9c11cd3f07101cdba90a2d81cf0e56b4] # LQ (TV hard reject, anime -10)
+        assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10 }]
       - trash_ids: [e2315f990da2e2cbfc9fa5b7a6fcfe48] # LQ (Release Title)
         assign_scores_to: [{ name: Direct Play, score: -10000 }, { name: Direct Play (Anime), score: -10000 }]
       - trash_ids: [e1a997ddb54e3ecbfe06341ad323c458] # Obfuscated
