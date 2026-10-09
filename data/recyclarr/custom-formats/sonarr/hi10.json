@@ -1,0 +1,16 @@
+{
+  "includeCustomFormatWhenRenaming": false,
+  "name": "H.264 Hi10",
+  "specifications": [
+    {
+      "fields": {
+        "value": "\\bHi10P?\\b"
+      },
+      "implementation": "ReleaseTitleSpecification",
+      "name": "Hi10 or Hi10P release-title tag",
+      "negate": false,
+      "required": true
+    }
+  ],
+  "trash_id": "kickstarrt-sonarr-hi10"
+}

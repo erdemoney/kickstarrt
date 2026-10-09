@@ -459,37 +459,83 @@ def infinidysk_arr_settings_change(
     )
 
 
-def sonarr_propers_repacks_change(http: DockerHTTP, key: str) -> Change | None:
-    """Let Sonarr custom-format scores rank Propers and Repacks.
+def radarr_original_language_change(http: DockerHTTP, key: str) -> Change | None:
+    """Keep Radarr's profile set to TRaSH's recommended Original language.
 
-    Sonarr's built-in revision preference sorts parsed vN/Proper/Repack revisions
-    ahead of custom-format scores. The shipped profiles manage these preferences
-    with custom formats, so keep the instance-wide setting at Do Not Prefer.
+    Recyclarr does not manage language on manually defined profiles. Resolve the
+    profile again when applying so this can run after Recyclarr creates it and
+    so a full API update preserves the latest profile scores and qualities.
+    Source: https://trash-guides.info/Radarr/radarr-setup-quality-profiles/
     """
-    endpoint = "http://sonarr:8989/api/v3/config/mediamanagement"
-    current = http.request("sonarr", "GET", endpoint, key)
-    if not isinstance(current, dict):
-        raise WireError("Sonarr returned invalid media management settings")
+    profile_endpoint = "http://radarr:7878/api/v3/qualityprofile"
+    language_endpoint = "http://radarr:7878/api/v3/language"
 
-    current_value = current.get("downloadPropersAndRepacks")
-    if current_value == "doNotPrefer":
+    def profiles() -> list[dict[str, Any]]:
+        result = http.request("radarr", "GET", profile_endpoint, key)
+        if not isinstance(result, list):
+            raise WireError("Radarr returned invalid quality profiles")
+        return result
+
+    def original_language() -> dict[str, Any]:
+        result = http.request("radarr", "GET", language_endpoint, key)
+        languages = result if isinstance(result, list) else []
+        original = next(
+            (
+                language
+                for language in languages
+                if str(language.get("name", "")).casefold() == "original"
+            ),
+            None,
+        )
+        if not original or original.get("id") is None:
+            raise WireError("Radarr does not expose the Original language option")
+        return original
+
+    def direct_play_profile(items: list[dict[str, Any]]) -> dict[str, Any] | None:
+        return next(
+            (profile for profile in items if profile.get("name") == "Direct Play"),
+            None,
+        )
+
+    desired_language = original_language()
+    current_profile = direct_play_profile(profiles())
+    current_language = (current_profile or {}).get("language")
+    if isinstance(current_language, dict) and str(current_language.get("id")) == str(
+        desired_language["id"]
+    ):
         return None
-    if not current.get("id"):
-        raise WireError("Sonarr media management settings are missing their ID")
 
-    payload = json.loads(json.dumps(current))
-    payload["downloadPropersAndRepacks"] = "doNotPrefer"
-    return Change(
-        "sonarr",
-        "use custom-format scores for Propers and Repacks",
-        [f"Download Propers and Repacks: {current_value} -> doNotPrefer"],
-        lambda: http.request(
-            "sonarr",
+    if current_profile:
+        detail = f"Direct Play language: {current_language} -> Original"
+    else:
+        detail = "Direct Play profile: resolve after Recyclarr sync; set language -> Original"
+
+    def apply() -> None:
+        profile = direct_play_profile(profiles())
+        if not profile:
+            raise WireError(
+                "Radarr Direct Play profile is missing after Recyclarr sync"
+            )
+        live_language = (profile.get("language") or {}).get("id")
+        if str(live_language) == str(desired_language["id"]):
+            return
+        if not profile.get("id"):
+            raise WireError("Radarr Direct Play profile is missing its ID")
+        payload = json.loads(json.dumps(profile))
+        payload["language"] = desired_language
+        http.request(
+            "radarr",
             "PUT",
-            f"{endpoint}/{current['id']}",
+            f"{profile_endpoint}/{profile['id']}",
             key,
             payload,
-        ),
+        )
+
+    return Change(
+        "radarr",
+        "set Direct Play language to Original (TRaSH recommendation)",
+        [detail],
+        apply,
     )
 
 
@@ -2008,9 +2054,6 @@ def run_wire(
             )
             if change:
                 changes.append(change)
-        propers_repacks = sonarr_propers_repacks_change(http, keys["sonarr"])
-        if propers_repacks:
-            changes.append(propers_repacks)
         for app in ("sonarr", "radarr"):
             skip_free_space = arr_skip_free_space_check_change(http, app, keys[app])
             if skip_free_space:
@@ -2028,6 +2071,11 @@ def run_wire(
         ):
             if change:
                 changes.append(change)
+        # Recyclarr creates the manual Radarr profile before its language is
+        # reconciled; this is also safe when the profile already exists.
+        radarr_language = radarr_original_language_change(http, keys["radarr"])
+        if radarr_language:
+            changes.append(radarr_language)
         # Seerr changes are appended after Recyclarr so the Direct Play quality
         # profile it configures exists when a Seerr server is created.
         seerr_key = seerr_api_key(config_dir)

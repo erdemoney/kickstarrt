@@ -1,0 +1,5 @@
+resource_providers:
+  - name: kickstarrt-sonarr-custom-formats
+    type: custom-formats
+    path: custom-formats/sonarr
+    service: sonarr
