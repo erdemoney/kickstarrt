@@ -272,7 +272,7 @@ services:
       start_period: 30s
 
   infinidysk:
-    image: ghcr.io/infinidysk/infinidysk:v1.5.1
+    image: ghcr.io/infinidysk/infinidysk:v1.6.0
     container_name: infinidysk
     <<: *puid-init
     environment:
