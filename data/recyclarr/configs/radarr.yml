@@ -20,28 +20,28 @@ radarr:
     media_management:
       propers_and_repacks: do_not_prefer
 
-    # Keep the TRaSH minimum sizes, but cap releases at about 50 Mbps average
-    # (375 MB/min) so they remain streamable on slower connections. Recyclarr
+    # Keep the TRaSH minimum sizes, but cap releases at about 60 Mbps average
+    # (450 MB/min) so they remain streamable on slower connections. Recyclarr
     # quality definitions are instance-wide; preferred stays just under the cap
     # so larger eligible releases remain favored.
     quality_definition:
       type: movie
       preferred_ratio: 0.99
       qualities:
-        - { name: HDTV-720p, max: 375, preferred: 375 }
-        - { name: WEBDL-720p, max: 375, preferred: 375 }
-        - { name: WEBRip-720p, max: 375, preferred: 375 }
-        - { name: Bluray-720p, max: 375, preferred: 375 }
-        - { name: HDTV-1080p, max: 375, preferred: 375 }
-        - { name: WEBDL-1080p, max: 375, preferred: 375 }
-        - { name: WEBRip-1080p, max: 375, preferred: 375 }
-        - { name: Bluray-1080p, max: 375, preferred: 375 }
-        - { name: Remux-1080p, max: 375, preferred: 375 }
-        - { name: HDTV-2160p, max: 375, preferred: 375 }
-        - { name: WEBDL-2160p, max: 375, preferred: 375 }
-        - { name: WEBRip-2160p, max: 375, preferred: 375 }
-        - { name: Bluray-2160p, max: 375, preferred: 375 }
-        - { name: Remux-2160p, max: 375, preferred: 375 }
+        - { name: HDTV-720p, max: 450, preferred: 450 }
+        - { name: WEBDL-720p, max: 450, preferred: 450 }
+        - { name: WEBRip-720p, max: 450, preferred: 450 }
+        - { name: Bluray-720p, max: 450, preferred: 450 }
+        - { name: HDTV-1080p, max: 450, preferred: 450 }
+        - { name: WEBDL-1080p, max: 450, preferred: 450 }
+        - { name: WEBRip-1080p, max: 450, preferred: 450 }
+        - { name: Bluray-1080p, max: 450, preferred: 450 }
+        - { name: Remux-1080p, max: 450, preferred: 450 }
+        - { name: HDTV-2160p, max: 450, preferred: 450 }
+        - { name: WEBDL-2160p, max: 450, preferred: 450 }
+        - { name: WEBRip-2160p, max: 450, preferred: 450 }
+        - { name: Bluray-2160p, max: 450, preferred: 450 }
+        - { name: Remux-2160p, max: 450, preferred: 450 }
 
     # TRaSH naming retains quality and release metadata to aid re-imports and
     # avoid duplicate grabs. Use Jellyfin-compatible TMDb IDs in movie folders

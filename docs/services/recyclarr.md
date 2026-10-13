@@ -18,8 +18,8 @@ optimizes for files clients can play without video re-encoding:
 - The quality ladder favors Remux, WEB, and Blu-ray releases at 2160p and 1080p. Radarr scores
   Remux, WEB, and HD/UHD Blu-ray release-group tiers; Sonarr scores the tiers configured for its
   regular and anime profiles.
-- Quality definitions keep TRaSH's minimum sizes but cap files at **375 MB/min** (about
-  **50 Mbps average**), with the preferred size just below that ceiling. This intentional,
+- Quality definitions keep TRaSH's minimum sizes but cap files at **450 MB/min** (about
+  **60 Mbps average**), with the preferred size just below that ceiling. This intentional,
   per-quality file-size limit is shared by all profiles in each Arr instance to accommodate slower
   streaming connections; it does not cap instantaneous bitrate or re-encode media.
 - Radarr keeps 4K HEVC eligible while rejecting 720p/1080p x265; UHD releases commonly use HEVC.

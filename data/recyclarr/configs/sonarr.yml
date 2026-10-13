@@ -35,33 +35,33 @@ sonarr:
 
     # Use the anime table's relaxed minimums so low-bitrate/older anime encodes
     # aren't rejected on size before scoring. Quality definitions are
-    # instance-wide in Sonarr, so the 375 MB/min (~50 Mbps average) ceiling
+    # instance-wide in Sonarr, so the 450 MB/min (~60 Mbps average) ceiling
     # applies to both regular and anime profiles. Keep preferred just under the
     # ceiling so larger eligible releases remain favored.
     quality_definition:
       type: anime
       preferred_ratio: 0.99
       qualities:
-        - { name: SDTV, max: 375, preferred: 375 }
-        - { name: WEBRip-480p, max: 375, preferred: 375 }
-        - { name: WEBDL-480p, max: 375, preferred: 375 }
-        - { name: DVD, max: 375, preferred: 375 }
-        - { name: Bluray-480p, max: 375, preferred: 375 }
-        - { name: Bluray-576p, max: 375, preferred: 375 }
-        - { name: HDTV-720p, max: 375, preferred: 375 }
-        - { name: HDTV-1080p, max: 375, preferred: 375 }
-        - { name: WEBRip-720p, max: 375, preferred: 375 }
-        - { name: WEBDL-720p, max: 375, preferred: 375 }
-        - { name: Bluray-720p, max: 375, preferred: 375 }
-        - { name: WEBRip-1080p, max: 375, preferred: 375 }
-        - { name: WEBDL-1080p, max: 375, preferred: 375 }
-        - { name: Bluray-1080p, max: 375, preferred: 375 }
-        - { name: Bluray-1080p Remux, max: 375, preferred: 375 }
-        - { name: HDTV-2160p, max: 375, preferred: 375 }
-        - { name: WEBRip-2160p, max: 375, preferred: 375 }
-        - { name: WEBDL-2160p, max: 375, preferred: 375 }
-        - { name: Bluray-2160p, max: 375, preferred: 375 }
-        - { name: Bluray-2160p Remux, max: 375, preferred: 375 }
+        - { name: SDTV, max: 450, preferred: 450 }
+        - { name: WEBRip-480p, max: 450, preferred: 450 }
+        - { name: WEBDL-480p, max: 450, preferred: 450 }
+        - { name: DVD, max: 450, preferred: 450 }
+        - { name: Bluray-480p, max: 450, preferred: 450 }
+        - { name: Bluray-576p, max: 450, preferred: 450 }
+        - { name: HDTV-720p, max: 450, preferred: 450 }
+        - { name: HDTV-1080p, max: 450, preferred: 450 }
+        - { name: WEBRip-720p, max: 450, preferred: 450 }
+        - { name: WEBDL-720p, max: 450, preferred: 450 }
+        - { name: Bluray-720p, max: 450, preferred: 450 }
+        - { name: WEBRip-1080p, max: 450, preferred: 450 }
+        - { name: WEBDL-1080p, max: 450, preferred: 450 }
+        - { name: Bluray-1080p, max: 450, preferred: 450 }
+        - { name: Bluray-1080p Remux, max: 450, preferred: 450 }
+        - { name: HDTV-2160p, max: 450, preferred: 450 }
+        - { name: WEBRip-2160p, max: 450, preferred: 450 }
+        - { name: WEBDL-2160p, max: 450, preferred: 450 }
+        - { name: Bluray-2160p, max: 450, preferred: 450 }
+        - { name: Bluray-2160p Remux, max: 450, preferred: 450 }
 
     # TRaSH naming keeps quality and release metadata in episode filenames to
     # aid re-imports and avoid duplicate grabs. Use the Jellyfin TVDb series
