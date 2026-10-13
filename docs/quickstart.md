@@ -425,7 +425,8 @@ just public enable jellyfin seerr
 ```
 
    Use `just public status` to review the current router selection. Add a DNS-only A record for
-   each enabled hostname, such as `seerr.<DOMAIN>` and `jellyfin.<DOMAIN>`, following
+   each hostname you want to use, such as `requests.<DOMAIN>` and `watch.<DOMAIN>` (or the
+   service-name aliases `seerr.<DOMAIN>` and `jellyfin.<DOMAIN>`), following
    [Cloudflare's public DNS instructions](cloudflare#public-dns-records). Then open the serving
    ports below; the [Traefik procedure](services/traefik#public-access) explains how the router,
    DNS record, and firewall fit together.

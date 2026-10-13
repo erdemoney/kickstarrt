@@ -9,8 +9,10 @@ Use **Seerr** to find and request movies and shows. Use **Jellyfin** to watch th
 
 Your administrator will provide the links and login details for both services:
 
-- **Seerr:** `https://seerr.<DOMAIN>`
-- **Jellyfin:** `https://jellyfin.<DOMAIN>`
+- **Seerr:** `https://requests.<DOMAIN>`
+- **Jellyfin:** `https://watch.<DOMAIN>`
+
+The service-name links `https://seerr.<DOMAIN>` and `https://jellyfin.<DOMAIN>` also work.
 
 You can use either service in a web browser, or install a compatible app on your device.
 
