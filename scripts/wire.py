@@ -723,10 +723,6 @@ def bazarr_change(
     general = current.get("general", {})
     desired = {
         "settings-general-use_sonarr": (general.get("use_sonarr"), True),
-        "settings-general-enable_strm_support": (
-            general.get("enable_strm_support"),
-            True,
-        ),
         "settings-sonarr-ip": (current.get("sonarr", {}).get("ip"), "sonarr"),
         "settings-sonarr-port": (current.get("sonarr", {}).get("port"), 8989),
         # Bazarr serializes the root URL base as "", so match its own
@@ -783,9 +779,31 @@ def bazarr_change(
 
     return Change(
         "bazarr",
-        "update Sonarr/Radarr connections and .strm support",
+        "update Sonarr/Radarr connections",
         changes,
         lambda: http.request("bazarr", "POST", endpoint, bazarr_key, form=form),
+    )
+
+
+def bazarr_strm_support_change(config_dir: Path, http: DockerHTTP) -> Change | None:
+    _, bazarr_key = bazarr_api_key(config_dir)
+    endpoint = "http://bazarr:6767/api/system/settings"
+    current = http.request("bazarr", "GET", endpoint, bazarr_key)
+    enabled = current.get("general", {}).get("enable_strm_support")
+    if str(enabled).lower() == "true":
+        return None
+
+    return Change(
+        "bazarr",
+        "enable .strm support",
+        [f"settings-general-enable_strm_support: {enabled} -> True"],
+        lambda: http.request(
+            "bazarr",
+            "POST",
+            endpoint,
+            bazarr_key,
+            form={"settings-general-enable_strm_support": "true"},
+        ),
     )
 
 
@@ -2068,6 +2086,7 @@ def run_wire(
         for change in (
             prowlarr_change(http, keys["prowlarr"], keys),
             bazarr_change(config_dir, http, keys),
+            bazarr_strm_support_change(config_dir, http),
             bazarr_jellyfin_change(
                 config_dir, http, resolve_jellyfin_key, dry_run=args.dry_run
             ),
