@@ -32,11 +32,12 @@ renewal behavior.
 
 ## Public DNS records
 
-After enabling a service's public Traefik router, add a DNS record for its hostname:
+After enabling a service's public Traefik router, add a DNS record for each hostname you want to
+use. Jellyfin accepts both `watch` and `jellyfin`; Seerr accepts both `requests` and `seerr`.
 
 1. Open [Cloudflare DNS → Records](https://dash.cloudflare.com/?to=/:account/dns) and choose **Add record**.
-2. Set **Type** to `A`, **Name** to the service subdomain (for example `jellyfin` or `seerr`), and
-   **IPv4 address** to the VPS's public IP.
+2. Set **Type** to `A`, **Name** to the hostname (for example `watch`, `jellyfin`, `requests`, or
+   `seerr`), and **IPv4 address** to the VPS's public IP.
 3. Set **Proxy status** to **DNS only** (grey cloud), then save.
 
 Use a stable or reserved public IP so the record remains valid after restarts or rebuilds. DNS

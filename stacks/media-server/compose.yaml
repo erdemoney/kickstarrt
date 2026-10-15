@@ -48,7 +48,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.entrypoints=${JELLYFIN_ENTRYPOINTS:-https-tailnet}"
-      - "traefik.http.routers.jellyfin.rule=Host(`${SUB_DOMAIN_JELLYFIN}.${DOMAIN}`)"
+      - "traefik.http.routers.jellyfin.rule=Host(`${SUB_DOMAIN_JELLYFIN}.${DOMAIN}`) || Host(`watch.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin.tls=true"
       # The default is tailnet-only. `just public enable jellyfin` adds the public
       # entrypoint without requiring a Compose file edit.
@@ -77,7 +77,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.seerr.entrypoints=${SEERR_ENTRYPOINTS:-https-tailnet}"
-      - "traefik.http.routers.seerr.rule=Host(`${SUB_DOMAIN_SEERR}.${DOMAIN}`)"
+      - "traefik.http.routers.seerr.rule=Host(`${SUB_DOMAIN_SEERR}.${DOMAIN}`) || Host(`requests.${DOMAIN}`)"
       - "traefik.http.routers.seerr.tls=true"
       - "traefik.http.services.seerr.loadbalancer.server.port=5055"
     healthcheck:
