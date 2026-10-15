@@ -588,10 +588,10 @@ def sonarr_unknown_quality_change(http: DockerHTTP, key: str) -> Change | None:
     that is absent is a hard config error), so Unknown keeps Sonarr's shipped
     default max of 199.9 MB/min. Sonarr checks a season pack against the combined
     runtime of its episodes. Set Unknown's preferred and maximum sizes to the
-    same 375 MB/min cap configured for the managed qualities; daily Recyclarr
+    same 450 MB/min cap configured for the managed qualities; daily Recyclarr
     sync leaves this unmanaged quality alone.
     """
-    desired = {"minSize": 5.0, "preferredSize": 375.0, "maxSize": 375.0}
+    desired = {"minSize": 5.0, "preferredSize": 450.0, "maxSize": 450.0}
     endpoint = "http://sonarr:8989/api/v3/qualitydefinition"
     current = http.request("sonarr", "GET", endpoint, key)
     items = current if isinstance(current, list) else []
