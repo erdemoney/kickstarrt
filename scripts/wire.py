@@ -723,6 +723,10 @@ def bazarr_change(
     general = current.get("general", {})
     desired = {
         "settings-general-use_sonarr": (general.get("use_sonarr"), True),
+        "settings-general-enable_strm_support": (
+            general.get("enable_strm_support"),
+            True,
+        ),
         "settings-sonarr-ip": (current.get("sonarr", {}).get("ip"), "sonarr"),
         "settings-sonarr-port": (current.get("sonarr", {}).get("port"), 8989),
         # Bazarr serializes the root URL base as "", so match its own
@@ -779,7 +783,7 @@ def bazarr_change(
 
     return Change(
         "bazarr",
-        "update Sonarr/Radarr connections",
+        "update Sonarr/Radarr connections and .strm support",
         changes,
         lambda: http.request("bazarr", "POST", endpoint, bazarr_key, form=form),
     )

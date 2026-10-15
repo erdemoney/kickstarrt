@@ -7,7 +7,8 @@ nav_order: 10
 # Bazarr: subtitles
 
 Bazarr fetches subtitles for media managed by Sonarr and Radarr. `just wire` configures its
-connections to both applications while preserving the rest of Bazarr's settings.
+connections to both applications and enables `.strm` support while preserving the rest of Bazarr's
+settings.
 
 ## Stack setup
 
