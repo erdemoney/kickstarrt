@@ -85,13 +85,13 @@ def apply_owned(paths: list[Path], puid: int, pgid: int) -> None:
         return
     if shutil.which("sudo") is None:
         print(
-            "warning: no root or sudo available; cannot prepare /mnt/usenet",
+            "warning: no root or sudo available; cannot prepare host media directories",
             file=sys.stderr,
         )
         return
     run(
         ("sudo", "mkdir", "-p", *[str(path) for path in paths]),
-        "create media directories",
+        "create host media directories",
     )
     run(
         (
@@ -99,7 +99,7 @@ def apply_owned(paths: list[Path], puid: int, pgid: int) -> None:
             "chown",
             *[f"{puid}:{pgid}"] + [str(path) for path in paths],
         ),
-        "own media directories",
+        "own host media directories",
     )
 
 
@@ -134,7 +134,8 @@ def main() -> int:
                     "library/movies",
                     "completed-downloads",
                 )
-            ],
+            ]
+            + [Path("/var/cache/kickstarrt/jellyfin-transcode")],
             puid,
             pgid,
         )

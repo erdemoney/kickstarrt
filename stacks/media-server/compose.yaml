@@ -40,9 +40,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/jellyfin/config:/config
       - /mnt/usenet:/mnt/usenet
+      - /var/cache/kickstarrt/jellyfin-transcode:/transcode
     stop_grace_period: 30s
-    tmpfs:
-      - /transcode
     # No GPU passthrough here: VPS hosts are CPU-only, so Jellyfin transcodes in
     # software. Keep the library direct-play friendly (see docs/services/jellyfin.md).
     labels:

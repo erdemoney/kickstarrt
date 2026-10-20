@@ -109,8 +109,9 @@ Read the pages in order for a first deploy; after that they're reference.
 | [Maintenance](maintenance) | Day-to-day operations, [backups](maintenance/backups), [back-catalog hunting](maintenance/hunt), and [Updates & CI](maintenance/updates). |
 | [FAQ](faq) | Design decisions and common questions. |
 
-All app config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s
-and `just prepare` creates each app's runtime subdirectory there. Media streams from your Usenet
+App config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s and
+`just prepare` creates each app's config subdirectory there. Jellyfin's temporary transcode files
+live separately under `/var/cache/kickstarrt/jellyfin-transcode`. Media streams from your Usenet
 provider, so the library on disk is only the `.strm` links under `/mnt/usenet`.
 
 ## External references

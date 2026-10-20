@@ -26,9 +26,13 @@ staging area, not library content.
 
 ## CPU-only playback
 
-The VPS has no GPU. Set Dashboard → **Playback** → **Transcoding path** to `/transcode` (a tmpfs),
-then disable video transcoding for every user: Dashboard → **Users** → edit a user → **Access** →
-**Media playback**.
+The VPS has no GPU. Set Dashboard → **Playback** → **Transcoding path** to `/transcode`, which is
+disk-backed at `/var/cache/kickstarrt/jellyfin-transcode` on the host. `just prepare` creates this
+directory with the configured media UID/GID. HLS playback can keep generated segments for the full
+session to support seeking, so make sure the filesystem has enough free space for the media being
+played; the transcode directory is temporary and is not part of the repository backup. Then disable
+video transcoding for every user: Dashboard → **Users** → edit a user → **Access** → **Media
+playback**.
 
 | Playback setting | Value |
 | --- | --- |
