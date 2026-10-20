@@ -19,7 +19,7 @@ init force="":
 
 # The implementation lives in scripts/prepare.py.
 
-# Create config dirs and `acme.json` (0600); called by `just up`.
+# Create runtime/config dirs and `acme.json` (0600); called by `just up`.
 [arg("dry_run", long="dry-run", value="--dry-run", help="report what would be done without changing anything")]
 prepare dry_run="":
     python3 -m scripts.prepare {{ dry_run }}
