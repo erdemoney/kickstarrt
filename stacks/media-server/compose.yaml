@@ -30,7 +30,7 @@ x-unprivileged: &unprivileged
 
 services:
   jellyfin:
-    image: lscr.io/linuxserver/jellyfin:12.2ubu2604-ls54
+    image: lscr.io/linuxserver/jellyfin:12.2ubu2604-ls55
     container_name: jellyfin
     <<: *lsio-init
     environment:
