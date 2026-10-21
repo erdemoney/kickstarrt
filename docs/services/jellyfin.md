@@ -26,13 +26,12 @@ staging area, not library content.
 
 ## CPU-only playback
 
-The VPS has no GPU. Set Dashboard → **Playback** → **Transcoding path** to `/transcode`, which is
-disk-backed at `/var/cache/kickstarrt/jellyfin-transcode` on the host. `just prepare` creates this
-directory with the configured media UID/GID. HLS playback can keep generated segments for the full
-session to support seeking, so make sure the filesystem has enough free space for the media being
-played; the transcode directory is temporary and is not part of the repository backup. Then disable
-video transcoding for every user: Dashboard → **Users** → edit a user → **Access** → **Media
-playback**.
+The VPS has no GPU. Set Dashboard → **Playback** → **Transcoding path** to `/transcode`, a tmpfs
+limited to 4 GiB and owned by the configured media UID/GID. The tmpfs uses host memory as files are
+written; it does not reserve the full 4 GiB up front. If it fills, transcoding can fail, but it will
+not consume additional root-disk space. HLS playback can retain generated segments during a session
+to support seeking. Then disable video transcoding for every user: Dashboard → **Users** → edit a user
+→ **Access** → **Media playback**.
 
 | Playback setting | Value |
 | --- | --- |
@@ -40,10 +39,15 @@ playback**.
 | Allow video playback that requires conversion without re-encoding (remux) | On |
 | Allow audio playback that requires transcoding | On |
 
-Repeat for each user; new users inherit the default, which allows video transcoding. With this
-policy, video that needs re-encoding fails instead of consuming CPU, while remux and audio
-transcoding remain available. The shipped **Direct Play** profiles in [Recyclarr](recyclarr) favor
-formats compatible with this policy.
+Repeat for each user; new users inherit the default, which allows video transcoding. With this policy,
+video that needs re-encoding fails instead of consuming CPU and filling the transcode tmpfs, while
+remux and audio transcoding remain available. The shipped **Direct Play** profiles in
+[Recyclarr](recyclarr) favor formats compatible with this policy.
+
+When migrating from the former disk-backed path, Compose leaves its old host directory and files in
+place. After Jellyfin has been recreated with the tmpfs, remove stale files from
+`/var/cache/kickstarrt/jellyfin-transcode` to reclaim that disk space; do not remove files from the
+directory while the old Jellyfin container is still using it.
 
 ## Troubleshooting
 

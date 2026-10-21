@@ -134,8 +134,7 @@ def main() -> int:
                     "library/movies",
                     "completed-downloads",
                 )
-            ]
-            + [Path("/var/cache/kickstarrt/jellyfin-transcode")],
+            ],
             puid,
             pgid,
         )
