@@ -49,7 +49,7 @@ releases at a lower rank. `-10000` scores remain hard exclusions.
 The quality ladders are completion-first: they run down to **SDTV** (Sonarr) / **DVD-R** (Radarr),
 so a monitored missing episode or movie is *always* grabbable instead of staying empty while waiting
 for a 4K release. Both Sonarr profiles also enable **Unknown** below SDTV as their final catch-all
-quality for releases Sonarr cannot classify. In the regular profile, DVD ranks below WEB 480p and
+quality for releases Sonarr cannot classify. In both Sonarr profiles, DVD ranks below WEB 480p and
 above SDTV. This makes it a low-tier fallback for older DVD-only content and preferable to generic
 SDTV releases. Once a low-tier landing fills the gap, subsequent searches upgrade it toward the
 profile ceiling for free over Usenet. The `until_quality` ceilings are untouched, so 4K is still
@@ -67,6 +67,7 @@ same playback policy:
 
 - Blu-ray remux and Blu-ray 1080p are one quality tier and form the ceiling.
 - Anime WEB releases that identify as HDTV are folded into the WEB tiers.
+- DVD is enabled below WEB 480p and above SDTV as a fallback for older DVD-only anime.
 - SeaDex anime BD/Web release-group tiers determine preference.
 - Explicit `Dual Audio` title tags and Sonarr-detected English + Japanese languages each add `+50`;
   releases matching both receive `+100`.

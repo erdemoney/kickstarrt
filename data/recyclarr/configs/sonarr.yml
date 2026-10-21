@@ -132,14 +132,15 @@ sonarr:
         reset_unmatched_scores:
           enabled: true # this file owns the profile: unmanaged CF scores reset to 0
         quality_sort: top
-        # best ... worst (TRaSH anime order). The first nine form the main
-        # ladder; Unknown is enabled last as a catch-all for releases Sonarr
-        # cannot classify. Other unsupported qualities stay listed (disabled)
-        # for a deterministic sort order. Qualities are merged per the TRaSH
-        # guide so scoring works: Bluray-1080p Remux with Bluray-1080p in one
-        # tier, and HDTV-1080p/HDTV-720p folded into the WEB tiers (anime
-        # WEB/HDRip releases often mislabel themselves HDTV). Bluray-576p/SDTV
-        # sit at the bottom of the main ladder as a completion floor.
+        # best ... worst (TRaSH anime order). The main ladder includes DVD
+        # below WEB 480p and above SDTV; Unknown is enabled last as a catch-all
+        # for releases Sonarr cannot classify. Other unsupported qualities
+        # stay listed (disabled) for a deterministic sort order. Qualities are
+        # merged per the TRaSH guide so scoring works: Bluray-1080p Remux with
+        # Bluray-1080p in one tier, and HDTV-1080p/HDTV-720p folded into the WEB
+        # tiers (anime WEB/HDRip releases often mislabel themselves HDTV).
+        # Bluray-576p/SDTV sit at the bottom of the main ladder as a completion
+        # floor.
         qualities:
           - name: Bluray-1080p Remux
             qualities: [Bluray-1080p Remux, Bluray-1080p]
@@ -153,14 +154,13 @@ sonarr:
           - name: Bluray-480p
           - name: WEB 480p
             qualities: [WEBRip-480p, WEBDL-480p]
+          - name: DVD
           - name: SDTV
           - name: Bluray-2160p Remux
             enabled: false
           - name: HDTV-2160p
             enabled: false
           - name: Raw-HD
-            enabled: false
-          - name: DVD
             enabled: false
           - name: Unknown
 
