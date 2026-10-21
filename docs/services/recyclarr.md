@@ -44,12 +44,13 @@ releases at a lower rank. `-10000` scores remain hard exclusions.
 
 ### Completion first, then 4K
 
-The quality ladders are completion-first: they run all the way down to **DVD** (Sonarr) /
+The quality ladders are completion-first: they run all the way down to **SDTV** (Sonarr) /
 **DVD-R** (Radarr), so a monitored missing episode or movie is *always* grabbable instead of
-staying empty while waiting for a 4K release. Sonarr ranks DVD below SDTV as a last resort for older
-content without a better release. Once a low-tier landing fills the gap, subsequent searches upgrade
-it toward the profile ceiling for free over Usenet. The `until_quality` ceilings are untouched, so 4K
-is still chased - just never allowed to leave a gap behind.
+staying empty while waiting for a 4K release. Sonarr ranks DVD below WEB 480p and above SDTV, making
+it a low-tier fallback for older DVD-only content while preferring it to generic SDTV releases. Once
+a low-tier landing fills the gap, subsequent searches upgrade it toward the profile ceiling for free
+over Usenet. The `until_quality` ceilings are untouched, so 4K is still chased - just never allowed
+to leave a gap behind.
 
 Sonarr's season packs carry a large preference bonus (`+5000`) so a grabbable pack always beats
 scattered individual-episode grabs. Note this cannot override Sonarr's built-in all-or-nothing pack
