@@ -31,9 +31,11 @@ optimizes for files clients can play without video re-encoding:
   Usenet provider at grab time, and repairs it in the background afterwards
   ([InfiniDysk](infinidysk)).
 - Disk images, Dolby Vision without an HDR10 fallback, generated dynamic HDR, 3D, upscaled releases,
-  extras, sing-along versions, AV1, VP9, VC-1, MPEG-2, HD x265, and obfuscated/bad-title releases
-  receive `-10000` and are never grabbed. Generic TRaSH LQ groups remain hard-rejected for regular
-  TV, but score `-10` for anime so other release preferences can still make them eligible.
+  extras, sing-along versions, AV1, VP9, VC-1, MPEG-2, HD x265, and bad-title releases receive
+  `-10000` and are never grabbed. The Obfuscated custom format scores `0`: its markers can appear on
+  readable Usenet releases that are still playable, as confirmed by testing. Generic TRaSH LQ groups
+  remain hard-rejected for regular TV, but score `-10` for anime so other release preferences can
+  still make them eligible.
 - Both Recyclarr configs set **Do Not Prefer** for Propers and Repacks; the Repack/Proper custom
   formats (+5/+6/+7) supply those preferences. `just wire` sets Radarr's language to **Original**
   per [TRaSH's Radarr guide](https://trash-guides.info/Radarr/radarr-setup-quality-profiles/), since
