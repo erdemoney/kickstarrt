@@ -27,8 +27,8 @@ staging area, not library content.
 ## CPU-only playback
 
 The VPS has no GPU. Set Dashboard → **Playback** → **Transcoding path** to `/transcode`, a tmpfs
-limited to 2 GiB and owned by the configured media UID/GID. The tmpfs uses host memory as files are
-written; it does not reserve the full 2 GiB up front. If it fills, transcoding can fail, but it will
+limited to 4 GiB and owned by the configured media UID/GID. The tmpfs uses host memory as files are
+written; it does not reserve the full 4 GiB up front. If it fills, transcoding can fail, but it will
 not consume additional root-disk space. HLS playback can retain generated segments during a session
 to support seeking. Then disable video transcoding for every user: Dashboard → **Users** → edit a user
 → **Access** → **Media playback**.
