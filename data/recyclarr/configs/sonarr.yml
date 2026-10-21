@@ -87,12 +87,12 @@ sonarr:
           enabled: true # this file owns the profile: unmanaged CF scores reset to 0
         quality_sort: top
         # best ... worst. The ceiling is 2160p Remux (4K upgrades are chased),
-        # and the ladder runs all the way down to SDTV so a missing episode is
-        # ALWAYS grabbable - completion first, quality second. DVD sits below
-        # WEB 480p and above SDTV as a low-tier fallback for older content.
-        # Once a low-tier release lands, Sonarr keeps upgrading it toward the
-        # ceiling for free over Usenet. The junk tiers below stay listed
-        # (disabled) so their sort order and cutoff behavior stay deterministic.
+        # and the ladder runs down to SDTV, with Unknown last as a catch-all
+        # for releases Sonarr cannot classify. DVD sits below WEB 480p and
+        # above SDTV as a low-tier fallback for older content. Once a low-tier
+        # release lands, Sonarr keeps upgrading it toward the ceiling for free
+        # over Usenet. The junk tiers below stay listed (disabled) so their
+        # sort order and cutoff behavior stay deterministic.
         # Sonarr names its remux qualities "Bluray-<res> Remux" (unlike Radarr).
         qualities:
           - name: Bluray-2160p Remux
@@ -119,7 +119,6 @@ sonarr:
           - name: Raw-HD
             enabled: false
           - name: Unknown
-            enabled: false
 
       - name: Direct Play (Anime)
         upgrade:
@@ -132,13 +131,14 @@ sonarr:
         reset_unmatched_scores:
           enabled: true # this file owns the profile: unmanaged CF scores reset to 0
         quality_sort: top
-        # best ... worst (TRaSH anime order). Allowed the first nine; the rest
-        # stay listed (disabled) for a deterministic sort order. Qualities are
-        # merged per the TRaSH guide so scoring works: Bluray-1080p Remux with
-        # Bluray-1080p in one tier, and HDTV-1080p/HDTV-720p folded into the WEB
-        # tiers (anime WEB/HDRip releases often mislabel themselves HDTV).
-        # Bluray-576p/SDTV sit at the bottom as a completion floor so a missing
-        # episode is always fillable; Sonarr then climbs back up for free.
+        # best ... worst (TRaSH anime order). The first nine form the main
+        # ladder; Unknown is enabled last as a catch-all for releases Sonarr
+        # cannot classify. Other unsupported qualities stay listed (disabled)
+        # for a deterministic sort order. Qualities are merged per the TRaSH
+        # guide so scoring works: Bluray-1080p Remux with Bluray-1080p in one
+        # tier, and HDTV-1080p/HDTV-720p folded into the WEB tiers (anime
+        # WEB/HDRip releases often mislabel themselves HDTV). Bluray-576p/SDTV
+        # sit at the bottom of the main ladder as a completion floor.
         qualities:
           - name: Bluray-1080p Remux
             qualities: [Bluray-1080p Remux, Bluray-1080p]
@@ -162,7 +162,6 @@ sonarr:
           - name: DVD
             enabled: false
           - name: Unknown
-            enabled: false
 
     custom_formats:
       # --- release-group quality tiers (TRaSH Guide scores) ---

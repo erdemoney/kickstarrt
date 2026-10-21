@@ -44,13 +44,14 @@ releases at a lower rank. `-10000` scores remain hard exclusions.
 
 ### Completion first, then 4K
 
-The quality ladders are completion-first: they run all the way down to **SDTV** (Sonarr) /
-**DVD-R** (Radarr), so a monitored missing episode or movie is *always* grabbable instead of
-staying empty while waiting for a 4K release. Sonarr ranks DVD below WEB 480p and above SDTV, making
-it a low-tier fallback for older DVD-only content while preferring it to generic SDTV releases. Once
-a low-tier landing fills the gap, subsequent searches upgrade it toward the profile ceiling for free
-over Usenet. The `until_quality` ceilings are untouched, so 4K is still chased - just never allowed
-to leave a gap behind.
+The quality ladders are completion-first: they run down to **SDTV** (Sonarr) / **DVD-R** (Radarr),
+so a monitored missing episode or movie is *always* grabbable instead of staying empty while waiting
+for a 4K release. Both Sonarr profiles also enable **Unknown** below SDTV as their final catch-all
+quality for releases Sonarr cannot classify. In the regular profile, DVD ranks below WEB 480p and
+above SDTV. This makes it a low-tier fallback for older DVD-only content and preferable to generic
+SDTV releases. Once a low-tier landing fills the gap, subsequent searches upgrade it toward the
+profile ceiling for free over Usenet. The `until_quality` ceilings are untouched, so 4K is still
+chased - just never allowed to leave a gap behind.
 
 Sonarr's season packs carry a large preference bonus (`+5000`) so a grabbable pack always beats
 scattered individual-episode grabs. Note this cannot override Sonarr's built-in all-or-nothing pack
@@ -69,6 +70,8 @@ same playback policy:
   releases matching both receive `+100`.
 - Anime releases tagged `Hi10`/`Hi10P` are rejected to avoid H.264 High 10 transcodes. The rule
   matches those release-title tags; ordinary H.264 and HEVC (including 10-bit HEVC) remain eligible.
+- **Unknown** is the final fallback for releases Sonarr cannot classify; subsequent searches can
+  still upgrade them toward the profile ceiling.
 - Raw, anime-specific LQ-group, dubs-only, and French-only releases are rejected for this household.
   Generic LQ-group matches receive the small penalty above, not a hard rejection.
 
