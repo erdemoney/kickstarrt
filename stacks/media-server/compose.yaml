@@ -40,7 +40,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/jellyfin/config:/config
       - /mnt/usenet:/mnt/usenet
-      - /var/cache/kickstarrt/jellyfin-transcode:/transcode
+    # Bound HLS/transcode scratch space so long sessions cannot fill the root disk.
+    tmpfs:
+      - "/transcode:size=2g,uid=${ENV_PUID:-1000},gid=${ENV_PGID:-1000},mode=0750"
     stop_grace_period: 30s
     # No GPU passthrough here: VPS hosts are CPU-only, so Jellyfin transcodes in
     # software. Keep the library direct-play friendly (see docs/services/jellyfin.md).

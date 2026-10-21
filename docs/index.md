@@ -111,8 +111,8 @@ Read the pages in order for a first deploy; after that they're reference.
 
 App config lives under the repo's own `data/` dir — `just init` writes the stack `.env`s and
 `just prepare` creates each app's config subdirectory there. Jellyfin's temporary transcode files
-live separately under `/var/cache/kickstarrt/jellyfin-transcode`. Media streams from your Usenet
-provider, so the library on disk is only the `.strm` links under `/mnt/usenet`.
+use a 2 GiB tmpfs. Media streams from your Usenet provider, so the library on disk is only the
+`.strm` links under `/mnt/usenet`.
 
 ## External references
 

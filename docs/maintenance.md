@@ -24,7 +24,7 @@ restores, see [Backups](maintenance/backups); for GitHub automation and CI, see
 | `just logs <stack>` / `just logs-svc <svc>` | Tail logs for a stack or service. |
 | `just restart <stack>` | Restart a stack. |
 | `just validate` | Run `docker compose config -q` on every stack without writing `.env` files. |
-| `just prepare` | Create runtime directories, including Jellyfin transcode storage, config directories, and `acme.json` (called by `just up`; supports `--dry-run`). |
+| `just prepare` | Create media directories, app config directories, and `acme.json` (called by `just up`; supports `--dry-run`). |
 | `just wire` | Reconcile app integrations through APIs; use `--dry-run` to preview. |
 | `just dns` | Print the Tailscale split-DNS resolver setup (see [Tailscale](tailscale)). |
 | `just networks` | Create the shared `internal` network; supports `--dry-run`. |
