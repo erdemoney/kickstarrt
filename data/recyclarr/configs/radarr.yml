@@ -170,5 +170,5 @@ radarr:
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
       - trash_ids: [e204b80c87be9497a8a6eaff48f72905] # LQ (Release Title)
         assign_scores_to: [{ name: Direct Play, score: -10000 }]
-      - trash_ids: [7357cf5161efbf8c4d5d0c30b4815ee2] # Obfuscated
-        assign_scores_to: [{ name: Direct Play, score: -10000 }]
+      - trash_ids: [7357cf5161efbf8c4d5d0c30b4815ee2] # Obfuscated (neutral; readable Usenet titles can be playable)
+        assign_scores_to: [{ name: Direct Play, score: 0 }]
