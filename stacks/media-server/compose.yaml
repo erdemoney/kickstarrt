@@ -30,7 +30,7 @@ x-unprivileged: &unprivileged
 
 services:
   jellyfin:
-    image: lscr.io/linuxserver/jellyfin:12.2ubu2604-ls55
+    image: lscr.io/linuxserver/jellyfin:12.3ubu2604-ls56
     container_name: jellyfin
     <<: *lsio-init
     environment:
@@ -64,7 +64,7 @@ services:
       start_period: 60s
 
   seerr:
-    image: ghcr.io/seerr-team/seerr:v3.5.0
+    image: ghcr.io/seerr-team/seerr:v3.5.1
     container_name: seerr
     <<: *unprivileged
     init: true
@@ -89,7 +89,7 @@ services:
       start_period: 20s
 
   maintainerr:
-    image: ghcr.io/maintainerr/maintainerr:3.30.2
+    image: ghcr.io/maintainerr/maintainerr:3.31.0
     container_name: maintainerr
     <<: *unprivileged
     user: ${ENV_PUID:-1000}:${ENV_PGID:-1000}
@@ -273,7 +273,7 @@ services:
       start_period: 30s
 
   infinidysk:
-    image: ghcr.io/infinidysk/infinidysk:v1.6.2
+    image: ghcr.io/infinidysk/infinidysk:v1.6.3
     container_name: infinidysk
     <<: *puid-init
     environment:
