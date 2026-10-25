@@ -17,6 +17,7 @@ restores, see [Backups](maintenance/backups); for GitHub automation and CI, see
 | `just init` | Create or reconcile `.env` files and fill interactive secrets. |
 | `just up` / `just down` | Start or stop every stack. `just up --dry-run` previews changes. |
 | `just update-all` / `just update <svc>` | Pull fresh images and recreate changed containers, or update one service. |
+| `just clean` | Show Docker disk usage, then interactively prune stopped containers, unused networks, dangling images, and build cache. Volumes are preserved. |
 | `just maintenance-run` | Fast-forward Git, update all stacks, then run health checks. |
 | `just maintenance-schedule` | Install the overnight maintenance timer (default: 03:00 host-local time). |
 | `just maintenance-status` / `just maintenance-unschedule` | Inspect or remove the maintenance timer. |
