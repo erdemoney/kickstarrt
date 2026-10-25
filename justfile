@@ -165,6 +165,12 @@ down:
 
 # This is also the entry point used by the optional overnight systemd timer.
 
+# Show Docker disk usage, then interactively prune unused resources (not volumes).
+[group('Maintenance')]
+clean:
+    docker system df
+    docker system prune
+
 # Pull the reviewed default branch, update changed containers, and verify the result.
 [group('Maintenance')]
 maintenance-run:
