@@ -12,31 +12,23 @@ services:
     cap_drop:
       - ALL
     cap_add:
-      # Persistent host files are owned by the configured VPS user; Traefik
-      # remains root in-container and needs to write ACME state/logs.
+      # Allow writes to host-owned ACME and log bind mounts.
       - DAC_OVERRIDE
       # It binds :80, :443 and :8443 inside the container.
       - NET_BIND_SERVICE
     environment:
       CF_DNS_API_TOKEN: ${CLOUDFLARE_DNS_TOKEN}
       TRAEFIK_DASHBOARD_CREDENTIALS: ${TRAEFIK_DASHBOARD_CREDENTIALS}
-    # dynamic.yml resolves the CrowdSec key with {{ env "..." }}, so the variable
-    # has to exist in Traefik's own environment - env_file injects the whole file.
+    # dynamic.yml reads CrowdSec's key from Traefik's environment; load .env here.
     env_file:
       - path: .env
         required: false
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      # Specific-IP publishes, one per entrypoint: docker binds each mapping to
-      # its own host IP, so nothing listens on 0.0.0.0:80/443. PUBLIC_BIND (the
-      # provider-mapped IP) reaches the container's public https listener (:8443,
-      # traefik.yml: PUBLIC_BIND:80 -> :80 redirect, PUBLIC_BIND:443 ->
-      # :8443 = the https entrypoint, which only public apps use). TAILNET_IP
-      # reaches the https-tailnet listener (:443, panels only). Because the two
-      # listeners are different sockets, a panel Host: header coming in on the
-      # public IP lands on an entrypoint with no router for it (404) - privacy at
-      # the socket layer, no per-router IP allow-list to maintain.
+      # Bind entrypoints to separate host IPs: public HTTPS uses :8443, while
+      # tailnet HTTPS uses :443. Admin routers use the tailnet entrypoint; see
+      # docs/services/traefik.md.
       - "${PUBLIC_BIND}:80:80"
       - "${PUBLIC_BIND}:443:8443"
       - "${TAILNET_IP}:80:80"
@@ -114,12 +106,8 @@ services:
     environment:
       DOMAIN: ${DOMAIN:?set DOMAIN in the stack .env}
       TAILNET_IP: ${TAILNET_IP:?set TAILNET_IP in the stack .env}
-    # Tailscale split-DNS resolver (see docs/services/coredns.md): answers *.DOMAIN with the VPS's
-    # tailnet IP so admin panels resolve by name on the tailnet. Bound to the
-    # tailnet IP only (systemd-resolved holds 127.0.0.53). Published ports ride
-    # Docker's FORWARD chain, which UFW's INPUT rules never inspect - the ufw
-    # "allow 53 from 100.64.0.0/10" rule only bites once the ufw-docker gate
-    # routes forwarded traffic through ufw-user-forward (see docs/quickstart.md).
+    # Tailnet split-DNS resolver, bound only to TAILNET_IP. Docker-published DNS
+    # ports bypass UFW INPUT; UFW mode requires ufw-docker (docs/quickstart.md).
     ports:
       - ${TAILNET_IP:?set TAILNET_IP in the stack .env}:53:53/udp
       - ${TAILNET_IP:?set TAILNET_IP in the stack .env}:53:53/tcp
