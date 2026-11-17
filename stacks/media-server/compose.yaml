@@ -174,7 +174,7 @@ services:
       start_period: 30s
 
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:2.6.5
+    image: lscr.io/linuxserver/prowlarr:3.0.2
     container_name: prowlarr
     <<: *lsio-init
     environment:
