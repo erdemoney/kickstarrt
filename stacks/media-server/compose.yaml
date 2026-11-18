@@ -40,21 +40,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/jellyfin/config:/config
       - /mnt/usenet:/mnt/usenet
-    # Bound HLS/transcode scratch space so long sessions cannot fill the root disk.
     tmpfs:
       - "/transcode:size=4g,uid=${ENV_PUID:-1000},gid=${ENV_PGID:-1000},mode=0750"
     stop_grace_period: 30s
-    # No GPU passthrough here: VPS hosts are CPU-only, so Jellyfin transcodes in
-    # software. Keep the library direct-play friendly (see docs/services/jellyfin.md).
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.entrypoints=${JELLYFIN_ENTRYPOINTS:-https-tailnet}"
       - "traefik.http.routers.jellyfin.rule=Host(`${SUB_DOMAIN_JELLYFIN}.${DOMAIN}`) || Host(`watch.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin.tls=true"
-      # The default is tailnet-only. `just public enable jellyfin` adds the public
-      # entrypoint without requiring a Compose file edit.
-      # No crowdsec label on purpose: the entrypoints apply crowdsec@file to every
-      # router (see traefik.yml) - attaching it here too would run it twice.
+      # Tailnet-only by default; `just public enable jellyfin` opts into public HTTPS.
+      # Entrypoints already apply CrowdSec; don't attach it again here.
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8096/health"]
@@ -128,10 +123,7 @@ services:
       - "traefik.http.routers.radarr.entrypoints=${RADARR_ENTRYPOINTS:-https-tailnet}"
       - "traefik.http.routers.radarr.rule=Host(`${SUB_DOMAIN_RADARR}.${DOMAIN}`)"
       - "traefik.http.routers.radarr.tls=true"
-      # private panel: on the https-tailnet entrypoint, published only on TAILNET_IP
-      # (see stacks/traefik/compose.yaml ports + traefik.yml), so it only
-      # ever sees traffic that came through the tailnet. No IP allow-list to attach
-      # or forget here.
+      # Defaults to the tailnet-only entrypoint, published on TAILNET_IP.
       - "traefik.http.services.radarr.loadbalancer.server.port=7878"
     healthcheck:
       test:
@@ -202,9 +194,6 @@ services:
       start_period: 30s
 
   recyclarr:
-    # Syncs the shipped TRaSH-tuned "Direct Play" quality profiles to
-    # radarr/sonarr (data/recyclarr/configs/*.yml, applied by `just wire`).
-    # No web UI, so no traefik labels. Rootless image: user replaces PUID/PGID.
     image: ghcr.io/recyclarr/recyclarr:8.8.0
     container_name: recyclarr
     <<: *unprivileged
@@ -219,9 +208,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ../../data/recyclarr:/config
-    # just wire writes /config/secrets.yml after the Arrs are configured. Keep
-    # the stock Recyclarr entrypoint; this guard only prevents a noisy restart
-    # loop before the first `just wire` run.
+    # Wait for `just wire` to create secrets before starting Recyclarr.
     entrypoint: ["/sbin/tini", "--", "/bin/sh", "-c"]
     command:
       - |
@@ -232,10 +219,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-    # Headless scheduler - no web UI, so no port to ping. The process that keeps
-    # the sync schedule alive is supercronic, so healthy == that scheduler is
-    # running. The start_period covers the initial `just wire` setup and the
-    # time before supercronic appears.
+    # Headless service; check the scheduler process instead of an HTTP endpoint.
     healthcheck:
       test: ["CMD-SHELL", "pgrep -x supercronic || exit 1"]
       interval: 30s
@@ -292,24 +276,15 @@ services:
       NZBDAV_CONFIG__GENERAL__BASE_URL: "http://infinidysk:3000"
       NZBDAV_CONFIG__MEDIA__LIBRARY_DIR: "/mnt/usenet/library"
       NZBDAV_CONFIG__REPAIR__ENABLE: "true"
-      # Optional streaming tunables. Off/default is deliberate: with the segment
-      # cache off, every rewatch and seek re-fetches from the provider, and the
-      # VPS stays stateless. Uncomment to trade VPS disk for provider traffic --
-      # the default cache path is /config/segment-cache, already inside the
-      # data/infinidysk volume, so no new mount is needed.
+      # Optional: trade /config disk space for fewer provider reads; see
+      # docs/services/infinidysk.md.
       # NZBDAV_CONFIG__USENET__SEGMENT_CACHE__ENABLED: "true"
       # NZBDAV_CONFIG__USENET__SEGMENT_CACHE__MAX_GB: "10"
-      # Cap provider ingress; 1 Mbit/s = 125,000 bytes/s, 0 = unlimited. Never
-      # applies to cache hits or LAN delivery.
+      # Optional provider-ingress limit in Mbps; 0 is unlimited.
       # NZBDAV_CONFIG__USENET__BANDWIDTH_LIMIT_MBPS: "0"
-      # Queue tuning. One worker is the upstream default: extra workers share the
-      # same provider connection pool and add no capacity, they just spread the
-      # same work wider. Raise only if season packs prove to be a bottleneck.
+      # Optional queue tuning; extra workers do not increase provider capacity.
       # NZBDAV_CONFIG__QUEUE__WORKER_COUNT: "1"
-      # The stuck-item watchdog fails an item after 3 cumulative stalls
-      # (5 minutes of no progress each), and a full article-existence STAT sweep
-      # is a long phase. Raise this before blaming the release if the queue
-      # reports stall-failures on large season packs.
+      # Raise for long article checks on large season packs; see the service docs.
       # QUEUE_ITEM_STUCK_MINUTES: "5"
       NZBDAV_CONFIG__USENET__PROVIDERS: >-
         ${INFINIDYSK_PROVIDERS:-}
