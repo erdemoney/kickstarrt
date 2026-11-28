@@ -194,7 +194,7 @@ services:
       start_period: 30s
 
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr:8.8.1
+    image: ghcr.io/recyclarr/recyclarr:9.0.0
     container_name: recyclarr
     <<: *unprivileged
     user: ${ENV_PUID:-1000}:${ENV_PGID:-1000}
